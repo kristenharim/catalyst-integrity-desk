@@ -16,3 +16,6 @@ data/review_log.jsonl
 # Node, if the console needs a build step
 node_modules/
 .next/
+
+# Live demo state — written during the demo, not committed.
+data/decisions.jsonl

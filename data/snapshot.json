@@ -1,0 +1,250 @@
+{
+  "contracts": {
+    "PRME": {
+      "runway": {
+        "ticker": "PRME",
+        "cik": "0001894562",
+        "name": "Prime Medicine, Inc.",
+        "as_of": "2026-03-31",
+        "cash": 64106000.0,
+        "securities": 71391000.0,
+        "liquidity": 135497000.0,
+        "burn_ttm_annual": 156417000.0,
+        "burn_recent_annual": 170840000.0,
+        "months_low": 9.517466635448374,
+        "months_high": 10.395059360555438,
+        "reliable": true,
+        "burn_unstable": false,
+        "inflow_quarters": [],
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": []
+      },
+      "trial": {
+        "nct": "NCT06559176",
+        "title": "A Study of the Safety and Efficacy of Prime Editing (PM359) in Participants With p47phox Autosomal Recessive Chronic Granulomatous Disease (CGD )",
+        "status": "ENROLLING_BY_INVITATION",
+        "pcd": "2030-01",
+        "pcd_type": "ESTIMATED",
+        "phases": [
+          "PHASE1",
+          "PHASE2"
+        ],
+        "sponsor": "Prime Medicine, Inc."
+      },
+      "history": {
+        "nct": "NCT06559176",
+        "sponsor": "Prime Medicine, Inc.",
+        "phases": [
+          "PHASE1",
+          "PHASE2"
+        ],
+        "n_versions": 13,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2024-08-16",
+            "pcd": "2029-09",
+            "pcd_type": "ESTIMATED",
+            "status": "NOT_YET_RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 3,
+            "submitted": "2024-10-04",
+            "pcd": "2029-10",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 30,
+            "held_days": 1793,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 362.0
+          },
+          {
+            "version": 4,
+            "submitted": "2024-10-09",
+            "pcd": "2029-11",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 31,
+            "held_days": 1818,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 392.8
+          },
+          {
+            "version": 6,
+            "submitted": "2025-01-22",
+            "pcd": "2030-01",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 61,
+            "held_days": 1744,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2029-09",
+        "last_pcd": "2030-01",
+        "total_slip_days": 122,
+        "n_late_moves": 0
+      },
+      "gap_months": -35.58110882956879,
+      "catalyst_date": "2030-01-01",
+      "verdict": "financing required before catalyst"
+    },
+    "RCKT": {
+      "runway": {
+        "ticker": "RCKT",
+        "cik": "0001281895",
+        "name": "ROCKET PHARMACEUTICALS, INC.",
+        "as_of": "2026-03-31",
+        "cash": 49610000.0,
+        "securities": 94769000.0,
+        "liquidity": 144379000.0,
+        "burn_ttm_annual": 179618000.0,
+        "burn_recent_annual": 181576000.0,
+        "months_low": 9.541723575802969,
+        "months_high": 9.645737064214055,
+        "reliable": true,
+        "burn_unstable": false,
+        "inflow_quarters": [],
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "ShortTermInvestments",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": []
+      },
+      "trial": {
+        "nct": "NCT04248439",
+        "title": "Gene Therapy for Fanconi Anemia, Complementation Group A",
+        "status": "ACTIVE_NOT_RECRUITING",
+        "pcd": "2026-05-05",
+        "pcd_type": "ESTIMATED",
+        "phases": [
+          "PHASE2"
+        ],
+        "sponsor": "Rocket Pharmaceuticals Inc."
+      },
+      "history": {
+        "nct": "NCT04248439",
+        "sponsor": "Rocket Pharmaceuticals Inc.",
+        "phases": [
+          "PHASE2"
+        ],
+        "n_versions": 4,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2020-01-28",
+            "pcd": "2023-08",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 1,
+            "submitted": "2020-11-23",
+            "pcd": "2022-06",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": -426,
+            "held_days": 981,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 196.7
+          },
+          {
+            "version": 2,
+            "submitted": "2024-04-08",
+            "pcd": "2026-05",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 1430,
+            "held_days": -677,
+            "carried_expired": true,
+            "days_expired": 677,
+            "is_late_move": false,
+            "svg_x": 758.0
+          },
+          {
+            "version": 3,
+            "submitted": "2025-12-18",
+            "pcd": "2026-05-05",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 4,
+            "held_days": 134,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2023-08",
+        "last_pcd": "2026-05-05",
+        "total_slip_days": 1008,
+        "n_late_moves": 0
+      },
+      "gap_months": 8.37782340862423,
+      "catalyst_date": "2026-05-05",
+      "verdict": "funded to catalyst"
+    }
+  },
+  "redline": {
+    "card_id": "rckt:funded_to_catalyst",
+    "breach": {
+      "card_id": "rckt:funded_to_catalyst",
+      "metric": "gap_months",
+      "observed": -0.5913757700205339,
+      "expected_low": 0.0,
+      "expected_high": 10.37782340862423,
+      "direction": "under"
+    },
+    "classification": {
+      "label": "direct_contradiction",
+      "confidence": 0.95,
+      "rationale": "The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a negative gap, directly contradicting the core of the belief. The other metrics have not shifted in a way that could offset or explain away this shortfall, so the drift invalidates the original story.",
+      "source": "granite"
+    },
+    "memo": "CHALLENGE [direct_contradiction]  rckt:funded_to_catalyst (v1)  conf 0.95\n  Belief : Rocket Pharmaceuticals reaches its registered primary completion date before runway exhaustion, with a non-negative funding gap.\n  Driver : SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD (conviction 3/5)\n  Reading: gap_months = -0.6, expected [0.0, 10.4]\n  The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a negative gap, directly contradicting the core of the belief. The other metrics have not shifted in a way that could offset or explain away this shortfall, so the drift invalidates the original story.\n  [judgment drafted by IBM Granite]",
+    "redline": "expected_low: 0.0 -> -0.6",
+    "proposed_card": {
+      "card_id": "rckt:funded_to_catalyst",
+      "scope": "company:RCKT",
+      "claim": "Rocket Pharmaceuticals reaches its registered primary completion date before runway exhaustion, with a non-negative funding gap.",
+      "metric": "gap_months",
+      "expected_low": -0.6,
+      "expected_high": 10.37782340862423,
+      "driver": "SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD",
+      "confidence": 3,
+      "source": "console.make_snapshot",
+      "as_of": "2026-03-31",
+      "status": "active",
+      "version": 1
+    },
+    "original_pcd": "2026-05-05",
+    "shifted_pcd": "2027-02-02",
+    "shift_months": 9
+  }
+}
