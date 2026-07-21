@@ -32,6 +32,25 @@ No model-produced number reaches the user. `_fabricated()` in the ported
   figure from the belief's own claim text, which is quotation, not invention.
 - Do **not** loosen it. The rule is "a number absent from the input".
 
+## Credentials
+
+Granite needs `WATSONX_API_KEY`, `WATSONX_PROJECT_ID` and `WATSONX_URL`. They
+live in `.env` at the repo root, which is gitignored and which you cannot read,
+because "Respect .gitignore" is on. You do not need to read it. You need to load
+it, in the same shell command as whatever you are running:
+
+```bash
+set -a; . ./.env; set +a; python3 -m pytest tests/
+```
+
+A shell that has not sourced `.env` has no credentials, so `GraniteClassifier`
+cannot authenticate and anything requiring live Granite fails. That failure is
+correct behaviour, not a bug to work around: silently falling back to the stub
+is how a stub judgment ends up in a demo that claims Granite made it.
+
+Never print the values, never paste them into a message, and never write them
+into a file that is not `.env`.
+
 ## Do not rewrite the engine
 
 `engine/runway.py`, `engine/ctgov_history.py` and `engine/gap.py` predate you and
