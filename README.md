@@ -56,8 +56,11 @@ attached and never carry a rank. A screen that silently drops its hard cases is 
 than one that shows them.
 
 **Say what is a hypothesis.** Whether cash constrained sponsors revise their dates
-differently than solvent ones is an open question, not a result. This repo assembles the
-panel that would answer it.
+differently than solvent ones is an open question, not a result, and adjacent published
+work already exists. See `docs/FINDINGS.md` section 2 for what can and cannot be claimed.
+
+The honest one line framing is **an auditable monitor for when a cash-to-catalyst
+assumption breaks**, not a novel dataset and not a discovery.
 
 ## Layout
 

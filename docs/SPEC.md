@@ -87,6 +87,22 @@ Out of scope, and say so if asked rather than pretending: full universe coverage
 valuation, competitor analysis, probability of success modeling, multi user, the causal
 result.
 
+## 48 hour kill gates
+
+Run these before committing the remaining eight days. If a gate fails, fall back to the
+Deliberate Risk Desk rather than spending the week discovering the same thing slower.
+
+| Gate | Pass condition | On failure |
+|---|---|---|
+| History | 10 candidate trials yield at least 3 material primary-completion-date revisions | fall back to A |
+| Join | at least 5 clean issuer to sponsor to SEC filing joins | fall back to A |
+| Finance | runway reconciles to the filing by hand, with provenance, for one company | manual single-company demo, or A |
+| Demo | one breach explains itself in 20 seconds, out loud, to someone else | simplify before adding anything |
+
+The demo gate is the one people skip and the one that decides the outcome. A judge has
+two or three minutes. If the breach does not land in twenty seconds, no amount of
+governance architecture behind it will help.
+
 ## Definition of done
 
 - [ ] `python3 -m engine.gap` still passes after every change

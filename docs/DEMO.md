@@ -63,14 +63,14 @@ Edit one byte of the ledger file on camera. Run `verify()`. It returns false.
 
 **2:20 to 2:50, the panel.**
 
-> And because every revision is timestamped and free, we assembled something that does
-> not exist yet: a panel of sponsor date revisions joined to sponsor cash position.
+> Every revision is timestamped, so we joined the revision panel to sponsor cash position
+> across the sector. Here is the distribution.
 >
 > The open question is whether companies that cannot fund their way to a readout hold
-> optimistic dates longer than solvent ones. We are not claiming that result. Low runway
+> optimistic dates longer than solvent ones. We are not claiming that. Low runway
 > correlates with small under resourced companies that slip anyway, and separating those
-> needs a within firm design. What we are showing is the dataset that makes the question
-> answerable.
+> needs a within firm design. There is adjacent published work on trial delays and firm
+> incentives, and the revision data itself is public. What is ours is the monitor.
 
 **2:50 to 3:00, the close.**
 

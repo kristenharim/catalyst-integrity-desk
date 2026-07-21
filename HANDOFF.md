@@ -64,17 +64,34 @@ records, with no model near a number. Granite reads the analyst's written ration
 reports which stated assumption a new filing or amendment breaks. The analyst approves,
 and the decision hash chains into a tamper evident ledger.
 
-And because the revision history is free and nobody has assembled it, the desk carries a
-third column no product has: how the sponsor has behaved toward its own date.
+So the desk carries a third column: how the sponsor has behaved toward its own date.
+
+## How to frame it, exactly
+
+**"An auditable monitor for when a portfolio's cash-to-catalyst assumption breaks."**
+
+Not "a novel dataset" and not "a new finding". Both of those lose under one question:
+
+- The catalyst screen is a shipping commercial product. BiopharmaWatch filters 11,000+
+  readouts by cash runway and burn across 949 companies, including a trial-change field.
+- The revision panel is a published dataset: 4.3M per-version rows across ~583k trials.
+- The finance-and-trial-timing link is adjacent published work (Guenzel & Liu, RFS 2026).
+
+See `docs/FINDINGS.md` section 2. What survives is the *monitor*: a contract that is
+recomputed deterministically, breached visibly, judged against its own written rationale,
+and changed only by a human whose decision is hash chained. That is a real thing to build
+and an honest thing to claim.
 
 ## What must not be claimed
 
-The research hypothesis is that cash constrained sponsors revise their registered
-readout dates differently than solvent ones. **That is a hypothesis. It has not been
-tested.** The panel needed to test it is what this repo assembles.
+That cash constrained sponsors revise their readout dates differently than solvent ones.
+**Hypothesis, untested, and adjacent work already exists.** Say "we could not find" and
+never "nobody has".
 
-Present the dataset and the mechanism. State the identification problem out loud
-(low runway correlates with small, under resourced companies that slip more anyway,
-which pushes the opposite way from the strategic story). A judge who hears an honest
-"here is the panel, here is why the causal claim is hard" will score it above a
-confident result that does not survive one question.
+State the identification problem out loud: low runway correlates with small, under
+resourced companies that slip more anyway, which pushes the opposite way from the
+strategic story. A judge who hears an honest "here is the panel, here is why the causal
+claim is hard" scores it above a confident result that dies to one question.
+
+Also: say **registered primary-completion expectation**, not readout date. They are not
+the same thing and the difference is a systematic 2 to 4 month optimistic bias.

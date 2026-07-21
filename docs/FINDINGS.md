@@ -108,13 +108,38 @@ update all occupy adjacent ground. EY Beyond Borders publishes the aggregate ann
 
 Do not pitch the screen. A judge finds BiopharmaWatch in one search.
 
-**What appears genuinely unoccupied:** the link between a sponsor's financial condition
-and the revision behaviour of its own registered completion dates. The trial delay
-literature exists ([Shadbolt et al., JAMA Netw Open 2023](https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2800488):
-about 1 in 5 RCTs complete on time, median delay 12.2 months). The primary outcome
-switching literature exists. The biotech financing literature exists
+**The revision panel is also not novel, and this was an overclaim in an earlier draft of
+this document.** [brbk/clinical_trials_history](https://huggingface.co/datasets/brbk/clinical_trials_history)
+is 4,333,631 rows across roughly 583,000 trials, every version, with
+`primary_completion_date` as a per-version field, built off the same internal endpoint.
+Do not say "nobody has assembled this."
+
+Operationally this is good news: it removes the single largest engineering cost in the
+project. Crawling histories directly is roughly 50 to 100 requests per trial. Use the
+dataset for the panel and keep `engine/ctgov_history.py` for live single-trial checks in
+the demo, where fetching from the source is the point. Note the licence is CC-BY-NC-4.0,
+which covers a hackathon but not a commercial product.
+
+**The finance-and-trial-timing link is adjacent, not empty.**
+[Guenzel & Liu, Excess Commitment in R&D, RFS 39(7) 2026](https://doi.org/10.1093/rfs/hhag026)
+uses clinical trial project data and finds that delays reduce subsequent project
+termination, instrumented with trial site congestion, moderated by CEO stock-price
+sensitivity. That is the opposite arrow from this project's hypothesis (delay causing
+firm behaviour, versus firm finances causing date revision behaviour), but it means the
+territory is occupied and "no paper connects finance and trial timing" is indefensible.
+Cite it, distinguish the arrow, and never claim empty terrain.
+
+**What still appears open,** stated as a search result rather than a fact: we could not
+find work on sponsor liquidity predicting *disclosure* behaviour toward the registered
+date specifically, meaning how long a lapsed date is carried and how much notice a
+revision gives. That is narrower than "the intersection is unoccupied" and it is the
+most that can be honestly claimed without a systematic review.
+
+Background that does exist: the trial delay literature
+([Shadbolt et al., JAMA Netw Open 2023](https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2800488),
+about 1 in 5 RCTs complete on time, median delay 12.2 months), the primary outcome
+switching literature, and the biotech financing literature
 ([Lerner, Shane & Tsai, JFE 2003](https://www.sciencedirect.com/science/article/abs/pii/S0304405X02002568)).
-The intersection does not appear to.
 
 ## 3. The five hardest questions
 
