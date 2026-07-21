@@ -15,6 +15,8 @@ OUT = os.path.join(ROOT, "BUNDLE.md")
 # Order matters. It is the read order from HANDOFF.md, with the code last so the model
 # has the framing before it sees anything it might be tempted to rewrite.
 FILES = [
+    # First, because a chat without filesystem access never auto-loads it.
+    "CLAUDE.md",
     "HANDOFF.md",
     "docs/SPEC.md",
     "docs/FINDINGS.md",
