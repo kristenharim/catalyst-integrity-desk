@@ -11,6 +11,7 @@ not be described as Bob's work in the README.
 | 2026-07-21 | by hand (pre-Bob) | `engine/runway.py`, `engine/ctgov_history.py`, `engine/gap.py`. Phase 1, verified against live SEC and ClinicalTrials.gov. | n/a |
 | 2026-07-21 | by hand (pre-Bob) | `HANDOFF.md`, `docs/SPEC.md`, `docs/FINDINGS.md` 1.1-1.8 and section 2, `docs/PORT.md`, `docs/DEMO.md`, `docs/BOB_PROMPTS.md`. | n/a |
 | 2026-07-21 | Claude Code | Verification and gate checks only, no repo code written. Ran the three engine demos (all pass). Ran the Join kill gate over the full 12 name set: 8/12 joined, gate passes. Found and quantified findings 1.9 and 1.10 below; wrote them into `docs/FINDINGS.md`. Created this file. | this session |
+| 2026-07-21 | by hand (pre-Bob) | `AGENTS.md` and `.bob/custom_modes.yaml`. Bob reads AGENTS.md by default and this repo had none, so it would have read CLAUDE.md, which is addressed to a different tool. The modes put a fileRegex on edit permission so the three verified engine modules cannot be rewritten. | n/a |
 
 ## Not yet started
 
