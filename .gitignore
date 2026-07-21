@@ -1,3 +1,18 @@
 data/cache/
 __pycache__/
 *.pyc
+.DS_Store
+
+# Credentials. Listed before the file exists on purpose, so it can never be
+# staged by something that creates it later without checking.
+.env
+.env.local
+.env.*.local
+
+# Ledger state is rebuilt, not tracked.
+data/ledger.jsonl
+data/review_log.jsonl
+
+# Node, if the console needs a build step
+node_modules/
+.next/
