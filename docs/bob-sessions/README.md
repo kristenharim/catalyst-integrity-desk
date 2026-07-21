@@ -11,6 +11,7 @@ work and which preceded it; these files are what that log is checked against.
 | file | phase | what it covers |
 |---|---|---|
 | `phase2-governance-port.json` | Phase 2, Prompt 1 | The governance port. Copies the ledger, challenge, classifier and Granite modules out of the fallback project, rewrites the two prompt strings for catalyst vocabulary, and keeps `_fabricated()` byte for byte. Adds `engine/contract.py`, the flattener from a `CatalystContract` to the packet `scan_breaches` reads. |
+| `phase2-redline-loop.json` | Phase 2, Prompt 2 | The redline loop: `as_directions`, `ContractDelta`, `run_redline`, and the fabrication tests. Read the second half. Two tests passed while proving nothing: one asserted Granite had not fabricated without checking Granite had been reached, so the stub fallback satisfied it, and the other imported `run_redline` and never called it. Both were reported, both were fixed, and Bob ran the bad-endpoint probe itself rather than taking the report on trust. |
 
 ## Credentials
 
