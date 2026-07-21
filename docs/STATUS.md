@@ -161,9 +161,49 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 Anything other than a `WATSONX_URL` pointing at a public region is a real
 credential and must not be committed.
 
+## Verification of sub-tasks 2 to 6, 2026-07-21
+
+The console was built while a Claude session was open alongside it. Nine tests
+pass. Green proves nothing here, so each check was broken to see whether it
+screams. All four caught it: a planted `9999` in the detail template, the
+carried-expired class renamed, the word `stub` put into the memo, and
+`days_expired` changed from 677 to 123. Every display string in the snapshot
+recomputes from its own source value, so none was typed by hand.
+
+The snapshot diff is purely additive. The Granite redline block is byte for byte
+what the live classification produced, so nothing was regenerated and no watsonx
+call was spent.
+
+The demo constraint holds. `/` lands on the Rocket timeline, and at 1280x800 the
+677-day node sits red and raised off the axis with the whole gap table below it,
+no scrolling. Every page rendered with no credentials in the shell, which is the
+network-disabled criterion proved rather than asserted.
+
+**One defect, and it is the demo's own beat.** `GET /redline/confirm` reads the
+integrity badge from `?intact=1` in the URL, set once at decision time. Tamper the
+ledger and reload, which is exactly what the page instructs, and the badge still
+reads intact. Measured: `BeliefLedger.verify()` returns `False` on disk while the
+page returns `✓ intact`. The ledger itself is sound, verified separately against a
+tampered hashed byte. The fix is for the confirm handler to open the ledger and
+call `verify()` itself. No test covers this, because sub-task 6 never asked for
+one, so a test belongs with the fix.
+
+Three smaller ones. `/redline` is absent from the provenance test's route list and
+`redline.html` still formats numbers with `%.1f` in the template; it passes today
+only because those digits happen to appear in the file. Dollars render to whole
+millions, so cash shows `$50M` against a 10-Q reading 49.61. `app.run(port=5000)`
+collides with macOS ControlCenter on this machine and will not bind on demo day.
+
 ## Still open
 
-- Sub-tasks 2 to 6 of the console
+- The confirm-page integrity badge, and a test for it
+- Who the console is attributed to. `docs/BOB_LOG.md` names Claude Code for
+  sub-tasks 1 through 6 and for Prompt 2, leaving one row attributed to Bob. But
+  `docs/bob-sessions/phase2-redline-loop.json` is a genuine Bob task export whose
+  title is Prompt 2 verbatim, so that row and its transcript disagree. The README
+  is written from this log, the challenge requires Bob as the primary development
+  tool, and the Bob budget is still unspent. Resolve the attribution before the
+  README, not after.
 - The contract list has only two rows: SANA has no live pivotal trial. Thin for a
   view about ranking, but the list is not the demo beat. Revisit only if cheap.
 - The README, written from `docs/BOB_LOG.md` rather than from memory
