@@ -79,6 +79,60 @@ Edit one byte of the ledger file on camera. Run `verify()`. It returns false.
 
 ---
 
+## The prior art slide
+
+Put this in the deck, visible, before Q&A. Naming your own priors reads as confidence.
+Having them named for you reads as unaware. Same underlying novelty, opposite scores.
+
+Title it **"What already exists"** and do not apologise for any of it.
+
+| Layer | Who owns it |
+|---|---|
+| The screen: rank companies by runway against catalyst | [BiopharmaWatch Catalyst Sync](https://www.biopharmawatch.com/catalyst-sync), 11,000+ readouts filtered by cash runway and burn across 949 companies, including a trial-change field |
+| Catalyst calendars and analyst-adjusted dates | [Biomedtracker / Citeline](https://www.evaluate.com/solutions/biomedtracker/), [BioPharmCatalyst](https://www.biopharmcatalyst.com/calendars/fda-calendar) |
+| Sector runway aggregates | EY Beyond Borders, 33% of public biotechs under one year of runway at end 2025; Stifel publishes weekly |
+| The per-version registry panel | [brbk/clinical_trials_history](https://huggingface.co/datasets/brbk/clinical_trials_history), 4,333,631 rows across ~583,000 trials, `primary_completion_date` per version, CC-BY-NC-4.0 |
+| Registry-derived dates used to study firm behaviour | [Guenzel & Liu, *Excess Commitment in R&D*, RFS 39(7) 2026](https://doi.org/10.1093/rfs/hhag026): delays reduce project termination, instrumented by trial-site congestion, moderated by CEO stock-price sensitivity |
+| Trial delay base rates | [Shadbolt et al., *JAMA Netw Open* 2023](https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2800488): about 1 in 5 RCTs complete on time, median delay 12.2 months |
+| Biotech financing cycles | [Lerner, Shane & Tsai, *JFE* 2003](https://www.sciencedirect.com/science/article/abs/pii/S0304405X02002568) |
+
+Then one line, spoken:
+
+> None of that is what we built. What we built is the monitor: the contract that gets
+> recomputed when one of those inputs changes, judged against the rationale someone
+> actually wrote down, and changed only by a human whose decision is hash chained.
+
+## Q&A one-liners
+
+Rehearse these. Each is under fifteen seconds.
+
+**"Isn't this BiopharmaWatch?"**
+Their screen is better than ours and larger. A screen tells you the gap today. It does
+not hold a written thesis, detect when a registry amendment breaks it, or record who
+decided what. That is the difference between a filter and a monitor.
+
+**"Guenzel and Liu already did this."**
+They ran the opposite arrow: delay causing firms to keep funding projects, moderated by
+CEO pay. Ours is firm liquidity possibly affecting how a date gets disclosed. Their paper
+is why we know the measurement works, and we cite it.
+
+**"The revision data is already published."**
+It is, and we use it. Assembling it was never the contribution.
+
+**"So what is new?"**
+Honestly, the monitor and one narrow open question about disclosure behaviour, which we
+have not tested and are not claiming.
+
+**"Isn't primary completion date just the readout?"**
+No, and that is a systematic bias, not noise. It is last patient last visit for the
+primary endpoint; topline follows by weeks to months. Every gap we show is optimistic by
+roughly two to four months, uniformly.
+
+**"Your burn number is wrong for the interesting companies."**
+Yes. That is why it is a band and why unreliable rows are shown but never ranked.
+Arrowhead's partnership upfront computes to a 1,116 month runway in our own engine, and
+we flag it rather than print it.
+
 ## Cuts, if you run long
 
 Drop in this order: the burn band explanation at 1:20, then the ledger tamper demo. Keep
