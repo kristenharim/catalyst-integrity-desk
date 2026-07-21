@@ -16,7 +16,7 @@ the room.
 >
 > The left side of that sentence comes from SEC filings. The right side comes from
 > ClinicalTrials.gov, where the company sets it, can change it whenever it likes, and
-> nobody ever diffs the versions.
+> nothing reconciles that change against the thesis that depended on the old date.
 
 **0:25 to 0:50, the fact.**
 
@@ -26,7 +26,7 @@ Show the Rocket Pharmaceuticals revision timeline.
 > date of June 2022. That date had already passed, six hundred and seventy seven days
 > earlier, and it sat on the public registry the entire time.
 >
-> No press release. No 8-K. Nobody diffed it.
+> No press release. No 8-K. Nothing in the thesis that depended on it moved.
 
 **0:50 to 1:20, the contract.**
 

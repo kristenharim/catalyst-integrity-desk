@@ -56,7 +56,8 @@ Measured on 2026-07-21:
 Every biotech thesis rests on a date: the company has cash into X, the trial reads out
 before X, therefore they are funded to the catalyst. The left side comes from SEC
 filings. The right side comes from ClinicalTrials.gov, where the sponsor sets it, can
-revise it at any time, and nobody diffs the revisions.
+revise it at any time, and the revision is not reconciled against the thesis that
+depended on the old date.
 
 The Catalyst Integrity Desk treats that as a contract: this company has capital to reach
 this readout by this date. Python computes both sides from filed tags and registry
