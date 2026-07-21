@@ -337,6 +337,48 @@ with an alias table plus hand review of the top 300 by market cap is 90-95%.
 
 Budget a full day for this. It is the single largest unbudgeted cost in the project.
 
+### 1.9 `query.spons` matches collaborators, so a partner's trial becomes your catalyst
+
+The v2 search parameter `query.spons` is not a lead-sponsor filter. It matches the
+sponsor/collaborator block as a whole, so a trial another company runs comes back under
+your issuer's name and `engine/gap.py` assigns it as that issuer's binding catalyst.
+
+Observed: `find_trials("ARVINAS, INC.")` returns `NCT05654623` first. Its `leadSponsor`
+is **Pfizer**; Arvinas Estrogen Receptor, Inc. is a collaborator. Arvinas's funding gap
+was therefore computed against a Pfizer-run trial.
+
+One of 8 joined names in the 12 name set. It does not error and it does not look wrong on
+screen, because the trial is real and the drug is genuinely theirs.
+
+**Fix:** after searching, keep only trials whose `leadSponsor.name` matches the issuer,
+normalising the suffix noise (`Inc.`/`Inc`/`, Inc`/`AG`/`Corp`). The registry's lead
+sponsor string differs from EDGAR's registrant name in 3 of 8 joins even when correct
+(`Rocket Pharmaceuticals Inc.` vs `ROCKET PHARMACEUTICALS, INC.`), so match normalised,
+not literal.
+
+### 1.10 The nearest registered completion is usually the most stale one
+
+`find_trials` sorts ascending by primary completion date and `build` takes `trials[0]`,
+which is the *earliest* date, not the *next* one. Because sponsors carry lapsed dates
+(finding 1.7 and the Rocket case), the earliest date is frequently already in the past,
+so the selection rule is biased toward exactly the stalest record in the set.
+
+Three of 8 joined names picked an already-passed completion date on 2026-07-21: ARVN
+(2025-01-31), EDIT (2025-08), RCKT (2026-05-05).
+
+This one is not cosmetic. Rocket is the demo's hero row. Against its picked date the gap
+is **+8.4 months, "funded to catalyst"**. Against its nearest *future* registered
+completion (`NCT06092034`, 2028-04) the same runway gives **-14.5 months, "financing
+required"**. Same company, same filing, opposite verdict, decided entirely by which
+registered date is treated as binding.
+
+**Fix is a definition, not a patch, and it is Kristen's call:** decide whether the binding
+catalyst is the nearest completion date still in the future, or the nearest one whose
+trial is still live regardless of a lapsed date. The second is defensible and is arguably
+the project's whole point, but then the gap must be presented against a date the sponsor
+has already missed, and the demo has to say so out loud rather than print
+"funded to catalyst".
+
 ## 2. Prior art, stated honestly
 
 **The screen is not novel.** [BiopharmaWatch Catalyst Sync](https://www.biopharmawatch.com/catalyst-sync)
