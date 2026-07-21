@@ -74,6 +74,42 @@ amendment produces a challenge card with a classification and a drafted memo.
 **Accept when:** all three views render from a frozen snapshot with the network
 disabled, and the ledger tamper demo is visible in the UI.
 
+### Prompt 3, continuation: sub-tasks 2 to 6
+
+Sub-task 1 is built and verified. This is the rest of Prompt 3, and it is the last
+substantial Bob spend on this project, so it is one conversation and not five.
+
+> Read `docs/plans/console.md`, then implement the Sub-task 1 addendum and sub-tasks
+> 2 through 6 in that order. Sub-task 1 itself is done: `data/snapshot.json` exists,
+> was built against live Granite, and must not be regenerated. The addendum adds
+> display strings to it without any network call.
+>
+> Four things decide whether this is right:
+>
+> Do the addendum first. Sub-task 6's number-provenance test cannot pass until the
+> rounded strings a reader sees are in the snapshot, and discovering that at sub-task
+> 6 costs a rewrite of every template.
+>
+> No template formats a number. Every figure prints a `display.*` string. If you
+> reach for `round()` or a Jinja number filter in a template, the snapshot is missing
+> a field and that is where the fix goes.
+>
+> `/` opens on the Rocket revision timeline and the 677-day carried-expired node is
+> visible without scrolling and marked distinctly from ordinary revisions. If a
+> layout choice would bury it, the layout loses.
+>
+> Sub-task 6 step 8 is not optional and not a formality: hardcode a `9999` into the
+> detail template, watch the provenance test fail and name that token, then remove
+> it. Three checks on this project have looked correct and been hollow. A check
+> nobody has seen fail is not evidence.
+>
+> Do not regenerate `data/snapshot.json`, do not call watsonx, and do not edit
+> anything in `engine/`.
+
+**Accept when:** `pytest tests/test_console.py` passes, the provenance test has been
+seen failing on a planted token, `make_snapshot.py --displays` is idempotent, and
+`/` lands on the timeline with the 677 row above the fold.
+
 ---
 
 ## Prompt 4: the panel

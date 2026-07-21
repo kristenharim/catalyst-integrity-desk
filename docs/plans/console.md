@@ -103,6 +103,74 @@ precomputed coordinates.
 
 ---
 
+## Sub-task 1 addendum: display strings
+
+**Status:** [ ] pending
+
+**Intent**
+
+Sub-task 6 asserts that every number in a page's visible text appears verbatim in
+`data/snapshot.json`. Sub-tasks 3 and 4 ask for gaps to one decimal and dollars in
+millions. On the snapshot as it stands those two requirements contradict each
+other. Checked by rendering each figure and searching the file, not by reasoning:
+
+| displayed | stored as | found |
+|---|---|---|
+| `+8.4` (RCKT gap) | `8.37782340862423` | no |
+| `-35.6` (PRME gap) | `-35.58110882956879` | no |
+| `49.6` (RCKT cash, $M) | `49610000.0` | no |
+| `144.4` (RCKT liquidity, $M) | `144379000.0` | no |
+| `9.5` (RCKT runway low) | `9.541723575802969` | yes, by luck of the digits |
+
+Twelve of the sixteen figures the list and detail views show fail. The wrong fix
+is to exempt them from the test, which is how this project's other hollow checks
+were born. Rounding is computation, and it belongs where `svg_x` already lives:
+in the snapshot.
+
+Note this must not trigger a Granite call. The redline block in the file was
+produced by a live classification that survived free-tier congestion. Adding
+display strings reads numbers that are already in the file.
+
+**Expected outcomes**
+
+- Each contract carries a `display` dict, and `redline` carries one, holding the
+  exact strings the templates print.
+- `python3 console/make_snapshot.py --displays` rewrites `data/snapshot.json` in
+  place with those blocks, makes no network call and no Granite call, and is
+  idempotent. Running it twice leaves the file byte-identical.
+- The same function is called inside `build_snapshot()` before the write, so a
+  future full rebuild produces them without the flag.
+- After it runs, every figure in the table above is found in the file.
+
+**Todo list**
+
+1. Add `_add_displays(snapshot: dict) -> dict` to `console/make_snapshot.py`. Pure,
+   no I/O, no imports beyond what is already there. For each contract it writes a
+   `display` dict from values already in that contract:
+   - `gap` = `f"{gap_months:+.1f}"` (explicit sign: `+8.4`, `-35.6`)
+   - `months_low`, `months_high` = `f"{v:.1f}"`
+   - `cash`, `securities`, `liquidity`, `burn_ttm`, `burn_recent` = `f"{v/1e6:.1f}"`
+     (millions, one decimal, no thousands separator; a comma would split into two
+     tokens and defeat the check)
+   For `redline`, from `breach`: `observed`, `expected_low`, `expected_high`, each
+   `f"{v:.1f}"`.
+2. Add a `--displays` flag to `main()`: load `SNAPSHOT_PATH`, run `_add_displays`,
+   write it back with `indent=2`. No credential check on this path, since it needs
+   none.
+3. Call `_add_displays(snapshot)` in `build_snapshot()` immediately before returning.
+4. Run `python3 console/make_snapshot.py --displays`, then run it a second time and
+   confirm `git diff --stat data/snapshot.json` shows no change from the second run.
+
+**Relevant context**
+
+- Templates from here on print `display.*` for every figure. A template that calls
+  `round()`, `format()`, or a Jinja number filter is the defect this addendum exists
+  to prevent, and sub-task 6 will catch it.
+- Dates, tickers, XBRL tags, `days_expired`, `n_versions` and `svg_x` are already
+  stored in the form they are shown. They need no display string.
+
+---
+
 ## Sub-task 2: Flask app skeleton, routing, and requirements
 
 **Status:** [ ] pending
@@ -187,9 +255,14 @@ their flag reason. No rank number shown for unreliable rows.
 4. Render the unreliable section below a `<hr>` with a heading "Flagged — not
    ranked". Each row shows Ticker, Company, Flag reason (from `runway.notes`), and
    Catalyst date. No rank column.
-5. Gap cell: format as `+X.X mo` (green) or `-X.X mo` (red) using inline style.
-   Exact value from snapshot, no rounding in the template beyond what Python's
-   `round()` produces when writing the snapshot.
+5. Gap cell: print `{{ c.display.gap }} mo`, green when the string starts with `+`,
+   red when it starts with `-`. The sign is already in the string. No rounding, no
+   formatting, no arithmetic in the template. Same for the runway band, which is
+   `{{ c.display.months_low }}–{{ c.display.months_high }} mo`.
+6. The snapshot has two contracts, both reliable: SANA has no live pivotal trial
+   and `build()` returns None for it, so it is absent from the file. The flagged
+   section will therefore render empty. Build it anyway and have it render nothing
+   when the list is empty. Do not fabricate a row to populate it.
 
 **Relevant context**
 
@@ -247,7 +320,9 @@ SVG coordinates come from the snapshot (computed in Sub-task 1). The template re
      in bold red anchored at the same x.
    - Label each node with the `submitted` date and `pcd` below the axis.
    - The SVG is inline HTML (no external file, no CDN).
-4. Write the gap calculation panel as an HTML table:
+4. Write the gap calculation panel as an HTML table. Every figure in it prints a
+   `display.*` string from the snapshot (`$ {{ c.display.cash }}M` and so on). No
+   division by a million in the template, no rounding filter.
    - Rows: Cash, Securities, Liquidity total, Burn (TTM annual), Burn (recent
      quarterly ann.), Runway band, Catalyst date (NCT ID + PCD), Funding gap.
    - Each row has a "Source" column showing the XBRL tag or "registry vN" as
@@ -302,7 +377,8 @@ accept is a live action performed on camera.
 **Todo list**
 
 1. Write `console/templates/redline.html` extending `base.html`.
-2. Display fields: card_id, scope, breach metric + direction, classification label
+2. Display fields, with every figure printed from `redline.display.*` rather than
+   formatted in the template: card_id, scope, breach metric + direction, classification label
    (styled: DIRECT_CONTRADICTION in red, ASSUMPTION_WEAKENED in amber, others in
    blue), memo text, and proposed band change from the snapshot's serialized
    `ChallengeCard.redline()` output.
@@ -314,8 +390,13 @@ accept is a live action performed on camera.
    - Construct `ReviewLog` pointing at `data/review_log.jsonl`.
    - Deserialize the `ChallengeCard` and `Decision` from the form + snapshot.
    - Call `apply_decision()`.
-   - Compute `ledger.verify()` and pass result to confirmation template.
-   - Redirect to `GET /redline/confirm`.
+   - Redirect to `GET /redline/confirm`. That handler re-opens the ledger, reads
+     the last entry and calls `verify()` there. Do not carry the result through the
+     redirect in a session or a query string: the tamper demo depends on the badge
+     reflecting the file at the moment the page is reloaded, not at the moment the
+     decision was taken. A badge cached from before the tamper would show green on
+     a corrupted ledger, which is the demo failing silently in the direction that
+     looks fine.
 5. Add `data/decisions.jsonl` and `data/review_log.jsonl` to `.gitignore`.
 6. Write `console/templates/confirm.html`: shows "Decision recorded", the verdict,
    and the verify badge. Include the tamper-demo instruction as a `<blockquote>`:
@@ -383,7 +464,10 @@ Every other phase left automated tests behind; this phase must too.
       (loaded as a raw string). Fail with a message naming the token and the route.
    d. No exclusions. Attribute values (viewBox, r, stroke-width, font-size) are
       not text nodes and are not reached by the parser. SVG x positions are stored
-      in the snapshot (Sub-task 1, step 3) and pass on their own merit.
+      in the snapshot (Sub-task 1, step 3) and pass on their own merit. Rounded
+      figures pass because the addendum put the rounded strings in the file. If a
+      token fails here, the fix is a display string in the snapshot, never an
+      exclusion in the test.
 8. Failure verification: before finalising the tests, temporarily hardcode a number
    absent from the snapshot into the RCKT detail template (e.g., a literal `9999`
    in a `<td>`), run the provenance test, confirm it fails and names `"9999"` as
