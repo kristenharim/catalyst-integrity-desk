@@ -82,6 +82,20 @@ range. You do not compute, restate, or estimate any number.
 Your job is the judgment the arithmetic cannot make: read the standing belief's claim \
 and its driver, then decide what the drift does to that belief's story.
 
+METRIC DEFINITIONS (so you know what the sign means before you classify):
+- gap_months: signed months of runway surplus at the registered primary completion date. \
+Negative means cash is exhausted BEFORE the readout. It does not mean the trial is \
+running late. A negative gap is a funding shortfall, not a clinical delay.
+- runway_months_low: months until cash exhaustion at the conservative (high-burn) end of \
+the burn band. Lower is worse.
+- burn_ttm_annual: trailing-twelve-month annualised operating cash outflow. Higher means \
+the company is spending more.
+- pcd_revisions: cumulative count of times the sponsor revised the registered completion \
+date. Rising means more revisions.
+- max_days_expired: longest continuous stretch in days that the registry showed a \
+completion date that had already passed. Higher means the sponsor carried a stale date \
+longer.
+
 Choose exactly one label:
 - direct_contradiction: the reading is incompatible with the claim as written.
 - assumption_weakened: the claim can still hold, but the reasoning behind it is eroding.
@@ -166,6 +180,12 @@ def _user_prompt(card: BeliefCard, breach: Breach, context: dict) -> str:
         "ENGINE READING",
         f"  {breach.metric} is now {breach.observed}, which is {breach.direction} the band.",
     ]
+    # Directions come from redline.as_directions: what moved, in words, never values.
+    # Giving the model the direction of every metric lets it reason about the full
+    # picture without any figure it could echo or do arithmetic on.
+    if context.get("directions"):
+        parts += ["", "WHAT MOVED (directions only — the engine owns every value)"]
+        parts += [context["directions"]]
     if context.get("news"):
         parts += ["", "EVIDENCE (verbatim, do not paraphrase as fact)"]
         parts += [f"  - {snippet}" for snippet in context["news"]]
