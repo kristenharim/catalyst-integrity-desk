@@ -1,21 +1,19 @@
 """Fabrication tests for the redline -> Granite -> ChallengeCard path.
 
-Two tests:
-
 1. `test_no_fabrication_live` -- sends a real breach to Granite over the watsonx.ai
    API and asserts that nothing in the returned rationale is a number absent from the
-   input. Requires WATSONX_API_KEY, WATSONX_PROJECT_ID, WATSONX_URL in the environment.
-   Skipped when credentials are absent.
+   input, and that the result came from Granite rather than the stub fallback. Requires
+   WATSONX_API_KEY, WATSONX_PROJECT_ID, WATSONX_URL in the environment. Skipped when
+   credentials are absent.
 
 2. `test_fabrication_guard_catches_invented_figure` -- injects a fake transport that
    returns a rationale containing a digit that was not in the input, and asserts that
    `_fabricated` detects it and the classify call falls back to the stub rather than
    returning the poisoned output.
 
-3. `test_scripted_amendment_produces_challenge_card` -- builds two synthetic
-   CatalystContract-like packets (before/after an amendment), runs run_redline with
-   a stub classifier, and asserts the resulting ChallengeCard has a classification
-   label and a non-empty memo.
+3. `test_scripted_amendment_produces_challenge_card` -- calls run_redline with
+   synthetic before/after packets. Asserts it produces a ChallengeCard when the
+   recomputed gap breaches the approved band and returns None when it does not.
 """
 from __future__ import annotations
 
@@ -97,9 +95,12 @@ def test_no_fabrication_live():
     }
     result = clf.classify(card, breach, ctx)
 
-    # If Granite fabricated, it falls back to the stub. The stub source is "stub".
-    # A live Granite result has source="granite".
-    # Either way there must be no invented figure in the rationale.
+    # source must be "granite" -- if the guard fired or the call failed the stub
+    # answered, which means the test passed without reaching Granite at all.
+    assert result.source == "granite", (
+        f"expected granite, got source={result.source!r}; "
+        f"rationale: {result.rationale!r}"
+    )
     invented = _fabricated(result.rationale, card, breach)
     assert not invented, (
         f"Granite fabricated {invented} in rationale: {result.rationale!r}"
@@ -153,13 +154,13 @@ def test_fabrication_guard_catches_invented_figure():
 # ---------------------------------------------------------------------------
 
 def test_scripted_amendment_produces_challenge_card():
-    """A synthetic amendment that pushes gap_months below zero produces a
-    ChallengeCard with a label and a non-empty memo.
+    """run_redline fires when the recomputed gap breaches the approved band,
+    and returns None when it does not.
 
-    No live network calls. The before/after packets are constructed directly
-    rather than via build() so the test is offline and deterministic.
+    No live network calls. Packets are constructed directly so the test is
+    offline and deterministic. The delta is duck-typed rather than built via
+    build() to avoid network calls while still exercising run_redline itself.
     """
-    # Simulate before: funded, gap positive.
     before_packet = {
         "gap_months": 9.5,
         "runway_months_low": 9.5,
@@ -167,63 +168,64 @@ def test_scripted_amendment_produces_challenge_card():
         "pcd_revisions": 3.0,
         "max_days_expired": 0.0,
     }
-    # Simulate after: completion date slipped, now gap is negative.
-    after_packet = {
+    # After a registry amendment: completion date slipped past runway exhaustion.
+    after_breach_packet = {
         "gap_months": -5.2,
         "runway_months_low": 9.5,
         "burn_ttm_annual": 80_000_000.0,
         "pcd_revisions": 4.0,
         "max_days_expired": 0.0,
     }
+    # After a different amendment: gap tightened but still inside the approved band.
+    after_ok_packet = {
+        "gap_months": 3.1,
+        "runway_months_low": 9.5,
+        "burn_ttm_annual": 80_000_000.0,
+        "pcd_revisions": 4.0,
+        "max_days_expired": 0.0,
+    }
 
-    directions = as_directions(before_packet, after_packet)
-
-    # gap_months: 9.5 -> -5.2 is a sharp fall. Confirm direction is present.
+    # Confirm the direction labelling before exercising the full path.
+    directions = as_directions(before_packet, after_breach_packet)
     assert "gap_months" in directions
     assert "falls sharply" in directions
 
-    # build a card whose approved range is [0, 24] so -5.2 is a breach
+    # card with approved range [0, 24]: -5.2 is a breach, 3.1 is not.
     card = _card(low=0.0, high=24.0)
 
-    # ContractDelta with synthetic packets -- bypass the full network stack
-    # by constructing a minimal object whose .before and .after properties
-    # return the pre-baked dicts directly.
     class _SyntheticDelta:
+        """Minimal duck type: run_redline only reads .after and .directions()."""
+        def __init__(self, after_pkt):
+            self._after = after_pkt
+
         def directions(self):
-            return as_directions(before_packet, after_packet)
+            return as_directions(before_packet, self._after)
 
         @property
         def after(self):
-            return after_packet
+            return self._after
 
-    delta = _SyntheticDelta()
+    # --- breach path ---
+    challenge = run_redline(_SyntheticDelta(after_breach_packet), card, StubClassifier())
 
-    breach = Breach(
-        card_id=card.card_id,
-        metric="gap_months",
-        observed=-5.2,
-        expected_low=0.0,
-        expected_high=24.0,
-        direction="under",
-    )
-    from orchestrator.challenge import build_challenge
-    ctx = {"directions": delta.directions()}
-    challenge = build_challenge(card, breach, ctx, StubClassifier())
-
-    assert challenge is not None
+    assert challenge is not None, "run_redline must return a ChallengeCard on a breach"
     assert challenge.classification.label in LABELS, (
         f"unexpected label: {challenge.classification.label!r}"
     )
     assert challenge.memo.strip(), "memo must not be empty"
-    # The memo must name the card_id so a reviewer can trace it.
     assert card.card_id in challenge.memo
-    # The fabrication rule applies to the model's rationale text, not the
-    # application-rendered memo template. The template legitimately includes
-    # engine-computed values (confidence, breach reading, band) and those are
-    # fine -- provenance is maintained because the values come from the engine,
-    # not from the model. Check only the classification rationale itself.
-    rationale = challenge.classification.rationale
-    invented = _fabricated(rationale, card, breach)
+
+    # The fabrication rule applies to the model's rationale text. The memo template
+    # legitimately includes engine-computed values; check only the rationale.
+    invented = _fabricated(challenge.classification.rationale, card,
+                           challenge.breach)
     assert not invented, (
-        f"rationale contains figures not in inputs: {invented}\nrationale: {rationale!r}"
+        f"rationale contains figures not in inputs: {invented}\n"
+        f"rationale: {challenge.classification.rationale!r}"
+    )
+
+    # --- no-breach path ---
+    result = run_redline(_SyntheticDelta(after_ok_packet), card, StubClassifier())
+    assert result is None, (
+        "run_redline must return None when the gap stays inside the approved band"
     )
