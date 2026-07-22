@@ -557,3 +557,48 @@ def test_confirm_ignores_forged_receipt(tmp_path, monkeypatch):
         assert "deadbeef" * 8 not in text, (
             "confirm page must not render a forged hash from the URL"
         )
+
+
+# ---------------------------------------------------------------------------
+# Display strings must faithfully render the fields they label
+# ---------------------------------------------------------------------------
+
+def test_display_strings_match_their_sources(snapshot_raw):
+    """Every display string recomputes from its own source value.
+
+    The provenance test proves a rendered number came from the snapshot. It does
+    not prove the string faithfully renders the field it labels, and those are
+    different claims. Verified by mutation before this existed: setting
+    prior_gap_months to 99.9 while the page still showed 8.4 left the whole suite
+    green, as did setting runway.cash to 1.0 while the page still showed $50M.
+
+    apply_displays() is the single writer of every display block, so recomputing
+    it on a copy and comparing is the whole check. It uses the real formatters
+    rather than reimplementing them, so the test cannot drift alongside the code.
+    """
+    import copy
+    from console.make_snapshot import apply_displays
+
+    committed = json.loads(snapshot_raw)
+    recomputed = apply_displays(copy.deepcopy(committed))
+
+    for ticker, c in committed["contracts"].items():
+        assert c["runway"]["display"] == recomputed["contracts"][ticker]["runway"]["display"], (
+            f"{ticker} runway display strings do not match their source values"
+        )
+        assert c.get("gap_months_1f") == recomputed["contracts"][ticker].get("gap_months_1f"), (
+            f"{ticker} gap_months_1f does not match gap_months"
+        )
+
+    r_committed, r_recomputed = committed.get("redline"), recomputed.get("redline")
+    if r_committed:
+        assert r_committed["breach"].get("display") == r_recomputed["breach"].get("display"), (
+            "redline breach display strings do not match their source values"
+        )
+        assert r_committed.get("lapse_display") == r_recomputed.get("lapse_display"), (
+            "lapse_display does not match prior_gap_months / current_gap_months"
+        )
+
+    assert committed.get("cmd_bar") == recomputed.get("cmd_bar"), (
+        "command bar counts do not match the contracts they summarise"
+    )

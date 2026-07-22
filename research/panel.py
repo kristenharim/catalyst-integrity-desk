@@ -7,7 +7,7 @@ lapsed registered completion, or a history of carrying expired dates?
 
 Output:
   research/panel.csv  -- one row per PCD revision, tidy format
-  research/figures/revision_vs_runway.png  -- descriptive figure
+  research/figures/revision_timeline.png   -- descriptive figure
 
 This is a sample of twelve companies, not a sector study. No regression is
 run, no causal relationship is claimed, and nothing here should be described
@@ -240,107 +240,103 @@ def write_csv(rows: list[_Row], path: str = CSV_PATH) -> None:
 # ---------------------------------------------------------------------------
 
 def make_figure(rows: list[_Row], path: str | None = None) -> None:
-    """Scatter: runway at filing vs PCD move magnitude. Carried-expired marked.
+    """Per-trial timeline of registered completion revisions, carried-expired marked.
 
-    X axis: runway band (months_low) at the snapshot date -- context, not ranking.
-    Y axis: moved_days for genuine revisions (reversals excluded).
-    Each point is one PCD-moving revision.  Carried-expired revisions are marked
-    with a distinct colour and shape so they are visible at video resolution.
+    Runway is deliberately on neither axis. An earlier version plotted runway against
+    move magnitude, which is visually the causal chart for the one hypothesis this
+    project refuses to claim: that cash-constrained sponsors handle dates differently.
+    With 23 revisions across 7 companies, and two of the three carried-expired points
+    belonging to the same sponsor, that reading is unsupported by this sample, and a
+    chart that invites it while the caption disclaims it is having the argument both
+    ways. See docs/FINDINGS.md section 2.
 
-    Caption states the sample size explicitly.
+    What this shows instead is what the monitor actually observes: when each sponsor
+    revised a registered completion date, and which of those revisions carried a date
+    that had already passed.
     """
     if path is None:
         os.makedirs(FIGURES_DIR, exist_ok=True)
-        path = os.path.join(FIGURES_DIR, "revision_vs_runway.png")
+        path = os.path.join(FIGURES_DIR, "revision_timeline.png")
 
-    # Only genuine revisions after the first (first has no moved_days) and no reversals.
-    plot_rows = [
-        r for r in rows
-        if r.moved_days is not None and not r.is_reversal and r.runway_low_mo is not None
-    ]
-
+    plot_rows = [r for r in rows if r.submitted and not r.is_reversal]
     if not plot_rows:
         print("  no plottable rows; figure skipped")
         return
 
-    expired = [r for r in plot_rows if r.carried_expired]
-    ordinary = [r for r in plot_rows if not r.carried_expired]
+    def _d(value):
+        return date.fromisoformat(value)
 
-    fig, ax = plt.subplots(figsize=(10, 6), facecolor="#0d1117")
+    # One lane per trial, ordered so the trials carrying expired dates sit on top.
+    trials: dict[tuple, list[_Row]] = {}
+    for r in plot_rows:
+        trials.setdefault((r.ticker, r.nct), []).append(r)
+    order = sorted(
+        trials,
+        key=lambda k: (max((x.days_expired or 0) for x in trials[k]), len(trials[k])),
+    )
+
+    fig, ax = plt.subplots(figsize=(11, 0.52 * len(order) + 3.2), facecolor="#0d1117")
     ax.set_facecolor("#0d1117")
+    labelled = set()   # legend entries are attached on first use, not on a fixed lane
 
-    # Ordinary revisions -- muted teal
-    if ordinary:
-        ax.scatter(
-            [r.runway_low_mo for r in ordinary],
-            [r.moved_days for r in ordinary],
-            s=55, alpha=0.7, color="#4ade80", marker="o",
-            label="PCD revision (ordinary)",
-            zorder=3,
-        )
+    for lane, key in enumerate(order):
+        revs = sorted(trials[key], key=lambda x: x.submitted)
+        xs = [_d(x.submitted) for x in revs]
+        ax.plot(xs, [lane] * len(xs), color="#30363d", linewidth=1, zorder=1)
+        ordinary = [x for x in revs if not x.carried_expired]
+        expired = [x for x in revs if x.carried_expired]
+        if ordinary:
+            ax.scatter([_d(x.submitted) for x in ordinary], [lane] * len(ordinary),
+                       s=46, color="#4ade80", marker="o", zorder=3,
+                       label=None if "rev" in labelled else "revision")
+            labelled.add("rev")
+        for x in expired:
+            ax.scatter([_d(x.submitted)], [lane], s=132, color="#f85149", marker="s",
+                       zorder=4,
+                       label=None if "exp" in labelled else "carried an already-passed date")
+            labelled.add("exp")
+            ax.annotate(f"{x.days_expired}d expired", xy=(_d(x.submitted), lane),
+                        xytext=(9, 5), textcoords="offset points",
+                        fontsize=8, color="#f85149", fontweight="bold")
 
-    # Carried-expired revisions -- red, square marker, prominent
-    if expired:
-        ax.scatter(
-            [r.runway_low_mo for r in expired],
-            [r.moved_days for r in expired],
-            s=100, alpha=0.95, color="#f85149", marker="s",
-            label="PCD revision (carried expired date)",
-            zorder=4,
-        )
-        # Annotate each expired point with ticker + days_expired.
-        for r in expired:
-            ax.annotate(
-                f"{r.ticker}\n{r.days_expired}d expired",
-                xy=(r.runway_low_mo, r.moved_days),
-                xytext=(8, 6), textcoords="offset points",
-                fontsize=7, color="#f85149",
-            )
-
-    # Zero line
-    ax.axhline(0, color="#30363d", linewidth=0.8, zorder=1)
-
-    # Axis labels and styling
-    ax.set_xlabel("Runway (months, conservative estimate)", color="#c9d1d9", fontsize=11)
-    ax.set_ylabel("PCD move (days)", color="#c9d1d9", fontsize=11)
+    ax.set_yticks(range(len(order)))
+    ax.set_yticklabels([f"{t}  {n}" for t, n in order], color="#c9d1d9", fontsize=8.5)
+    ax.set_ylim(-0.6, len(order) - 0.4)
+    ax.set_xlabel("Date the revision was submitted to the registry",
+                  color="#c9d1d9", fontsize=11)
     ax.tick_params(colors="#8b949e")
     for spine in ax.spines.values():
         spine.set_edgecolor("#30363d")
+    ax.grid(axis="x", color="#21262d", linewidth=0.6, zorder=0)
+    # Right margin so the "Nd expired" annotations are not clipped at the edge.
+    x0, x1 = ax.get_xlim()
+    ax.set_xlim(x0, x1 + (x1 - x0) * 0.13)
 
-    n_companies = len({r.ticker for r in rows})
-    n_trials = len({r.nct for r in rows})
-    n_revisions = len(plot_rows)
-    n_expired_revisions = len(expired)
-    n_reversals = sum(1 for r in rows if r.is_reversal and r.moved_days is not None)
+    n_companies = len({r.ticker for r in plot_rows})
+    n_trials = len(order)
+    n_expired = sum(1 for r in plot_rows if r.carried_expired)
+    n_expired_sponsors = len({r.ticker for r in plot_rows if r.carried_expired})
 
-    # The count in the title is computed, never hardcoded. Twelve tickers are attempted
-    # and only some resolve to a live pivotal trial with a matching sponsor name, so a
-    # fixed "12 companies" overstates the sample by whatever failed to join that day.
     ax.set_title(
-        "PCD revision magnitude vs. sponsor runway\n"
-        f"{n_companies} companies that resolved, of {len(TICKERS)} attempted. Not the sector.",
+        "When sponsors revised a registered primary completion date\n"
+        f"{n_companies} companies that resolved, of {len(TICKERS)} attempted. "
+        "Not the sector.",
         color="#c9d1d9", fontsize=13, pad=12,
     )
+    legend = ax.legend(facecolor="#161b22", edgecolor="#30363d",
+                       labelcolor="#c9d1d9", fontsize=9, loc="lower left")
+    legend.set_zorder(6)
 
-    # Legend
-    legend = ax.legend(
-        facecolor="#161b22", edgecolor="#30363d",
-        labelcolor="#c9d1d9", fontsize=9,
-    )
-
-    # Caption below the axes
     caption = (
-        f"Sample: {n_companies} clinical-stage companies, {n_trials} pivotal trial(s), "
-        f"{n_revisions} PCD-moving revisions (excluding {n_reversals} data-entry reversals). "
-        f"Red squares: {n_expired_revisions} revision(s) where the sponsor carried a date that had already passed. "
-        f"Runway is from the most recent SEC 10-Q/10-K (as of 2026-Q1). "
-        f"Descriptive only. No causal claim."
+        f"Sample: {n_companies} clinical-stage companies, {n_trials} pivotal trials, "
+        f"{len(plot_rows)} registry revisions. "
+        f"{n_expired} revision(s) across {n_expired_sponsors} sponsor(s) carried a completion "
+        f"date that had already passed. "
+        "Runway is on neither axis on purpose: whether cash position relates to this "
+        "behaviour is an open question this sample cannot answer. Descriptive only."
     )
-    fig.text(
-        0.5, -0.03, caption,
-        ha="center", va="top", fontsize=7.5, color="#8b949e",
-        wrap=True, transform=fig.transFigure,
-    )
+    fig.text(0.5, -0.02, caption, ha="center", va="top", fontsize=7.5,
+             color="#8b949e", wrap=True, transform=fig.transFigure)
 
     fig.tight_layout()
     os.makedirs(os.path.dirname(path), exist_ok=True)

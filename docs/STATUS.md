@@ -309,10 +309,6 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## Still open
 
-- `python3 console/app.py` traceback, plus the display-drift test. Both are in
-  `docs/BOB_PROMPTS.md` under Prompt 3 hardening. Bob has 4.73 coins left and these
-  are not worth spending them on, so they go by hand and get logged as by hand.
-  `python3 -m console.app` works meanwhile, so neither is a blocker.
 - The breach-moment Bob task is the one row in `docs/BOB_LOG.md` with no transcript.
   Export it, or mark the row as unexported. A row that reads "pending" forever
   becomes a lie in a README written from this file.

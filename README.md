@@ -225,7 +225,8 @@ engine/gap.py             the catalyst contract join
 engine/ledger.py          hash-chained belief ledger
 orchestrator/             redline loop, challenge builder, Granite client
 console/                  Flask console, three views, snapshot generator
-tests/                    13 tests, no network, no credentials
+research/                 the monitoring-queue panel, CSV and figure
+tests/                    22 tests, no network, no credentials
 data/snapshot.json        the frozen demo artifact
 docs/BOB_LOG.md           what Bob built versus what preceded it
 docs/bob-sessions/        full Bob task exports, the evidence behind that log
