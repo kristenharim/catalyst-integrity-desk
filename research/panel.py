@@ -313,9 +313,12 @@ def make_figure(rows: list[_Row], path: str | None = None) -> None:
     n_expired_revisions = len(expired)
     n_reversals = sum(1 for r in rows if r.is_reversal and r.moved_days is not None)
 
+    # The count in the title is computed, never hardcoded. Twelve tickers are attempted
+    # and only some resolve to a live pivotal trial with a matching sponsor name, so a
+    # fixed "12 companies" overstates the sample by whatever failed to join that day.
     ax.set_title(
         "PCD revision magnitude vs. sponsor runway\n"
-        "12 companies, not the sector",
+        f"{n_companies} companies that resolved, of {len(TICKERS)} attempted. Not the sector.",
         color="#c9d1d9", fontsize=13, pad=12,
     )
 
