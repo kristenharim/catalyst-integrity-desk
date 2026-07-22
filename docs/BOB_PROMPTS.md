@@ -178,9 +178,80 @@ someone who types the file path instead, plus the check that would have caught i
 **Accept when:** `python3 console/app.py` serves, `python3 -m console.app` still serves,
 the new test fails without the fix, and `pytest tests/` is green.
 
+### Prompt 3, widening: a real ranked list and a real flagged row
+
+The console demonstrates two invariants it cannot currently show. The contract list has
+two rows, so "ranked" is not visible. And no row anywhere is flagged, so "unreliable rows
+are shown, never ranked, never silently dropped" is a claim with no example, even though
+it appears in `AGENTS.md`, the README, the definition of done, and `DEMO.md` tells the
+presenter to point at the flagged rows on camera.
+
+Candidates were checked before writing this, so do not go hunting. `SRPT` builds a real
+contract and comes back `reliable=False` with the note "cash-positive operating quarter(s)
+in TTM window ... likely a one-time inflow". `BEAM` builds clean with a gap near 20 months.
+`ARWR`, `ALNY`, `NTLA` and `DYN` have no live pivotal trial and `build()` returns None for
+them, which is correct behaviour, not a bug to work around.
+
+> **1.** Widen `TICKERS` in `console/make_snapshot.py` to
+> `["SANA", "PRME", "RCKT", "BEAM", "SRPT"]`. SANA still drops out with no live pivotal
+> trial and that is expected.
+>
+> **2.** Rebuild the snapshot. This one **does** call Granite, so source `.env` first and
+> expect the retry-with-backoff path to earn its keep:
+> `set -a; . ./.env; set +a; python3 console/make_snapshot.py`. The generator already
+> asserts the 677-day row survives; do not weaken that assertion to make a rebuild pass.
+>
+> **3.** The flagged section of `contracts.html` has never rendered a row, because until
+> now there were none. Check it actually displays SRPT with its flag reason from
+> `runway.notes`, with no rank number, below the separator. Fix it if it does not, and
+> add a test that asserts the flagged section contains SRPT and that SRPT carries no rank.
+>
+> **4.** Confirm the ranked rows are sorted by gap ascending and that the provenance test
+> still passes on the widened `/contracts` page. Every new figure needs its display
+> string, which `apply_displays` should handle on the rebuild.
+>
+> Do not touch `engine/`. Do not weaken any existing assertion.
+
+**Accept when:** `/contracts` shows three ranked rows and one flagged row with a readable
+reason, `pytest tests/` is green with `.env` sourced, and the 677 row is still on
+`/contract/RCKT`.
+
 ---
 
-## Prompt 4: the panel
+### Prompt 4, reduced: the panel the demo actually needs
+
+`docs/SPEC.md` Phase 4 specifies a 60 to 100 company panel assembled from SEC DERA
+quarterly ZIPs. That is three days of work and it is cut. But `docs/DEMO.md` allocates
+2:20 to 2:50 to the panel and its own cut list says to keep the panel no matter what, so
+the script and the artifact currently disagree.
+
+This is the reduced version: it fills the demo beat honestly, in one session, using data
+the engine already produces. Do this one first. The full DERA panel below stays available
+if budget and days allow.
+
+> Build `research/panel.py`. For the twelve tickers already in `engine/runway.py`'s demo
+> list, join each company's runway band to the full registry revision history of its live
+> trials, and emit a tidy CSV, one row per revision, with the sponsor's cash position and
+> whether that revision carried an already-expired date.
+>
+> Then produce one figure for the demo: the distribution of registered-date revisions
+> against runway, with the carried-expired revisions marked. Matplotlib, written to
+> `research/figures/`, no interactivity, legible at video resolution.
+>
+> Say the sample size out loud in the caption. Twelve companies is twelve companies, not
+> "the sector". Descriptive statistics only: no regression, no causal language, and no
+> claim that cash-constrained sponsors behave differently. That question is open and
+> `docs/FINDINGS.md` section 2 says exactly how it must be described.
+
+**Accept when:** the CSV exists with one row per revision, the figure renders legibly, the
+caption states the sample size, and nothing in the output implies a causal result.
+
+---
+
+## Prompt 4: the panel, full version
+
+Only after the reduced panel above is working. Large downloads, long runtime, and
+eight documented gotchas in the way.
 
 > Build `research/panel.py`. Download the SEC DERA Financial Statement Data Sets
 > quarterly ZIPs, filter `sub.txt` to SIC 2834, 2835, 2836 with US filers and 10-Q or

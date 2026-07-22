@@ -242,6 +242,24 @@ documented command. Same defect pattern as everything else here: the check did n
 touch the path it claimed to cover. `python3 -m console.app` works today and is what
 the README now says.
 
+## The live Granite test, verified 2026-07-21
+
+With `.env` sourced the suite is **14 passed, no skips**, including
+`test_no_fabrication_live`. That test is not hollow: pointed at an invalid
+`WATSONX_URL` it fails on the `source == "granite"` assertion, with the stub
+fallback visible in stderr. So a pass means the call actually reached Granite,
+which is the exact failure this project already hit once and fixed.
+
+Run it that way before filming:
+
+```bash
+set -a; . ./.env; set +a; python3 -m pytest tests/ -q
+```
+
+Without credentials it skips, and a judge running `pytest` cold sees 13 passed
+and 1 skipped. That is correct behaviour, not a defect, but the README should not
+lean on a check the reader watches skip.
+
 ## Attribution, resolved 2026-07-21
 
 Bob built the console. One Bob session did sub-task 1 and sub-tasks 2 to 6 in a

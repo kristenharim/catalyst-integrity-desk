@@ -128,6 +128,11 @@ properties.
 None of them announced themselves. So a check here is not trusted until it has been seen
 failing.
 
+- The fabrication guard is tested against live Granite, not a mock. That test is
+  itself checked by pointing it at an invalid endpoint: it then fails on the
+  `source == "granite"` assertion rather than passing on the stub, which is the
+  precise way an earlier version of it lied. With credentials the suite is 14
+  passed; without them that one test skips and you see 13 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.
