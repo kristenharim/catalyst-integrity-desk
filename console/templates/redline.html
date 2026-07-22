@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Pending Redline -- Catalyst Integrity Desk{% endblock %}
+{% block title %}Pending Redline &middot; Catalyst Integrity Desk{% endblock %}
 {% block content %}
 
 <h1>Pending Redline</h1>
@@ -8,9 +8,9 @@
 
 {# ------------------------------------------------------------------
    Three-column story: reads left to right as the breach moment.
-   Left column:  the registered expectation (what the thesis rested on).
-   Centre column: the amendment (what changed).
-   Right column:  thesis status after the amendment.
+   Left column:  the thesis as approved -- anchored to the lapsed trial.
+   Centre column: what changed -- not an amendment; the date passed.
+   Right column:  thesis status after the binding catalyst moved.
 
    CSS transitions on the gap colour flip illustrate the breach; no
    numbers are introduced by the animation.
@@ -18,14 +18,14 @@
 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;
             margin-bottom:28px; max-width:1100px;">
 
-  {# ---- Left: registered expectation ---- #}
+  {# ---- Left: thesis as approved against the lapsed trial ---- #}
   <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:20px;">
     <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
-                letter-spacing:0.07em; margin-bottom:10px;">Registered expectation</div>
+                letter-spacing:0.07em; margin-bottom:10px;">Thesis as approved</div>
     <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
       <div style="margin-bottom:8px;">
         <span style="color:#8b949e">Trial:</span>
-        <span style="font-weight:bold; color:#e6edf3;">{{ redline.proposed_card.scope }}</span>
+        <span style="font-weight:bold; color:#e6edf3;">{{ redline.prior_trial }}</span>
       </div>
       <div style="margin-bottom:8px;">
         <span style="color:#8b949e">Approved claim:</span>
@@ -37,7 +37,11 @@
       <div style="margin-bottom:8px;">
         <span style="color:#8b949e">Registered primary completion:</span>
         <code style="background:#0d1117; padding:2px 6px; border-radius:3px;
-                     color:#e6edf3;">{{ redline.original_pcd }}</code>
+                     color:#e6edf3;">{{ redline.prior_pcd }}</code>
+      </div>
+      <div style="margin-bottom:8px;">
+        <span style="color:#8b949e">Funding gap at approval:</span>
+        <span style="color:#10b981; font-weight:bold;">+{{ redline.lapse_display.prior_gap_1f }} months</span>
       </div>
       <div>
         <span style="color:#8b949e">Approved band:</span>
@@ -47,35 +51,41 @@
     </div>
   </div>
 
-  {# ---- Centre: the amendment ---- #}
+  {# ---- Centre: what changed (date passed, not an amendment) ---- #}
   <div style="background:#161b22; border:1px solid #d29922; border-radius:6px; padding:20px;">
     <div style="font-size:11px; color:#d29922; text-transform:uppercase;
-                letter-spacing:0.07em; margin-bottom:10px;">Amendment</div>
+                letter-spacing:0.07em; margin-bottom:10px;">What changed</div>
     <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
+      {% if redline.no_amendment_filed %}
+      <div style="background:#2d1f00; border:1px solid #d29922; border-radius:4px;
+                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#d29922;">
+        No amendment was filed. The registered completion date passed.
+      </div>
+      {% endif %}
       <div style="margin-bottom:12px;">
-        <span style="color:#8b949e">Registered primary completion</span>
+        <span style="color:#8b949e">Binding trial before</span>
         <div style="margin-top:6px; display:flex; align-items:center; gap:10px;">
-          {# Old date struck through in red #}
+          {# Old trial struck through in red #}
           <code style="background:#3d1414; padding:2px 8px; border-radius:3px;
                        color:#f87171; text-decoration:line-through;
-                       font-size:13px;">{{ redline.original_pcd }}</code>
-          <span style="color:#8b949e;">&#8594;</span>
-          {# New date arrives in bright red -- breach moment #}
-          <code style="background:#3d1414; padding:2px 8px; border-radius:3px;
-                       color:#f85149; font-size:13px; font-weight:bold;
-                       border:1px solid #f85149;">{{ redline.shifted_pcd }}</code>
+                       font-size:13px;">{{ redline.prior_trial }} ({{ redline.prior_pcd }})</code>
         </div>
       </div>
-      <div style="margin-bottom:8px;">
-        <span style="color:#8b949e">Shift:</span>
-        +{{ redline.shift_months }} months
+      <div style="margin-bottom:12px;">
+        <span style="color:#8b949e">Binding trial now</span>
+        <div style="margin-top:6px;">
+          {# New binding trial in bright red -- breach moment #}
+          <code style="background:#3d1414; padding:2px 8px; border-radius:3px;
+                       color:#f85149; font-size:13px; font-weight:bold;
+                       border:1px solid #f85149;">{{ redline.current_trial }} ({{ redline.current_pcd }})</code>
+        </div>
       </div>
       <div style="margin-bottom:8px;">
         <span style="color:#8b949e">Metric:</span>
         <span class="tag">{{ redline.breach.metric }}</span>
       </div>
       <div>
-        <span style="color:#8b949e">Observed:</span>
+        <span style="color:#8b949e">Observed gap:</span>
         <span style="color:#f85149; font-weight:bold;">
           {{ redline.breach.display.observed_1f }} months
         </span>
@@ -84,24 +94,24 @@
     </div>
   </div>
 
-  {# ---- Right: thesis status after amendment ---- #}
+  {# ---- Right: thesis status after the binding catalyst moved ---- #}
   <div style="background:#161b22; border:2px solid #f85149; border-radius:6px; padding:20px;
               transition: border-color 0.4s;">
     <div style="font-size:11px; color:#f85149; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">Thesis status</div>
     <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
       <div style="margin-bottom:12px;">
-        {# Funding gap: flipped from green to red by the amendment #}
+        {# Funding gap: flipped from green to red when the binding catalyst moved #}
         <div style="font-size:11px; color:#8b949e; margin-bottom:4px;">Funding gap</div>
         <div style="display:flex; align-items:center; gap:10px;">
-          {# Previous state would have been positive (within band) #}
+          {# Previous state: positive (within band) #}
           <span style="color:#6b7280; text-decoration:line-through; font-size:13px;">
-            +{{ redline.breach.display.expected_low_1f }}+ months
+            +{{ redline.lapse_display.prior_gap_1f }} months
           </span>
           <span style="color:#8b949e;">&#8594;</span>
-          {# Post-amendment: negative, red #}
+          {# Current: negative, red #}
           <span style="color:#f85149; font-weight:bold; font-size:18px;">
-            {{ redline.breach.display.observed_1f }} months
+            {{ redline.lapse_display.current_gap_1f }} months
           </span>
         </div>
       </div>
@@ -160,7 +170,7 @@
   {# Original claim with invalidated clause marked, and proposed replacement #}
   <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:20px;">
     <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
-                letter-spacing:0.07em; margin-bottom:10px;">Analyst claim -- redline</div>
+                letter-spacing:0.07em; margin-bottom:10px;">Analyst claim &middot; redline</div>
 
     <div style="font-size:11px; color:#8b949e; margin-bottom:6px;">Original:</div>
     <div style="background:#0d1117; border-left:3px solid #f85149; padding:10px 14px;

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}{{ ticker }} -- {{ c.runway.name }}{% endblock %}
+{% block title %}{{ ticker }} &middot; {{ c.runway.name }}{% endblock %}
 {% block content %}
 
-<h1>{{ ticker }} -- {{ c.runway.name }}</h1>
+<h1>{{ ticker }} &middot; {{ c.runway.name }}</h1>
 <p style="margin-bottom:20px">
   <a href="/contracts">&larr; Back to contract list</a>
 </p>
@@ -12,7 +12,7 @@
    SVG coordinates are precomputed in make_snapshot.py; no arithmetic here.
    ------------------------------------------------------------------ #}
 {% if c.history and c.history.revisions %}
-<h2>{{ c.history.nct }} -- Registered primary completion date revisions</h2>
+<h2>{{ c.history.nct }} &middot; Registered primary completion date revisions</h2>
 <div style="overflow-x:auto; background:#161b22; border:1px solid #30363d;
             border-radius:6px; padding:12px 0 8px;">
 <svg width="1220" height="180" style="display:block;">
@@ -29,7 +29,7 @@
       <text x="{{ r.svg_x }}" y="50" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10"
             font-weight="bold" fill="#f87171">
-        carried expired -- {{ r.days_expired }} days
+        carried expired &middot; {{ r.days_expired }} days
       </text>
       {# Connector from node to axis #}
       <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
@@ -75,7 +75,7 @@
 {% if c.lapsed_history %}
 {% for lh in c.lapsed_history %}
 {% if lh and lh.revisions %}
-<h2 style="color:#f87171;">{{ lh.nct }} -- LAPSED registered completion ({{ c.lapsed[loop.index0].pcd }}) -- date-integrity signal</h2>
+<h2 style="color:#f87171;">{{ lh.nct }} &middot; LAPSED registered completion ({{ c.lapsed[loop.index0].pcd }}) &middot; date-integrity signal</h2>
 <p style="font-size:12px; color:#f87171; margin-bottom:8px;">
   This trial's registered primary completion has already passed. It is not treated as
   a catalyst date. The revision history below is shown because a sponsor that carries
@@ -95,7 +95,7 @@
       <text x="{{ r.svg_x }}" y="50" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10"
             font-weight="bold" fill="#f87171">
-        carried expired -- {{ r.days_expired }} days
+        carried expired &middot; {{ r.days_expired }} days
       </text>
       <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
             stroke="#dc2626" stroke-width="1" stroke-dasharray="3,3"/>

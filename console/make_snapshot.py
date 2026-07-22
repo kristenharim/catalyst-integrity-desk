@@ -1,7 +1,7 @@
 """Build data/snapshot.json for the console.
 
 Captures the full engine output for the demo tickers (SANA, PRME, RCKT, BEAM, SRPT)
-plus one scripted amendment for RCKT so the Flask app never touches a live API during
+plus the real lapse event for RCKT so the Flask app never touches a live API during
 rendering.
 
 Run:
@@ -21,9 +21,8 @@ import json
 import os
 import sys
 import time
-from copy import deepcopy
 from dataclasses import asdict
-from datetime import date, timedelta
+from datetime import date
 
 # Repo root is one level up from this file.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -38,10 +37,6 @@ TICKERS = ["SANA", "PRME", "RCKT", "BEAM", "SRPT"]
 SNAPSHOT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "snapshot.json")
 SVG_WIDTH = 1100
 SVG_PAD = 60  # pixels each side; usable span = SVG_WIDTH - 2*SVG_PAD = 980
-
-# The scripted amendment shifts RCKT's catalyst_date forward by this many months
-# so gap_months goes negative and a breach fires.
-RCKT_SHIFT_MONTHS = 9
 
 
 # ---------------------------------------------------------------------------
@@ -91,6 +86,14 @@ def _redline_display(breach: dict) -> dict:
     }
 
 
+def _lapse_display(redline: dict) -> dict:
+    """Compute gap display strings for the lapse story fields."""
+    return {
+        "prior_gap_1f": _fmt_1f(redline.get("prior_gap_months")),
+        "current_gap_1f": _fmt_1f(redline.get("current_gap_months")),
+    }
+
+
 def _cmd_bar(contracts: dict) -> dict:
     """Precompute command-bar counts so the template never uses |length or comparisons.
 
@@ -129,6 +132,8 @@ def apply_displays(snapshot: dict) -> dict:
     redline = snapshot.get("redline")
     if redline and redline.get("breach"):
         redline["breach"]["display"] = _redline_display(redline["breach"])
+    if redline and redline.get("prior_gap_months") is not None:
+        redline["lapse_display"] = _lapse_display(redline)
 
     # Refresh command-bar counts from the (now display-enriched) contracts block.
     snapshot["cmd_bar"] = _cmd_bar(snapshot.get("contracts", {}))
@@ -246,7 +251,7 @@ def _serialise_contract(c: CatalystContract) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Scripted amendment for RCKT
+# Real lapse event for RCKT
 # ---------------------------------------------------------------------------
 
 _GRANITE_MAX_ATTEMPTS = 5
@@ -256,7 +261,7 @@ _GRANITE_BACKOFF_START = 30  # seconds; doubles each attempt
 def _classify_once(delta, card) -> "ChallengeCard | None":  # type: ignore[name-defined]
     """One attempt at Granite classification via run_redline.
 
-    Returns None if the engine detected no breach — that is a broken premise,
+    Returns None if the engine detected no breach -- that is a broken premise,
     not a case to work around.  Returns the ChallengeCard otherwise; caller
     checks source.  A fresh GraniteClassifier is constructed each time so any
     cached token state from a failed attempt does not carry over.
@@ -266,45 +271,55 @@ def _classify_once(delta, card) -> "ChallengeCard | None":  # type: ignore[name-
 
 
 def _build_rckt_redline(rckt: CatalystContract) -> dict:
-    """Construct a scripted +9-month shift on RCKT's catalyst_date and run the
-    redline loop with up to five attempts.  Exits non-zero if all fail."""
-    # Build the recomputed contract: same runway, same trial but with pcd shifted
-    # forward by RCKT_SHIFT_MONTHS months (approx 30.44 days/month).
-    original_pcd_str = rckt.trial["pcd"]
-    try:
-        original_date = date.fromisoformat(original_pcd_str)
-    except ValueError:
-        # Month-only format like "2026-05": pad to first of month.
-        original_date = date.fromisoformat(original_pcd_str + "-01")
+    """Build the redline from the real lapse event on RCKT.
 
-    shift_days = int(RCKT_SHIFT_MONTHS * 30.4375)
-    new_date = original_date + timedelta(days=shift_days)
-    new_pcd_str = new_date.isoformat()
+    The approved contract is built from the lapsed trial the engine already
+    carries (NCT04248439, registered primary completion 2026-05-05), which
+    gives gap_months ~+8.4.  The recomputed contract is the real current
+    contract (NCT06092034, 2028-04), which gives gap_months ~-14.5.
 
-    new_trial = deepcopy(rckt.trial)
-    new_trial["pcd"] = new_pcd_str
+    No amendment was filed.  The date simply arrived and passed.  That is the
+    event the BeliefCard is being updated to reflect.
+    """
+    if not rckt.lapsed:
+        print(
+            "ERROR: RCKT has no lapsed trial. Cannot build the lapse redline.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
-    recomputed = CatalystContract(
+    # Approved contract: same runway, bound to the lapsed trial that the
+    # original thesis rested on.
+    approved_trial = rckt.lapsed[0]
+    approved_history = rckt.lapsed_history[0] if rckt.lapsed_history else None
+    approved = CatalystContract(
         runway=rckt.runway,
-        trial=new_trial,
-        history=rckt.history,
+        trial=approved_trial,
+        history=approved_history,
     )
 
-    delta = ContractDelta(approved=rckt, recomputed=recomputed)
+    # Recomputed contract: the real current contract (already built by the caller).
+    recomputed = rckt
 
-    # BeliefCard: approved range requires gap_months >= 0 (funded to catalyst).
-    # expected_low=0 ensures the +9-month shift into negative territory triggers a breach.
-    original_gap = rckt.gap_months or 0.0
+    prior_gap = approved.gap_months
+    current_gap = recomputed.gap_months
+
+    delta = ContractDelta(approved=approved, recomputed=recomputed)
+
+    # BeliefCard: the thesis as it stood against the lapsed trial.
+    # The approved band is centred on the prior gap; expected_low=0 (funded to
+    # catalyst was the thesis).  The current gap is well below 0, so a breach fires.
     card = BeliefCard(
         card_id="rckt:funded_to_catalyst",
-        scope="company:RCKT",
+        scope=approved_trial["nct"],
         claim=(
-            "Rocket Pharmaceuticals reaches its registered primary completion date "
-            "before runway exhaustion, with a non-negative funding gap."
+            "Rocket Pharmaceuticals reaches the registered primary completion of "
+            f"{approved_trial['nct']} ({approved_trial['pcd']}) before runway exhaustion, "
+            "with a non-negative funding gap."
         ),
         metric="gap_months",
         expected_low=0.0,
-        expected_high=max(original_gap + 2.0, 2.0),
+        expected_high=max((prior_gap or 0.0) + 2.0, 2.0),
         driver="SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD",
         confidence=3,
         source="console.make_snapshot",
@@ -316,13 +331,13 @@ def _build_rckt_redline(rckt: CatalystContract) -> dict:
         print(f"  Granite attempt {attempt}/{_GRANITE_MAX_ATTEMPTS}...", flush=True)
         challenge_card = _classify_once(delta, card)
         if challenge_card is None:
-            # run_redline found no breach: the scripted amendment did not break the
-            # contract.  The demo premise is wrong — nothing to judge, nothing to ship.
+            # run_redline found no breach: the lapse did not break the contract.
+            # This should never happen because the gap flipped from +8.4 to -14.5.
             print(
-                f"ERROR: scripted +{RCKT_SHIFT_MONTHS}-month RCKT amendment did not produce "
-                f"a breach (recomputed gap_months={delta.recomputed.gap_months:.2f}, "
+                f"ERROR: RCKT lapse did not produce a breach "
+                f"(recomputed gap_months={delta.recomputed.gap_months:.2f}, "
                 f"approved band=[{card.expected_low:.1f}, {card.expected_high:.1f}]).\n"
-                f"The demo premise is broken. Check the amendment parameters.",
+                f"Check that rckt.lapsed[0] is the correct trial.",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -359,9 +374,15 @@ def _build_rckt_redline(rckt: CatalystContract) -> dict:
         "memo": challenge_card.memo,
         "redline": challenge_card.redline(),
         "proposed_card": asdict(challenge_card.proposed_card),
-        "original_pcd": original_pcd_str,
-        "shifted_pcd": new_pcd_str,
-        "shift_months": RCKT_SHIFT_MONTHS,
+        # Lapse story fields: serialised so the template never does arithmetic.
+        "prior_trial": approved_trial["nct"],
+        "prior_pcd": approved_trial["pcd"],
+        "prior_gap_months": prior_gap,
+        "current_trial": recomputed.trial["nct"],
+        "current_pcd": _iso(recomputed.catalyst_date),
+        "current_gap_months": current_gap,
+        # No amendment was filed. The date lapsing is the event.
+        "no_amendment_filed": True,
     }
 
 

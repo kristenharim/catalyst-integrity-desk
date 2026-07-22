@@ -675,31 +675,31 @@
     "breach": {
       "card_id": "rckt:funded_to_catalyst",
       "metric": "gap_months",
-      "observed": -23.49075975359343,
+      "observed": -14.521560574948666,
       "expected_low": 0.0,
-      "expected_high": 2.0,
+      "expected_high": 10.37782340862423,
       "direction": "under",
       "display": {
-        "observed_1f": "-23.5",
+        "observed_1f": "-14.5",
         "expected_low_1f": "0.0",
-        "expected_high_1f": "2.0"
+        "expected_high_1f": "10.4"
       }
     },
     "classification": {
       "label": "direct_contradiction",
       "confidence": 0.95,
-      "rationale": "The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a large negative gap, meaning cash will be exhausted before the trial finishes. This directly contradicts the core of the belief without any mitigating factors.",
+      "rationale": "The claim explicitly states that the funding gap must remain non-negative until the registered primary completion date. The engine reading shows a sharply negative gap months value, indicating cash exhaustion before the completion date, which directly contradicts the belief's core assertion.",
       "source": "granite"
     },
-    "memo": "CHALLENGE [direct_contradiction]  rckt:funded_to_catalyst (v1)  conf 0.95\n  Belief : Rocket Pharmaceuticals reaches its registered primary completion date before runway exhaustion, with a non-negative funding gap.\n  Driver : SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD (conviction 3/5)\n  Reading: gap_months = -23.5, expected [0.0, 2.0]\n  The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a large negative gap, meaning cash will be exhausted before the trial finishes. This directly contradicts the core of the belief without any mitigating factors.\n  [judgment drafted by IBM Granite]",
-    "redline": "expected_low: 0.0 -> -23.5",
+    "memo": "CHALLENGE [direct_contradiction]  rckt:funded_to_catalyst (v1)  conf 0.95\n  Belief : Rocket Pharmaceuticals reaches the registered primary completion of NCT04248439 (2026-05-05) before runway exhaustion, with a non-negative funding gap.\n  Driver : SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD (conviction 3/5)\n  Reading: gap_months = -14.5, expected [0.0, 10.4]\n  The claim explicitly states that the funding gap must remain non-negative until the registered primary completion date. The engine reading shows a sharply negative gap months value, indicating cash exhaustion before the completion date, which directly contradicts the belief's core assertion.\n  [judgment drafted by IBM Granite]",
+    "redline": "expected_low: 0.0 -> -14.5",
     "proposed_card": {
       "card_id": "rckt:funded_to_catalyst",
-      "scope": "company:RCKT",
-      "claim": "Rocket Pharmaceuticals reaches its registered primary completion date before runway exhaustion, with a non-negative funding gap.",
+      "scope": "NCT04248439",
+      "claim": "Rocket Pharmaceuticals reaches the registered primary completion of NCT04248439 (2026-05-05) before runway exhaustion, with a non-negative funding gap.",
       "metric": "gap_months",
-      "expected_low": -23.5,
-      "expected_high": 2.0,
+      "expected_low": -14.5,
+      "expected_high": 10.37782340862423,
       "driver": "SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD",
       "confidence": 3,
       "source": "console.make_snapshot",
@@ -707,9 +707,17 @@
       "status": "active",
       "version": 1
     },
-    "original_pcd": "2028-04",
-    "shifted_pcd": "2028-12-30",
-    "shift_months": 9
+    "prior_trial": "NCT04248439",
+    "prior_pcd": "2026-05-05",
+    "prior_gap_months": 8.37782340862423,
+    "current_trial": "NCT06092034",
+    "current_pcd": "2028-04-01",
+    "current_gap_months": -14.521560574948666,
+    "no_amendment_filed": true,
+    "lapse_display": {
+      "prior_gap_1f": "8.4",
+      "current_gap_1f": "-14.5"
+    }
   },
   "cmd_bar": {
     "monitored": 4,
