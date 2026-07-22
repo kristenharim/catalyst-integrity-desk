@@ -9,8 +9,8 @@ carrying a primary completion date of June 2022. **That date had already been ex
 Nobody was watching, because nobody's job is to watch.
 
 **And Rocket is not unusual.** In a random sample of industry-sponsored phase 2/3 trials,
-**80.6% carried an already-passed registered completion date at some point**, median
-stretch 246 days. Rocket's 677 days sits at the **84th percentile** of 221 such stretches:
+**80.0% carried an already-passed registered completion date at some point**, median
+stretch 240 days. Rocket's 677 days sits at the **85th percentile** of 188 such stretches:
 long, but not the tail.
 
 That is a correction to how this project used to open, and it makes the claim bigger
@@ -23,8 +23,8 @@ primary completion date to be updated "not later than 30 calendar days" after a 
 reaches actual primary completion. The observed median is eight times that window, so this
 is not an artifact of annual update batching.
 
-`docs/COHORT.md` has the frame, the n, the strata (NIH sponsors run 619 days, two and a
-half times industry, which is why every rate here stays labelled), and what the sample
+`docs/COHORT.md` has the frame, the n, the strata (NIH sponsors run 580 days, well over
+twice industry, which is why every rate here stays labelled), and what the sample
 cannot support.
 
 ## The claim, in one sentence
@@ -102,7 +102,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 137 passed, 1 skipped
+python3 -m pytest tests/ -q       # 140 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -112,7 +112,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 138 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 141 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -263,8 +263,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 138
-  passed; without them that one test skips and you see 137 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. With credentials the suite is 141
+  passed; without them that one test skips and you see 140 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.

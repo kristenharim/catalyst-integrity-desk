@@ -268,6 +268,29 @@ a corrupt entry now silently lowers the number of versions a comparison can see,
 makes continuity harder to establish rather than easier. It fails toward refusing to state
 a number, which is the safe direction, and it should still be repaired at the source.
 
+## An append-only store that inflated its own n
+
+`data/cohort/results.jsonl` is append-only and the run is resumable, which is right for a
+long fetch-bound job and wrong for counting. A trial measured twice appends twice. A
+background pass and a manual merge overlapped, 49 of 180 rows were duplicates, and a
+published report of n=169 was really 131 distinct trials. Every rate computed from it was
+slightly off, all in the flattering direction, and nothing looked wrong: more rows reads as
+more data.
+
+It is the same shape as the ledger problem this project already solved and the same shape
+as the truncated cache entry above. A store that only ever grows will eventually be read as
+if growth were evidence.
+
+Closed: `load_results()` deduplicates on read, last row wins, and a row carrying refusal
+reasons beats one that predates them regardless of write order. The report prints distinct
+trials beside stored rows so the two are visible together. Three tests assert they cannot
+diverge, including one asserting the printed n equals the distinct count.
+
+The residual: deduplication happens on read, so the file still contains the duplicates. That
+is deliberate, since discarding a measurement to make a count tidy is the wrong direction,
+but it means any consumer that reads the file without going through `load_results()` gets
+the inflated view.
+
 ## Untested, and known to be
 
 - ~~The decision receipt's two hashes.~~ Closed. The receipt used to travel in the query

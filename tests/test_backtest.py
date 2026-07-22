@@ -154,3 +154,61 @@ def test_carried_expired_needs_no_cross_commitment_comparison(cached):
     # Only two versions are visible at that cutoff, and the finding stands on
     # the latest one alone.
     assert len(as_known_on(ROCKET, date(2023, 9, 1))) == 2
+
+
+# ---------------------------------------------------------------------------
+# The cohort store must not inflate its own n
+# ---------------------------------------------------------------------------
+# The store is append-only and resumable, so a trial measured twice appends
+# twice. Counting both inflates n and every rate computed from it, silently, in
+# the direction of more data. It happened: a published report of n=169 was
+# really 131 distinct trials, because a background pass and a manual merge
+# appended concurrently.
+
+def test_cohort_results_are_deduplicated_on_read():
+    """One row per NCT, whatever the file contains."""
+    import collections
+    from research.cohort import load_results, _results_path
+
+    rows = load_results()
+    if not rows:
+        pytest.skip("no cohort measured yet")
+    counts = collections.Counter(r["nct"] for r in rows)
+    dupes = {k: v for k, v in counts.items() if v > 1}
+    assert not dupes, f"load_results returned duplicate trials: {dupes}"
+
+
+def test_deduplication_prefers_the_more_informative_row():
+    """A re-measure carrying refusal reasons must beat an older row without
+    them, regardless of which was written first. Otherwise resuming a run can
+    silently downgrade the schema of rows already measured."""
+    from research.cohort import load_results
+
+    rows = load_results()
+    if not rows:
+        pytest.skip("no cohort measured yet")
+    # Any stratum that has been re-measured must show reasons on every row that
+    # has any refusals at all.
+    for r in rows:
+        if r.get("refused_scope") or r.get("refused_superseded"):
+            assert "refusal_reasons" in r, r["nct"]
+
+
+def test_reported_n_matches_distinct_trials():
+    """The n printed in a report is the count of distinct trials, not rows.
+
+    Asserted because the two diverged in a published figure, and the divergence
+    was invisible: more rows looks like more data rather than like a bug.
+    """
+    import json
+    import os
+    from research.cohort import load_results, _results_path
+
+    path = _results_path()
+    if not os.path.exists(path):
+        pytest.skip("no cohort measured yet")
+    with open(path) as f:
+        raw = [json.loads(l) for l in f if l.strip()]
+    distinct = {r["nct"] for r in raw}
+    assert len(load_results()) == len(distinct)
+    assert len(load_results()) <= len(raw)

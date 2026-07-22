@@ -214,11 +214,32 @@ def _results_path() -> str:
 
 
 def load_results() -> list[dict]:
+    """Measured trials, one row per NCT.
+
+    Deduplicated on read, and this is not tidiness. The store is append-only and
+    resumable, so a trial measured twice -- by an interrupted run resuming, or by
+    two passes overlapping -- appends twice. Counting both inflates n and every
+    rate computed from it, silently, in the direction of more data. That happened:
+    a report of n=169 was really 131 distinct trials.
+
+    Last row wins, so a re-measure supersedes an earlier one without deleting it.
+    A row carrying refusal reasons beats one that predates them regardless of
+    order, because the later schema is strictly more informative.
+    """
     path = _results_path()
     if not os.path.exists(path):
         return []
     with open(path) as f:
-        return [json.loads(line) for line in f if line.strip()]
+        rows = [json.loads(line) for line in f if line.strip()]
+
+    best: dict[str, dict] = {}
+    for r in rows:
+        prev = best.get(r["nct"])
+        if prev is None:
+            best[r["nct"]] = r
+        elif "refusal_reasons" in r or "refusal_reasons" not in prev:
+            best[r["nct"]] = r
+    return list(best.values())
 
 
 def run(n_per_stratum: int) -> None:
@@ -271,7 +292,9 @@ def report() -> None:
         print("No results yet. Run --draw first.")
         return
 
-    print(f"COHORT: {len(rows)} trials measured, {len(errors)} failed to fetch.")
+    raw = sum(1 for _ in open(_results_path())) if os.path.exists(_results_path()) else 0
+    print(f"COHORT: {len(rows)} distinct trials measured, {len(errors)} failed to "
+          f"fetch, from {raw} stored rows (deduplicated on read).")
     print(f"Frame: interventional, phases {'/'.join(PHASES)}, first posted "
           f"{FRAME_START} to {FRAME_END}, with a registered primary completion.")
     print(f"Seed {SEED}. This is the denominator for every rate below.\n")

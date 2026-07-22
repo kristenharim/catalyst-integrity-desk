@@ -5,9 +5,18 @@ those fourteen were the trials of five companies picked by hand to illustrate th
 A sample selected on the outcome cannot produce a base rate. This is the first attempt at
 one.
 
-**Status: partial and resumable.** 169 trials measured of 240 drawn, NIH complete, INDUSTRY
-at 62 and awaiting a re-measure. The draw is seeded and stored, so the remainder continues
-rather than restarting.
+**Status: partial and resumable.** 129 distinct trials measured of 240 drawn. The draw is
+seeded and stored, so the remainder continues rather than restarting.
+
+**A correction to a figure published one revision ago.** That version reported n=169. It
+was 131 distinct trials; the store is append-only and resumable, a background pass and a
+manual merge appended concurrently, and 49 trials were counted twice. Every rate computed
+from the inflated n was slightly wrong. `load_results()` now deduplicates on read,
+preferring the row that carries refusal reasons, the report prints distinct trials beside
+stored rows, and three tests assert the two cannot diverge again.
+
+The inflation was invisible in exactly the way that matters: more rows reads as more data,
+never as a bug, and it moved the headline in the flattering direction.
 
 ## The frame, which is the denominator
 
@@ -21,19 +30,22 @@ enumeration is capped at 3,000 per stratum, so within a stratum the draw is unif
 the registry's own ordering rather than over the whole stratum, which is a real limitation
 and not a rounding one.
 
-## Results
+## Results, deduplicated
 
 | Stratum | n | Carried a dead date | Dead-date days p50 / p90 / max | Transitions | Contingent | Refused | of which scope | unreadable |
 |---|---:|---:|---|---:|---:|---:|---:|---:|
-| INDUSTRY | 62 | **80.6%** | **246** / 1018 / 2104 | 130 | 6.9% | 40.0% | not yet split | not yet split |
-| NIH | 95 | 82.1% | **619** / 1595 / 2716 | 295 | 6.1% | 35.9% | 25.4% | **0%** |
+| INDUSTRY | 60 | **80.0%** | **240** / 996 / 2104 | 126 | 7.1% | 39.7% | not yet split | not yet split |
+| NIH | 57 | 80.7% | **580** / 1589 / 2716 | 173 | 5.2% | 35.3% | 25.4% | **0%** |
 | OTHER_GOV | 6 | 50.0% | 504 / 606 / 686 | 5 | 0% | 0% | 0% | 0% |
 | OTHER | 6 | 50.0% | 323 / 535 / 555 | 6 | 0% | 50.0% | not yet split | not yet split |
 
+Previously published as 80.6% / 246 days for INDUSTRY and 82.1% / 619 for NIH. The
+substance is unchanged and the numbers were not.
+
 ## The strata differ, so every rate stays labelled
 
-NIH sponsors carry a dead date about as *often* as industry ones (82.1% against 80.6%) and
-roughly **two and a half times as long**: median 619 days against 246.
+NIH sponsors carry a dead date about as *often* as industry ones (80.7% against 80.0%) and
+roughly **two and a half times as long**: median 580 days against 240.
 
 That is why the 80.6% figure is written as an INDUSTRY number everywhere it appears, and
 why an all-strata average would be actively misleading. Two populations that differ this
@@ -47,7 +59,7 @@ mixed a finding about the sponsor (a count changed) with a gap in our own data (
 was unreadable). Recording the reason per transition settles it, at least for the stratum
 that has been re-measured:
 
-    NIH, 295 transitions:   scope changed 25.4%   superseded 10.5%   unreadable 0.0%
+    NIH, 173 transitions:   scope changed 25.4%   superseded 9.8%   unreadable 0.0%
 
 **Zero unreadable.** Every refusal is a real event in the record: either a count or
 enumeration genuinely changed, or the commitment was withdrawn or terminated. The bundle
@@ -55,8 +67,8 @@ was not corrupted; it was correct and unlabelled. Worth stating plainly, because
 that comes back clean is evidence too, and the honest outcome of looking for a hole is
 sometimes that there is not one.
 
-INDUSTRY still shows "measured before the split" and its 40.0% remains an upper bound until
-those 62 trials are re-measured. Same command, already running.
+INDUSTRY still shows "measured before the split" and its 39.7% remains an upper bound until
+those 60 trials are re-measured. Same command, already running.
 
 ## Two things this contradicts
 
@@ -102,8 +114,8 @@ field:
 > "Primary Completion Date must be updated not later than 30 calendar days after the
 > clinical trial reaches its actual primary completion date."
 
-Thirty days. The observed median stretch is 246, roughly eight times the window, and the
-p90 of 1,018 days is about thirty-four times it. Whatever explains the distribution, it is
+Thirty days. The observed industry median is 240 days, eight times the window, and the
+p90 of 996 days is about thirty-three times it. Whatever explains the distribution, it is
 not an annual update cycle, because the rule for this element is not annual.
 
 **What that does and does not license, precisely.** The rule concerns updating the date to
