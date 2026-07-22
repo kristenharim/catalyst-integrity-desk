@@ -1,4 +1,4 @@
-# The sponsors carrying expired commitments are the ones that stopped filing
+# Most trials carrying an expired commitment never filed again
 
 **Every cohort figure in this document is a field of snapshot `cohort-8326c1c1e964`, frozen
 2026-07-22, with point prevalence computed as of that same date: 240 drawn trials, 60 in each
@@ -23,8 +23,14 @@ stratum, not over the whole stratum. "Randomly drawn" throughout means that and 
 
 ## The finding: this study cannot separate reconciliation from filing frequency
 
-The trials carrying an expired commitment are overwhelmingly the ones whose sponsors stopped
-filing, and the measure that was going to be this study's headline cannot see them.
+Most trials carrying an expired commitment never filed a date correction after it lapsed: 4 of
+5 in industry, 15 of 19 in OTHER, 20 of 27 in OTHER_GOV. The measure that was going to be this
+study's headline is built from observed corrections and therefore cannot see them.
+
+**"Never filed again" is one measured thing**, and it is stated rather than left to inference:
+no completion-date correction filed between the date lapsing and 2026-07-22. Those dates have
+stood a long time. The median is 1,102 days in industry, 1,178 in OTHER and 2,288 in
+OTHER_GOV, which is three to six years, and the shortest anywhere is 203 days.
 
 A trial is **carrying an expired commitment** when its most recent registered primary
 completion date is in the past and still typed as an estimate. A past date typed ACTUAL is the
@@ -33,10 +39,10 @@ of 2026-07-22, against two denominators, beside how often each stratum files at 
 
 | Stratum | carrying an expired estimate | of trials whose commitment is still open | invisible to the stretch measure | median registry versions | median date revisions |
 |---|---:|---:|---:|---:|---:|
-| NIH | 0 of 60 (0.0%) | 0 of 18 (**0.0%**) | 0 | 106.5 | 4 |
-| INDUSTRY | 5 of 60 (8.3%) | 5 of 15 (33.3%) | **4 of 5** | 9 | 3 |
-| OTHER | 19 of 60 (31.7%) | 19 of 28 (67.9%) | 15 of 19 | 4 | 2 |
-| OTHER_GOV | 27 of 60 (45.0%) | 27 of 29 (**93.1%**) | 20 of 27 | 2 | 1 |
+| NIH | 0 of 60 (0.0%) | 0 of 18 (**0.0%**) | 0 | 106.5 | 3 |
+| INDUSTRY | 5 of 60 (8.3%) | 5 of 15 (33.3%) | **4 of 5** | 9 | 2 |
+| OTHER | 19 of 60 (31.7%) | 19 of 28 (67.9%) | 15 of 19 | 4 | 1 |
+| OTHER_GOV | 27 of 60 (45.0%) | 27 of 29 (**93.1%**) | 20 of 27 | 2 | 0 |
 
 Both denominators are reported because they answer different questions. Out of all 60 trials
 the rate is small and should be: most trials in this frame have finished and recorded an actual
@@ -58,8 +64,11 @@ strata. That is an association across four points, not a tested mechanism, and n
 separates filing frequency from any other property that varies alongside it.
 
 **A registry version is any record edit, not a completion-date edit**, and the 53x spread
-between NIH and OTHER_GOV is mostly edits to fields nobody here is discussing. On date
-revisions alone the medians are 4, 3, 2 and 1: the same ordering over a far smaller range. The
+between NIH and OTHER_GOV is mostly edits to fields nobody here is discussing. On date changes
+alone the medians are 3 for NIH, 2 for industry, 1 for OTHER and **0 for OTHER_GOV**: the same
+ordering over a far smaller range. The count excludes the initial registration, which the
+underlying `n_pcd_revisions` field includes; an earlier draft of this column reported 4/3/2/1
+from that field and so credited every trial with a revision it had never made. The
 last column above carries both so the spread is not read as fifty times more date maintenance.
 
 **The converse does not hold, and the study can say so.** Of the 32 OTHER_GOV trials that never
@@ -75,7 +84,8 @@ files nothing produces no stretch at all and scores as never having carried one.
 exactly what makes it invisible: 20 of OTHER_GOV's 27 currently-expired trials and 15 of
 OTHER's 19 are invisible that way, and 32 of 60 OTHER_GOV trials never revised a date at all.
 
-The two measures therefore rank the four strata in **exactly opposite order**:
+The two measures therefore reverse the ordering, with industry and NIH tied at the top of the
+first:
 
 | Stratum | ever carried, and filed again | carrying one now | median versions |
 |---|---:|---:|---:|
@@ -213,7 +223,7 @@ estimated here.
 **Sensitivity, per stretch.** A stretch is emitted per consecutive version pair, so one lapse
 spanning many filings contributes many overlapping rows measuring the same expiry to
 successively later endpoints, and a frequent filer contributes more of them. One NIH trial
-with 97 versions and three date revisions contributes 91 of that stratum's 493 stretches.
+with 97 versions and two date changes contributes 91 of that stratum's 493 stretches.
 
 | Stratum | stretches | median | p90 | max | ever carried |
 |---|---:|---:|---:|---:|---:|
@@ -238,8 +248,10 @@ Three independent differences, none of which rests on the duration ratio alone:
    estimate, against 20.4% of NIH and 37.5% of OTHER_GOV ones.
 2. **Point prevalence.** 45.0% of OTHER_GOV trials are carrying an expired estimate now
    against 0.0% of NIH trials.
-3. **Filing frequency**, which orders both and is not separable from either here, at a median
-   of 2 registry versions per trial against 106.5, or 1 date revision against 4.
+3. **Filing frequency**, which varies alongside both and is not separable from either here,
+   at a median of 2 registry versions per trial against 106.5, or 0 date changes against 3.
+   It does not order the reconciliation rate: OTHER files more than OTHER_GOV and has the
+   higher estimate-to-estimate rate, 38.5% against 37.5%.
 
 `stats()` raises rather than returning a pooled rate, so the figure cannot be computed by
 accident.
@@ -291,10 +303,19 @@ estimate-to-estimate subset does not rebut batching either: a sponsor on a yearl
 replace an expired estimate with a fresh one at the next pass, which is exactly what that
 subset counts. **A cadence hypothesis is not refuted by evidence that the cadence is slow.**
 
-So this section does not deliver a result. What would settle it is in the data and has not
-been run: if batching were operating, update intervals would cluster near multiples of a year.
-Until someone looks, the honest position is that annual housekeeping remains a live
-explanation for the durations here, and that it would not be a compliant one.
+**The concession splits, and only half of it stands.** Batching cannot explain the trials
+currently carrying an expired estimate: a yearly sweep does not leave a date standing a median
+of 1,102 days in industry or 2,288 in OTHER_GOV. For that population the explanation is
+excluded on duration alone. It remains formally unexcluded only for the closed-spell durations
+reported further down, where a slow cycle and a slow reconciliation look alike.
+
+The clustering test is now run rather than deferred. Intervals between consecutive
+date-changing industry filings, n=126, have a median of 289 days, and **17 of 126 (13.5%) fall
+within 45 days of a one-, two- or three-year multiple** — at or below what an even spread over
+the observed range would give. There is no annual bunching. Keying convention, because it
+changes the answer: each interval runs between the submit dates of two consecutive versions
+that changed the completion date, so a trial's first interval runs from its initial
+registration. The figures are snapshot fields, not a reviewer's spot check.
 
 **What the regulation does and does not license, precisely.** The rule concerns updating the
 date to *actual* once a trial reaches its actual primary completion. Much of what is observed
@@ -429,5 +450,5 @@ freeze. The store is `data/cohort/results.jsonl`, one row per trial; superseded 
 are kept in `results-archive.jsonl`. The frozen figures are in `data/cohort/snapshot.json`
 under the id `cohort-8326c1c1e964`, and a test recomputes every one of them from the store,
 field by field, against the snapshot's own pinned as-of date. Every cohort figure quoted in
-this document is one of those fields; the two classes that are not are named in the opening
+this document is one of those fields; the classes that are not are named in the opening
 section.

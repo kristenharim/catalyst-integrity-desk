@@ -205,6 +205,23 @@ def measure(nct: str, sponsor_class: str) -> dict:
     # The behaviour this project claims to measure is narrower: an expired
     # ESTIMATE replaced by another ESTIMATE. The sponsor let the date pass and
     # then pushed it, without the trial having completed.
+    # `n_pcd_revisions` is len(revs) and the FIRST entry is the initial
+    # registration, not a change: 67 trials in this cohort have
+    # n_pcd_revisions == 1 and have never revised anything. A field named
+    # "revisions" whose value includes the registration has already misled one
+    # published figure, so the count of actual changes gets its own name and the
+    # prose uses only this one.
+    row["n_date_changes"] = max(0, len(revs) - 1)
+
+    # Submission intervals between consecutive date-changing filings, for the
+    # batching test. Keying convention, stated because it changes the answer:
+    # each interval runs between the submit dates of two consecutive versions
+    # that CHANGED the completion date, so the first interval of a trial runs
+    # from its initial registration rather than from a previous change.
+    subs = [_parse_date(r.get("submitted")) for r in revs]
+    row["submit_intervals"] = [(b - a).days for a, b in zip(subs, subs[1:])
+                               if a and b]
+
     pairs = [(r.get("held_days"), (r.get("pcd_type") or "").upper())
              for r in revs if r.get("held_days") is not None]
     row["held_days"] = [h for h, _ in pairs]
@@ -428,14 +445,22 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
     # that lapsed and went quiet. An ACTUAL date in the past is the reconciled
     # case and must not count; an ESTIMATE in the past is an expired forecast.
     as_of = as_of or date.today()
-    carrying_now = silent = 0
-    for r in sub:
+
+    def _carr(r: dict) -> bool:
         p = _parse_date(r.get("last_pcd"))
-        if p is not None and p < as_of \
-                and (r.get("last_pcd_type") or "").upper() != "ACTUAL":
+        return bool(p is not None and p < as_of
+                    and (r.get("last_pcd_type") or "").upper() != "ACTUAL")
+
+    carrying_now = silent = 0
+    since, since_silent = [], []
+    for r in sub:
+        if _carr(r):
             carrying_now += 1
+            d = (as_of - _parse_date(r["last_pcd"])).days
+            since.append(d)
             if not r["dead_date_stretches"]:
                 silent += 1                      # invisible to the stretch measure
+                since_silent.append(d)
 
     # PRIMARY duration: one observation per trial, its longest carry. The stretch
     # unit emits a row per consecutive version pair, so one lapse spanning many
@@ -459,6 +484,17 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
     t_late_est = [r for r in revising
                   if r.get("revisions_after_lapse_to_estimate", 0)]
 
+    # The cross-tab the headline rests on, computed here rather than in prose.
+    never = [r for r in sub if not r.get("n_date_changes")]
+    date_changes = sorted(r.get("n_date_changes") or 0 for r in sub)
+
+    # Batching test. If sponsors swept the registry on a yearly cycle, intervals
+    # between date-changing filings would bunch near multiples of a year.
+    NEAR, YEARS = 45, (365, 730, 1095)
+    intervals = [d for r in sub for d in (r.get("submit_intervals") or [])]
+    near = sum(1 for d in intervals
+               if any(abs(d - y) <= NEAR for y in YEARS))
+
     # Trials still carrying an open commitment: the last registered date is an
     # estimate rather than an actual. The denominator a reader who only looks at
     # unreported trials actually wants, since a completed trial cannot be carrying
@@ -476,6 +512,26 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
         # Conditional on the commitment still being open, which is the denominator
         # a reader looking only at unreported trials wants.
         "open_estimates": len(open_est),
+        # How long the currently-expired dates have stood, which is what earns
+        # the word "stopped" in "stopped filing".
+        "carrying_days_since_expiry_p50": _pct(sorted(since), .5),
+        "carrying_days_since_expiry_min": min(since) if since else None,
+        # The subset the phrase "stopped filing" is about: carrying an expired
+        # estimate AND no date correction filed since it lapsed. How long those
+        # have stood is what earns the word "stopped".
+        "silent_carrier_days_p50": _pct(sorted(since_silent), .5),
+        "silent_carrier_days_min": min(since_silent) if since_silent else None,
+        "silent_carriers_under_a_year": sum(1 for d in since_silent if d < 365),
+        "carrying_never_revised": sum(1 for r in sub
+                                      if not r.get("n_date_changes") and _carr(r)),
+        "never_revised": len(never),
+        "never_revised_and_carrying": sum(1 for r in never if _carr(r)),
+        "never_revised_not_carrying": sum(1 for r in never if not _carr(r)),
+        "median_date_changes": _pct(date_changes, .5),
+        "submit_intervals_n": len(intervals),
+        "submit_intervals_p50": _pct(sorted(intervals), .5),
+        "submit_intervals_near_year_multiple": near,
+        "submit_intervals_near_year_rate": (near / len(intervals)) if intervals else None,
         "carrying_now_of_open_rate": (carrying_now / len(open_est)) if open_est else None,
         "trial_days_p50": _pct(per_trial, .5),
         "trial_days_p90": _pct(per_trial, .9),

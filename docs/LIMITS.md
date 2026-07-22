@@ -432,6 +432,37 @@ nobody stated: a defect in `carried_until_corrected()` is shared by the product 
 study, so the study cannot act as an independent check on the product. It did not catch
 this. An adversarial reader did.
 
+## The prose guard, and exactly what it proves
+
+Prose was the last unguarded surface here. Four rounds of adversarial review found the
+measured figures clean every time and the retyped ones wrong repeatedly: a median printed as
+106 where the field holds 106.5, fixed in one file and missed in five others; "at least"
+silently dropped from a count; a median-date-changes column off by one because the field it
+was typed from counts the initial registration; and a phrase reported as corrected in two
+consecutive rounds whose replacement never matched and did nothing.
+
+`tests/test_prose_figures.py` is the console's number-provenance test pointed at markdown.
+Every numeric token in a table row or a bolded claim in the five claim documents must be a
+representation of a snapshot field or appear in an enumerated `NON_SNAPSHOT` list with its
+source. That list is the enforced version of the write-up's "figures that are not snapshot
+fields" paragraph, which drifted out of date twice while it lived only in prose.
+
+**What it does not prove, verified by mutation rather than assumed.** It is a presence check,
+so it cannot catch a small-integer error: reverting the median-date-changes column from 0 back
+to 1 passed it, because "1" appears somewhere in the snapshot and in the regulation citation.
+That is the same limit this file already records for the console's provenance test, and it is
+exactly the defect class that shipped. The headline table's last two columns are therefore
+additionally bound cell-by-cell to the fields they claim to render, by name, and restoring the
+off-by-one fails that test. Every other table in the document is presence-checked only.
+
+Also guarded mechanically, because it failed once: a hedge present in four claim documents and
+absent from the fifth. One fix pass deleted the only qualifier in `docs/SUBMISSION.md`, the
+most externally facing of the five, while the other four kept theirs.
+
+The remaining exposure is a figure that is correct, present in the snapshot, and attached to
+the wrong row or label. Presence is not correspondence, and only two columns have
+correspondence.
+
 ## The reconciliation split conditions on a revision existing
 
 **Found 2026-07-22 by the second council round, confirmed, and disclosed rather than fixed.**

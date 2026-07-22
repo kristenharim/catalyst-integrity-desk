@@ -110,8 +110,8 @@ revision. The true figures are 8.3% and 45.0%. See `docs/LIMITS.md`.
 
 ## The finding the study now leads on: reconciliation tracks filing frequency
 
-The registry-level result is that the trials carrying expired commitments are overwhelmingly
-the ones whose sponsors stopped filing. NIH files a median of 106.5 versions per trial and carries zero expired
+The registry-level result is that most trials carrying an expired commitment never filed a
+date correction after it lapsed: 4 of 5 in industry, 20 of 27 for government sponsors. NIH files a median of 106.5 versions per trial and carries zero expired
 commitments; OTHER_GOV files a median of 2 and 27 of its 29 open commitments have expired,
 monotone across all four strata. The revision-level split below is the supporting mechanism
 among sponsors that are still filing, not the headline.
@@ -237,8 +237,8 @@ Before "nobody reconciles this" goes anywhere external, the dull hypothesis has 
 ruled out. If sponsors batch their registry updates annually, a median lapse of 240 days
 is an artifact of update cadence and not of anyone ignoring anything.
 
-It is not. **42 CFR 11.64(a)(1)(ii)** sets a field-specific deadline for exactly this
-field:
+It is not compliant, at least. **42 CFR 11.64(a)(1)(ii)** sets a field-specific deadline for
+exactly this field:
 
 > "Primary Completion Date must be updated not later than 30 calendar days after the
 > clinical trial reaches its actual primary completion date."
@@ -253,7 +253,13 @@ registered *estimated* date that passed and stayed standing. Those overlap but a
 same event: a trial that did not complete on its estimated date owes a revision, and a
 trial that did owes an update to actual, but this data does not say which happened. So:
 
-- The batching explanation is ruled out as a *complete* explanation of the distribution.
+- The batching explanation is **not** ruled out by the regulation, which is a statement about
+  the duty and not about anyone's cadence. It *is* ruled out for the trials currently carrying
+  an expired estimate, on duration alone: a yearly sweep does not leave a date standing a
+  median of 1,102 days in industry or 2,288 in OTHER_GOV. And the clustering test reported in
+  `docs/WRITEUP.md` finds no annual bunching, 17 of 126 industry intervals within 45 days of a
+  year multiple. See that document for the full split; an earlier version of this file said
+  the explanation was ruled out by the regulation alone, which does not follow.
 - No individual stretch is called a breach, because that would need to know whether the
   trial actually completed on the registered date, and it is not in this dataset.
 - The duty can be *named*, which is what `orchestrator/lexicon.py` requires before any
