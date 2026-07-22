@@ -248,25 +248,34 @@ can change what a trial measures in ways none of them capture. And the contingen
 honest but unresolved: it hands the reword question to a human and nothing here makes that
 judgement cheap.
 
-## A non-atomic cache write, found by interrupting one
+## A non-atomic cache write, found by interrupting one, and now fixed at the source
 
-`_cached()` in `engine/ctgov_history.py` writes a fetched version straight to its target
-path. Killing a run mid-write therefore leaves a truncated JSON file that parses as
-corrupt, and every later read of that trial fails on it. Found by timing out a cohort run:
-one file of 335, `NCT03919071-v356.json`, 20,107 bytes, and it took down five tests that
-had nothing to do with it.
+`_cached()` in `engine/ctgov_history.py` wrote a fetched version straight to its target
+path. Killing a run mid-write therefore left a truncated JSON file that parses as corrupt,
+and every later read of that trial failed on it, because `_cached()` returns early whenever
+the path exists and cannot tell a short file from a complete one. Found by timing out a
+cohort run: one file of 335, `NCT03919071-v356.json`, 20,107 bytes, and it took down five
+tests that had nothing to do with it.
 
-The fix in the right place is a write to a temporary file and an atomic rename, which is
-three lines. That module is one of the three verified against live APIs and is not to be
-rewritten, so it is recorded here rather than patched, and the readers this project owns
-were hardened instead: `engine/dimensions.py` and `research/backtest.py` skip an unreadable
-entry and classify that version as unestablished, which is the same answer they already
-give for a version nobody has fetched.
+It cost measurements as well as tests. Two NIH trials in the random cohort, `NCT04269902`
+and `NCT04071223`, stored a `JSONDecodeError` in place of a result and dropped that
+stratum's n by two. Both were re-measured successfully once the fix was in.
 
-That is the correct degradation but it is not the correct fix, and the difference matters:
-a corrupt entry now silently lowers the number of versions a comparison can see, so it
-makes continuity harder to establish rather than easier. It fails toward refusing to state
-a number, which is the safe direction, and it should still be repaired at the source.
+**Closed 2026-07-22**, at the source, under `docs/AMENDING_PROTECTED_MODULES.md` and with
+the owner's approval. The write goes to a temp file beside the target and is renamed, which
+is atomic on POSIX. All four conditions were checked, including a byte-for-byte diff of
+every module gate's output before and after, and the test
+(`tests/test_ctgov_cache.py::test_interrupted_cache_write_leaves_no_readable_entry`) was
+watched failing against the old code.
+
+The graceful degradation stays and is still doing work: `engine/dimensions.py` and
+`research/backtest.py` skip an unreadable entry and classify that version as unestablished,
+which is the same answer they give for a version nobody has fetched. A cache entry can be
+corrupted by something other than an interrupted write. But it is worth being clear about
+what it costs, because it is the reason this sat unfixed: a corrupt entry silently lowers
+the number of versions a comparison can see, so it makes continuity harder to establish
+rather than easier. It fails toward refusing to state a number, and a failure in the safe
+direction is one that can survive a long time without anyone minding.
 
 ## An append-only store that inflated its own n
 
@@ -286,10 +295,62 @@ reasons beats one that predates them regardless of write order. The report print
 trials beside stored rows so the two are visible together. Three tests assert they cannot
 diverge, including one asserting the printed n equals the distinct count.
 
-The residual: deduplication happens on read, so the file still contains the duplicates. That
-is deliberate, since discarding a measurement to make a count tidy is the wrong direction,
-but it means any consumer that reads the file without going through `load_results()` gets
-the inflated view.
+**The residual is now closed too, 2026-07-22.** Deduplicating on read fixed the readers this
+project owns and left the inflated view sitting in the file for anyone else. The store is
+compacted to one row per trial and the 123 superseded rows are appended to
+`data/cohort/results-archive.jsonl`, so nothing is destroyed: an earlier measurement of the
+same trial is evidence about the measurement process even when it is not evidence about the
+trial. Three tests hold it there. One asserts the raw file agrees with the deduplicated
+read. One asserts every archived trial is still measured in the live store, so compaction
+can never be the thing that loses a measurement. One scans the shipped modules and fails if
+anything outside `research/cohort.py` reads the store directly, which is what keeps a future
+consumer from reintroducing the inflated view after the next resumable run appends.
+
+Compaction moved no published figure, which was checked by reporting before and after rather
+than reasoned about.
+
+**And the compaction itself shipped with the project's own defect pattern, caught before
+release.** Its first version selected winners by calling `load_results()`, which re-reads the
+file, then compared object identity against rows it had not loaded. It matched nothing and
+archived all 363 rows. It failed loudly, printing "0 rows kept", and the store was restored
+from the archive it had just written. The root cause was two copies of the deduplication
+rule, one in `load_results()` and one implied by `compact()`. There is now one, `_dedupe()`,
+and both call it. A cohort study measured by a second implementation measures the second
+implementation, and the same is true of a cohort store compacted by one.
+
+## No pooled all-strata rate, and the report used to print one
+
+NIH sponsors carry a dead date about as often as industry ones and roughly two and a half
+times as long, so the strata are not poolable and every published rate is labelled by
+stratum. That was stated in `docs/COHORT.md` and violated in the code: `report()` iterated
+`STRATA + ("ALL",)` and printed a pooled section, on every run, for as long as the rule had
+existed.
+
+It is the same failure this file keeps recording. A rule that lives only in prose has
+already been broken somewhere nobody looked.
+
+Closed by removing the section and by making `stats()` raise on any stratum name outside the
+four, so a pooled figure cannot be produced at all rather than merely not being printed. Two
+tests: one asserts the report prints no pooled section, one asserts the frozen snapshot's
+strata are exactly the four measured ones.
+
+## Every published rate cites a snapshot id
+
+A rate with no version is a claim about whatever the store happened to contain the day
+somebody read it. `data/cohort/snapshot.json` freezes the measurement under a
+content-addressed id (currently `cohort-65fdf1f71b1d`, 240 trials, 60 per stratum), hashed
+over the measured rows and the frame together, because a rate means nothing without the
+denominator that produced it.
+
+What this establishes: a figure citing an id can be checked against the store that produced
+it, and a snapshot cannot be quietly re-cut under the same name, because changing one
+measured row changes the id. A test recomputes the id from the store and fails when the two
+disagree, so a citation cannot rot silently.
+
+What it does not establish: that the figure was copied into the prose correctly. The
+snapshot is checked field by field against a recomputation from the store, and the prose is
+not checked against the snapshot. That is the same gap the rendering-fidelity section above
+describes, in a different place.
 
 ## Untested, and known to be
 

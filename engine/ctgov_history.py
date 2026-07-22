@@ -76,8 +76,16 @@ def _cached(nct: str, version: int) -> dict:
             return json.load(f)
     time.sleep(SLEEP)
     d = _get(f"{BASE}/{nct}/history/{version}")
-    with open(path, "w") as f:
+    # 2026-07-21, amendment under docs/AMENDING_PROTECTED_MODULES.md. Writing
+    # straight to `path` left a truncated file when a run was interrupted mid-write,
+    # and the early return above then served it forever: two cohort trials stored a
+    # JSONDecodeError instead of a measurement. Write beside the target and rename,
+    # which is atomic on POSIX. The pid keeps two concurrent fetchers of the same
+    # version off each other's temp file.
+    tmp = f"{path}.{os.getpid()}.tmp"
+    with open(tmp, "w") as f:
         json.dump(d, f)
+    os.replace(tmp, path)
     return d
 
 

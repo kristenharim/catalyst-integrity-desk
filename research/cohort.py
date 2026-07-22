@@ -34,13 +34,14 @@ seed is stored with the results.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import random
 import sys
 import urllib.parse
 import urllib.request
-from datetime import date
+from datetime import date, datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -213,6 +214,14 @@ def _results_path() -> str:
     return os.path.join(OUT, "results.jsonl")
 
 
+def _archive_path() -> str:
+    return os.path.join(OUT, "results-archive.jsonl")
+
+
+def _snapshot_path() -> str:
+    return os.path.join(OUT, "snapshot.json")
+
+
 def load_results() -> list[dict]:
     """Measured trials, one row per NCT.
 
@@ -231,7 +240,17 @@ def load_results() -> list[dict]:
         return []
     with open(path) as f:
         rows = [json.loads(line) for line in f if line.strip()]
+    return list(_dedupe(rows).values())
 
+
+def _dedupe(rows: list[dict]) -> dict[str, dict]:
+    """The winning row per trial, from rows already in memory.
+
+    Separate from `load_results()` so that `compact()` selects winners by the same
+    rule rather than by a second implementation of it. The first version of
+    `compact()` re-read the file and compared object identity against rows it had
+    not loaded, matched nothing, and archived the entire store.
+    """
     best: dict[str, dict] = {}
     for r in rows:
         prev = best.get(r["nct"])
@@ -239,7 +258,199 @@ def load_results() -> list[dict]:
             best[r["nct"]] = r
         elif "refusal_reasons" in r or "refusal_reasons" not in prev:
             best[r["nct"]] = r
-    return list(best.values())
+    return best
+
+
+def compact() -> tuple[int, int]:
+    """Rewrite the store with one row per trial, archiving every row dropped.
+
+    `load_results()` already deduplicates on read, so this changes no published
+    figure. It closes the residual named in `docs/LIMITS.md`: the file itself still
+    held the duplicates, so any consumer reading it directly got the inflated view
+    that produced the n=169 error. Deduplicating on read fixes the readers this
+    project owns; it cannot fix a reader nobody has written yet.
+
+    Nothing is destroyed. Superseded rows move to `results-archive.jsonl`, because
+    discarding a measurement to make a count tidy is the wrong direction and an
+    earlier measurement of the same trial is evidence about the measurement process
+    even when it is not evidence about the trial.
+
+    Written through a temp file and renamed, for the same reason `_cached()` now is.
+    """
+    path = _results_path()
+    if not os.path.exists(path):
+        return (0, 0)
+    with open(path) as f:
+        raw = [json.loads(line) for line in f if line.strip()]
+
+    # Selected by the same rule `load_results()` uses, over the same objects, so
+    # identity is meaningful. A trial's winning row survives and every other row
+    # for that trial is archived, including one that happens to compare equal.
+    keep = _dedupe(raw)
+    winners = [r for r in raw if r is keep.get(r["nct"])]
+    archived = [r for r in raw if r is not keep.get(r["nct"])]
+
+    if archived:
+        with open(_archive_path(), "a") as f:
+            for r in archived:
+                f.write(json.dumps(r) + "\n")
+
+    tmp = f"{path}.{os.getpid()}.tmp"
+    with open(tmp, "w") as f:
+        for r in winners:
+            f.write(json.dumps(r) + "\n")
+    os.replace(tmp, path)
+    return (len(winners), len(archived))
+
+
+# ---------------------------------------------------------------------------
+# The frozen snapshot
+# ---------------------------------------------------------------------------
+#
+# Every published number has to cite a version of this store, or "80.0%" is a
+# claim about whatever the file happened to contain the day someone read it. The
+# id is content-addressed rather than a date or a counter, so a snapshot cannot be
+# quietly re-cut under the same name: change one measured row and the id changes,
+# and a test recomputes it from the store and fails when the two disagree.
+
+SNAPSHOT_VERSION = 1
+
+
+def _canonical(rows: list[dict]) -> bytes:
+    """The bytes the snapshot id hashes. Frame included, because a rate means
+    nothing without the denominator that produced it."""
+    payload = {
+        "snapshot_version": SNAPSHOT_VERSION,
+        "seed": SEED,
+        "frame_start": FRAME_START,
+        "frame_end": FRAME_END,
+        "phases": list(PHASES),
+        "strata": list(STRATA),
+        "rows": sorted(json.dumps(r, sort_keys=True) for r in rows),
+    }
+    return json.dumps(payload, sort_keys=True).encode()
+
+
+def snapshot_id(rows: list[dict] | None = None) -> str:
+    rows = load_results() if rows is None else rows
+    return "cohort-" + hashlib.sha256(_canonical(rows)).hexdigest()[:12]
+
+
+def stats(rows: list[dict], cls: str) -> dict:
+    """Every rate for one stratum, computed once and used by both the report and
+    the frozen snapshot, so the printed number and the published number cannot
+    drift apart.
+
+    There is deliberately no all-strata branch. NIH trials carry a dead date about
+    as often as industry ones and roughly two and a half times as long, so a pooled
+    figure would describe no population that exists. Asking for one is a mistake
+    the caller should hear about rather than a number this returns.
+    """
+    if cls not in STRATA:
+        raise ValueError(
+            f"{cls!r} is not a stratum. Strata are not poolable: they differ by "
+            f"about 2.4x on dead-date duration, so an all-strata rate describes "
+            f"no population. Ask for one of {STRATA}.")
+
+    sub = [r for r in rows if r["sponsor_class"] == cls]
+    n = len(sub)
+    if not n:
+        return {"n": 0}
+    with_dead = [r for r in sub if r["dead_date_stretches"] > 0]
+    durations = [d for r in sub for d in r["dead_date_days"]]
+    trans = sum(r.get("n_transitions", 0) for r in sub)
+    est = [r["established_days"] for r in sub if r.get("n_transitions")]
+    scope = sum(r.get("refused_scope", 0) for r in sub)
+    unread = sum(r.get("refused_unreadable", 0) for r in sub)
+    sup = sum(r.get("refused_superseded", 0) for r in sub)
+    ref = sum(r.get("refused_revisions", 0) for r in sub)
+    cont = sum(r.get("contingent_revisions", 0) for r in sub)
+
+    return {
+        "n": n,
+        "carried_dead_date": len(with_dead),
+        "carried_dead_date_rate": len(with_dead) / n,
+        "n_stretches": len(durations),
+        "dead_days_p50": _pct(durations, .5),
+        "dead_days_p90": _pct(durations, .9),
+        "dead_days_max": max(durations) if durations else None,
+        "transitions": trans,
+        "contingent": cont,
+        "contingent_rate": (cont / trans) if trans else None,
+        "refused": ref,
+        "refused_rate": (ref / trans) if trans else None,
+        "refused_scope": scope,
+        "refused_scope_rate": (scope / trans) if trans else None,
+        "refused_unreadable": unread,
+        "refused_unreadable_rate": (unread / trans) if trans else None,
+        "refused_superseded": sup,
+        "refused_superseded_rate": (sup / trans) if trans else None,
+        # Refusals measured before reasons were recorded. Must be zero before a
+        # snapshot is published: an unsplit refusal bundles a finding about the
+        # sponsor with a gap in our own data, and one number cannot carry both.
+        "refused_unsplit": ref - scope - unread - sup,
+        "established_p10": _pct(est, .1),
+        "established_p50": _pct(est, .5),
+        "established_p90": _pct(est, .9),
+    }
+
+
+def freeze() -> dict:
+    """Cut a snapshot every published number can cite.
+
+    Refuses to cut one over an incomplete measurement, because the failure this
+    guards against is not a wrong number: it is a correct number that silently
+    described fewer trials than the reader thinks.
+    """
+    all_rows = load_results()
+    rows = [r for r in all_rows if "error" not in r]
+    errors = [r for r in all_rows if "error" in r]
+    if errors:
+        raise ValueError(
+            f"{len(errors)} trials failed to measure "
+            f"({', '.join(r['nct'] for r in errors[:5])}). Fix or re-measure them "
+            f"before freezing; a snapshot that quietly drops trials is the n-inflation "
+            f"bug wearing the other sign.")
+
+    by_stratum = {cls: stats(rows, cls) for cls in STRATA}
+    unsplit = {c: s["refused_unsplit"] for c, s in by_stratum.items()
+               if s.get("refused_unsplit")}
+    if unsplit:
+        raise ValueError(
+            f"refusals measured before the reason split: {unsplit}. Re-measure "
+            f"those strata; an unsplit refusal rate is an upper bound, not a figure.")
+
+    snap = {
+        "snapshot_id": snapshot_id(all_rows),
+        "snapshot_version": SNAPSHOT_VERSION,
+        "frozen_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "seed": SEED,
+        "frame": {
+            "study_type": "INTERVENTIONAL",
+            "phases": list(PHASES),
+            "first_posted_from": FRAME_START,
+            "first_posted_to": FRAME_END,
+            "requires_registered_primary_completion": True,
+            "enumeration_cap_per_stratum": 3000,
+        },
+        "n_distinct_trials": len(rows),
+        "n_failed_to_measure": len(errors),
+        "n_rows_stored": (sum(1 for _ in open(_results_path()))
+                          if os.path.exists(_results_path()) else 0),
+        "strata": by_stratum,
+    }
+    tmp = f"{_snapshot_path()}.{os.getpid()}.tmp"
+    with open(tmp, "w") as f:
+        json.dump(snap, f, indent=2, sort_keys=True)
+    os.replace(tmp, _snapshot_path())
+    return snap
+
+
+def load_snapshot() -> dict | None:
+    if not os.path.exists(_snapshot_path()):
+        return None
+    with open(_snapshot_path()) as f:
+        return json.load(f)
 
 
 def run(n_per_stratum: int) -> None:
@@ -297,47 +508,54 @@ def report() -> None:
           f"fetch, from {raw} stored rows (deduplicated on read).")
     print(f"Frame: interventional, phases {'/'.join(PHASES)}, first posted "
           f"{FRAME_START} to {FRAME_END}, with a registered primary completion.")
-    print(f"Seed {SEED}. This is the denominator for every rate below.\n")
+    print(f"Seed {SEED}. This is the denominator for every rate below.")
 
-    for cls in STRATA + ("ALL",):
-        sub = rows if cls == "ALL" else [r for r in rows if r["sponsor_class"] == cls]
-        if not sub:
+    snap = load_snapshot()
+    if snap and snap["snapshot_id"] == snapshot_id():
+        print(f"Snapshot {snap['snapshot_id']}, frozen {snap['frozen_at']}. "
+              f"Cite it with every number.")
+    elif snap:
+        print(f"Snapshot {snap['snapshot_id']} is STALE: the store has changed "
+              f"since it was frozen. Re-freeze before publishing anything.")
+    else:
+        print("No frozen snapshot. Run --freeze before publishing any number.")
+    print()
+
+    # No ALL section, and its absence is the finding. NIH sponsors carry a dead
+    # date about as often as industry ones and roughly two and a half times as
+    # long, so a pooled rate would describe no population that exists.
+    for cls in STRATA:
+        s = stats(rows, cls)
+        if not s["n"]:
             continue
-        n = len(sub)
-        with_dead = [r for r in sub if r["dead_date_stretches"] > 0]
-        durations = [d for r in sub for d in r["dead_date_days"]]
-        trans = sum(r.get("n_transitions", 0) for r in sub)
-        cont = sum(r.get("contingent_revisions", 0) for r in sub)
-        ref = sum(r.get("refused_revisions", 0) for r in sub)
-        est = [r["established_days"] for r in sub if r.get("n_transitions")]
-
-        print(f"--- {cls}  (n={n}) ---")
-        print(f"  carried a dead date at some point   {len(with_dead):>4} "
-              f"({len(with_dead)/n:.1%})")
-        if durations:
+        print(f"--- {cls}  (n={s['n']}) ---")
+        print(f"  carried a dead date at some point   {s['carried_dead_date']:>4} "
+              f"({s['carried_dead_date_rate']:.1%})")
+        if s["n_stretches"]:
             print(f"  dead-date duration, days            "
-                  f"p50 {_pct(durations,.5):.0f}   p90 {_pct(durations,.9):.0f}   "
-                  f"max {max(durations)}")
-        print(f"  transitions                         {trans:>4}")
-        if trans:
-            print(f"  contingent on prose alone           {cont:>4} ({cont/trans:.1%})")
-            print(f"  refused outright                    {ref:>4} ({ref/trans:.1%})")
+                  f"p50 {s['dead_days_p50']:.0f}   p90 {s['dead_days_p90']:.0f}   "
+                  f"max {s['dead_days_max']}")
+        print(f"  transitions                         {s['transitions']:>4}")
+        if s["transitions"]:
+            print(f"  contingent on prose alone           {s['contingent']:>4} "
+                  f"({s['contingent_rate']:.1%})")
+            print(f"  refused outright                    {s['refused']:>4} "
+                  f"({s['refused_rate']:.1%})")
             # Split, because a finding about the sponsor and a gap in our data
             # are different things and one number cannot carry both.
-            scope = sum(r.get("refused_scope", 0) for r in sub)
-            unread = sum(r.get("refused_unreadable", 0) for r in sub)
-            sup = sum(r.get("refused_superseded", 0) for r in sub)
-            unsplit = ref - scope - unread - sup
-            print(f"    of which scope changed            {scope:>4} ({scope/trans:.1%})")
-            print(f"    of which unreadable here          {unread:>4} ({unread/trans:.1%})")
-            print(f"    of which superseded               {sup:>4} ({sup/trans:.1%})")
-            if unsplit:
-                print(f"    measured before the split         {unsplit:>4}"
+            print(f"    of which scope changed            {s['refused_scope']:>4} "
+                  f"({s['refused_scope_rate']:.1%})")
+            print(f"    of which unreadable here          {s['refused_unreadable']:>4} "
+                  f"({s['refused_unreadable_rate']:.1%})")
+            print(f"    of which superseded               {s['refused_superseded']:>4} "
+                  f"({s['refused_superseded_rate']:.1%})")
+            if s["refused_unsplit"]:
+                print(f"    measured before the split         {s['refused_unsplit']:>4}"
                       f"  <- re-measure these to close the bundle")
-        if est:
+        if s["established_p50"] is not None:
             print(f"  established movement, days          "
-                  f"p10 {_pct(est,.1):.0f}   p50 {_pct(est,.5):.0f}   "
-                  f"p90 {_pct(est,.9):.0f}")
+                  f"p10 {s['established_p10']:.0f}   p50 {s['established_p50']:.0f}   "
+                  f"p90 {s['established_p90']:.0f}")
         print()
 
 
@@ -346,10 +564,26 @@ def main() -> None:
     ap.add_argument("--draw", type=int, metavar="N",
                     help="draw N trials per stratum and measure them")
     ap.add_argument("--report", action="store_true")
+    ap.add_argument("--compact", action="store_true",
+                    help="rewrite the store one row per trial, archiving the rest")
+    ap.add_argument("--freeze", action="store_true",
+                    help="cut a snapshot id every published number must cite")
     args = ap.parse_args()
     if args.draw:
         run(args.draw)
         report()
+    elif args.compact:
+        kept, archived = compact()
+        print(f"Compacted: {kept} rows kept, {archived} archived to "
+              f"{os.path.relpath(_archive_path())}. Nothing deleted.")
+        report()
+    elif args.freeze:
+        snap = freeze()
+        counts = ", ".join("%s %d" % (c, snap["strata"][c]["n"]) for c in STRATA)
+        print(f"Frozen {snap['snapshot_id']} at {snap['frozen_at']}: "
+              f"{snap['n_distinct_trials']} trials ({counts}).")
+        print(f"Written to {os.path.relpath(_snapshot_path())}. Cite this id "
+              f"beside every published figure.")
     elif args.report:
         report()
     else:

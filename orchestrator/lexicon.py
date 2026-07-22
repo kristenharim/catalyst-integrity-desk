@@ -44,10 +44,27 @@ class Rule:
     kind: str
     pattern: str
     why: str
+    # A line matching `unless` is not checked against this rule. Distinct from
+    # EXEMPT_MARKER, which excuses a quotation: this excuses a claim that has been
+    # brought inside what the evidence supports, by labelling it. Only the
+    # quantification rules use it, and the label they require is a real constraint
+    # rather than a password, because it forces the assumption onto the page beside
+    # the figure.
+    unless: str | None = None
 
     @property
     def rx(self) -> re.Pattern:
         return re.compile(self.pattern, re.IGNORECASE)
+
+    @property
+    def unless_rx(self) -> re.Pattern | None:
+        return re.compile(self.unless, re.IGNORECASE) if self.unless else None
+
+
+# A Fermi estimate may be published only as a contingent figure whose assumption
+# is stated on the same line. Both words are required: "contingent" alone is a
+# label anyone can type, and the assumption is the part a reader can argue with.
+LABELLED_CONTINGENT = r"(?=.*\bcontingent\b)(?=.*\bassum)"
 
 
 RULES: list[Rule] = [
@@ -108,6 +125,55 @@ RULES: list[Rule] = [
     Rule("immutable", r"\b(?:immutable|append-only)\b",
          "the ledger is tamper evident given the anchor was not also rewritten"),
 
+    # --- absorption ---------------------------------------------------------
+    # Added before any AI-domain content could render, not after. Every rule here
+    # is a claim about a vendor's roadmap or about what a capability will be worth
+    # later. This project measures whether dated public commitments were kept. It
+    # has no instrument that reads the future of somebody else's product, and the
+    # absorption argument is the single most tempting thing to assert without one.
+    Rule("absorption",
+         r"\b(?:will|going to|about to|bound to|destined to)\s+(?:be\s+|get\s+)?"
+         r"(?:absorbed|subsumed|swallowed|commoditi[sz]ed|obsoleted|eaten|"
+         r"replaced by (?:the )?model)\b",
+         "whether a capability is absorbed is a prediction about a vendor's "
+         "roadmap; nothing here measures it"),
+    Rule("absorption",
+         r"\b(?:absorbed|subsumed|commoditi[sz]ed|folded)\s+(?:in)?to\s+"
+         r"(?:the\s+)?(?:model|models|foundation model|base model|platform|"
+         r"labs?|frontier)\b",
+         "a prediction about where a capability ends up, stated as observed"),
+    Rule("absorption", r"\bbecomes?\s+(?:just\s+)?a\s+feature\b",
+         "a claim about future product boundaries, not a record comparison"),
+    Rule("absorption",
+         r"\bfeature,?\s+not\s+a\s+(?:product|company|business|startup)\b",
+         "a claim about future product boundaries, not a record comparison"),
+    Rule("absorption", r"\btable\s+stakes\b",
+         "asserts what the market will require later; unmeasured here"),
+    Rule("absorption",
+         r"\b(?:claude|chatgpt|gpt-?\d*|gemini|llama|openai|anthropic|deepmind)\b"
+         r"[^.]{0,30}?\bwill\b",
+         "a claim about another vendor's roadmap; the system observes records, "
+         "not plans"),
+
+    # --- unlabelled magnitudes ----------------------------------------------
+    # A Fermi estimate is a legitimate thing to publish and an illegitimate thing
+    # to publish bare. The quantification memo may state "$XB misallocated" only
+    # as a contingent figure with its assumption on the same line, so a reader
+    # sees what the number rests on at the moment they see the number.
+    Rule("quantification",
+         r"\$\s?\d[\d,.]*\s*(?:bn?|mm?|k|billion|million|trillion)?\b"
+         r"[^.]{0,40}?\b(?:wasted|burned|burnt|misallocated|squandered|"
+         r"thrown away|down the drain)\b",
+         "a waste figure is an estimate; label it contingent and state the "
+         "assumption it rests on, on the same line",
+         LABELLED_CONTINGENT),
+    Rule("quantification",
+         r"\b(?:wast(?:e|es|ed|ing)|misallocat\w+|squander\w+|burn(?:s|ed|t|ing)?"
+         r"\s+through)\b[^.]{0,25}?\$\s?\d",
+         "a waste figure is an estimate; label it contingent and state the "
+         "assumption it rests on, on the same line",
+         LABELLED_CONTINGENT),
+
     # --- vocabulary the project fixed already ------------------------------
     Rule("vocabulary", r"\breadout date\b",
          "say 'registered primary-completion expectation'; they differ by two "
@@ -135,6 +201,9 @@ def scan(text: str) -> list[Violation]:
         if EXEMPT_MARKER in line:
             continue
         for rule in RULES:
+            ux = rule.unless_rx
+            if ux is not None and ux.search(line):
+                continue
             for m in rule.rx.finditer(line):
                 out.append(Violation(rule.kind, m.group(0), rule.why, i, line.strip()))
     return out
@@ -155,6 +224,45 @@ def demo() -> None:
     assert scan("An immutable ledger.")[0].kind == "immutable"
     assert scan("The readout date moved.")[0].kind == "vocabulary"
     assert scan("This is an early warning of trouble.")[0].kind == "causation"
+
+    # The AI-domain rules, each planted and watched being caught. Written before
+    # any such content exists, because a guard added after the prose is a guard
+    # shaped around the prose it was supposed to judge.
+    for planted in [
+        "This whole category will be absorbed by the model layer.",
+        "Screens like this get subsumed into the platform within a year.",
+        "Registry monitoring becomes a feature of the base model.",
+        "Honestly it is a feature, not a product.",
+        "Provenance checking is table stakes by 2027.",
+        "Claude will ship this natively in a release or two.",
+        "GPT-5 will do this without a vendor.",
+    ]:
+        v = scan(planted)
+        # `any`, not `[0]`: "Claude will ship this" trips the older feasibility
+        # rule too, and which rule names it first does not matter. What matters
+        # is that no planted line gets through.
+        assert any(x.kind == "absorption" for x in v), (planted,
+                                                        [str(x) for x in v])
+
+    for planted in [
+        "Roughly $3B is wasted on diligence that reads a stale date.",
+        "Investors misallocated $12.4M against dates that had already passed.",
+        "That is $900 million burned on a catalyst nobody re-read.",
+    ]:
+        v = scan(planted)
+        assert any(x.kind == "quantification" for x in v), (planted,
+                                                            [str(x) for x in v])
+
+    # The same magnitudes are publishable once the label and the assumption are
+    # on the line with them. This is the whole point of the rule: it does not ban
+    # the estimate, it bans the estimate arriving unaccompanied.
+    for ok in [
+        "Contingent: about $3B wasted annually, assuming 4,000 diligence hours "
+        "at the rates in the memo.",
+        "Contingent on the assumption of one stale date per deal, $12M "
+        "misallocated.",
+    ]:
+        assert clean(ok), (ok, [str(v) for v in scan(ok)])
 
     # The honest phrasings must pass, or the guard would forbid the product.
     for ok in [

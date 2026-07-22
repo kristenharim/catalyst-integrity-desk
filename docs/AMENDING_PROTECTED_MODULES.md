@@ -48,10 +48,36 @@ All four must hold. Any one missing and it is not an amendment, it is a rewrite.
 - Tidying. If the diff would still be worth making with the bug already fixed, it is not
   an amendment.
 
-## The open case
+## The first invocation, 2026-07-22
 
-The `_cached()` non-atomic write meets all four conditions and has not been applied. It is
-recorded in `docs/LIMITS.md`, the readers this project owns were hardened to skip an
-unreadable entry, and the source-level fix is available for a human to approve under this
-procedure. Degrading gracefully around a known corruption path is the correct temporary
-answer and the wrong permanent one.
+The `_cached()` non-atomic write was the case this procedure was written for, and it has
+now been applied under it, with the owner's approval. Recorded here because a procedure
+nobody has run is a document, not a control.
+
+How each condition was met, and how it was checked rather than asserted:
+
+| Condition | Evidence |
+|---|---|
+| 1. A defect, demonstrated | Two cohort trials, `NCT04269902` and `NCT04071223`, stored a `JSONDecodeError` in place of a measurement, on top of the earlier `NCT03919071-v356.json` case. A test reproduces it by interrupting a write. |
+| 2. No interface change | Same signature, same return, same cache path. |
+| 3. No behaviour change on correct input | All four module gates captured before and after the edit and diffed. Byte identical. |
+| 4. Gates pass, plus every test touching the module | Four gates green, full suite green, two new tests in `tests/test_ctgov_cache.py`. |
+
+The test named in the commit is
+`tests/test_ctgov_cache.py::test_interrupted_cache_write_leaves_no_readable_entry`. It was
+watched failing against the pre-amendment module, where the truncated file survives at the
+target path, which is the whole defect.
+
+Two things learned that are worth keeping for the next amendment.
+
+The before-and-after gate diff is the condition that does the work. It is the only one that
+cannot be satisfied by reading the diff and feeling confident, and it is cheap: capture the
+output, edit, capture again, diff.
+
+And the defect had already been degraded around. `engine/dimensions.py` and
+`research/backtest.py` were hardened to skip an unreadable entry, which was the correct
+temporary answer, and the temporary answer is what made the permanent one easy to defer.
+The graceful degradation stays: it is still right for a cache entry corrupted some other
+way. But it silently lowered the number of versions a comparison could see, which fails
+toward refusing to state a number rather than toward stating a wrong one, and that is
+exactly the kind of safe failure that survives a long time without being fixed.

@@ -5,13 +5,18 @@ investigation. The cohort answers "what is normal". This answers "where does
 this one sit", which is the only form in which a single company's record means
 anything.
 
-The framing rule, and it is the whole reason this file is careful: 80.6% of
-industry-sponsored trials in the sample carried an already-passed registered
+The framing rule, and it is the whole reason this file is careful: 80.0% of the
+industry-sponsored trials in the cohort carried an already-passed registered
 completion date at some point, so *doing it* separates nobody. What varies is
-*how long*, and the distribution has a long tail: median 246 days, p90 over a
-thousand. So a profile reports a percentile against the cohort, never a verdict,
-and the sentence it supports is "this sponsor's longest stretch sits at the Nth
+*how long*, and the distribution has a long tail: median 240 days, p90 996. So a
+profile reports a percentile against the cohort, never a verdict, and the
+sentence it supports is "this sponsor's longest stretch sits at the Nth
 percentile of trials examined", not anything about the sponsor.
+
+Those two figures are from snapshot `cohort-65fdf1f71b1d` and are quoted here to
+explain the design. Nothing in this module reads them: every number it prints is
+computed from the cohort at call time, so the prose above can go stale without
+the output ever doing so.
 
     python3 -m research.sponsor_profile NCT04248439
     python3 -m research.sponsor_profile --trial NCT04248439
