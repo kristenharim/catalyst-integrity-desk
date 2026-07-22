@@ -32,6 +32,8 @@ funding gap = runway exhaustion date - registered primary completion date
 No credentials, no API keys, no network. The demo runs from a committed snapshot.
 
 ```bash
+git clone https://github.com/kristenharim/catalyst-integrity-desk.git
+cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
 python3 -m pytest tests/ -q       # 21 passed, 1 skipped

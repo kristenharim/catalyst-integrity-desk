@@ -11,13 +11,15 @@ Wild Card runs again in August if you want a second pass.
 
 | Requirement | State |
 |---|---|
-| Published Project Page, all sections complete | **not started**, needs the repo link first |
+| Published Project Page, all sections complete | **not started**. Unblocked now, the repo link exists. Only Kristen can publish it. |
 | Working prototype using IBM Bob | done |
-| Public GitHub repository with a README | **not started**, no remote exists yet |
+| Public GitHub repository with a README | **done 2026-07-22**, https://github.com/kristenharim/catalyst-integrity-desk |
 | Public demo video, max 3 minutes | **not started**, script is `docs/DEMO.md` |
 | SkillsBuild completion certificate | obtained, **not yet uploaded** |
 
-Order matters: publish the repo, then create the page, because the page wants the link.
+Order mattered: publish the repo, then create the page, because the page wants the link.
+The repo is up, so the page is the next move. The three open items all need a human with
+an account: the page, the video, and the certificate upload.
 
 ---
 
@@ -138,11 +140,21 @@ python3 -m pytest tests/ -q   # 21 passed, 1 skipped (22 passed with watsonx cre
 No credentials and no network. The console renders entirely from a committed snapshot, so a
 judge can clone and run it with no IBM account.
 
-## Links to fill in
+## Links
 
-- GitHub repository: _pending, publish first_
-- Demo video: _pending_
-- SkillsBuild certificate: _obtained, upload to the page_
+- GitHub repository: **https://github.com/kristenharim/catalyst-integrity-desk**
+  Public, `main`, README at the root. Published 2026-07-22.
+- Demo video: _pending. Script is `docs/DEMO.md`, maximum 3 minutes._
+- SkillsBuild certificate: _obtained, still to upload to the project page._
+
+Clone and run, for a judge with no IBM account:
+
+```bash
+git clone https://github.com/kristenharim/catalyst-integrity-desk.git
+cd catalyst-integrity-desk
+pip install -r requirements.txt
+python3 -m console.app        # http://localhost:8050
+```
 
 ---
 

@@ -312,9 +312,14 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 - The breach-moment Bob task is the one row in `docs/BOB_LOG.md` with no transcript.
   Export it, or mark the row as unexported. A row that reads "pending" forever
   becomes a lie in a README written from this file.
-- **Publish the repo on GitHub.** Submission requires a public repository with a
-  README, and there is currently no remote at all. History is clean of
-  credentials, checked across every commit, so no rewrite is needed first.
+- ~~**Publish the repo on GitHub.**~~ Done 2026-07-22, public at
+  https://github.com/kristenharim/catalyst-integrity-desk. Full history, 58 commits,
+  not a squashed snapshot. Re-scanned before pushing: `.env` never committed on any
+  branch, no key literals in tracked files or in the Bob transcripts. The initial push
+  needed `http.postBuffer` raised against the 5.2 MB payload, set in this repo's local
+  config only. Note that commits carry three author emails, one of them the placeholder
+  `kristenharim@example.com`, so those show as unattributed on GitHub. Cosmetic, and
+  fixing it means rewriting every hash.
 - ~~The SkillsBuild certificate.~~ Obtained 2026-07-21. Still has to be *uploaded* with
   the submission, so it is not done until it is attached to the Project Page.
 - The Project Page on the platform, all sections marked complete.
