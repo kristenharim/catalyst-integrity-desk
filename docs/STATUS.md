@@ -309,9 +309,14 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## Still open
 
-- The breach-moment Bob task is the one row in `docs/BOB_LOG.md` with no transcript.
-  Export it, or mark the row as unexported. A row that reads "pending" forever
-  becomes a lie in a README written from this file.
+- **The breach-moment Bob task is still the one row in `docs/BOB_LOG.md` with no
+  transcript.** The panel row was closed 2026-07-21 by `phase4-panel.json`. A second
+  file exported at the same time turned out to be a byte-identical re-export of
+  `phase3-repair-and-widening.json`, checked by hashing the payload with `exportedAt`
+  stripped, so it was discarded rather than committed as a ninth transcript. Until the
+  breach-moment task is exported, the README and the submission pack both say ten of
+  eleven rows are backed, and name the exception. Do not restore the stronger sentence
+  before the file exists.
 - ~~**Publish the repo on GitHub.**~~ Done 2026-07-22, public at
   https://github.com/kristenharim/catalyst-integrity-desk. Full history, 58 commits,
   not a squashed snapshot. Re-scanned before pushing: `.env` never committed on any
