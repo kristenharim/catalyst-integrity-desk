@@ -88,7 +88,7 @@ The upgrade is per-element binding: every semantic figure carries the record and
 path it came from, and the test resolves that path and asserts the formatter's exact
 output. Global substring matching then stays as defence in depth.
 
-## Lapsed-versus-future is decided at build time, against wall clock
+## Lapsed-versus-future is decided at build time, and the date is now pinned
 
 `build()` splits pivotal trials on `date.today()` unless an `as_of` is passed. Two
 consequences:
@@ -101,9 +101,48 @@ consequences:
 Month-only registry dates (`2028-04`) are parsed to the first of the month, which is the
 conservative direction, but it is a parser default doing policy work.
 
-For a frozen demo this is sound, because the snapshot is the artifact. For anything
-running continuously it is not, and the fix is to thread the snapshot's own `as_of`
-through the split rather than reading the clock.
+**Half closed.** The snapshot now carries its own `as_of`, written once by
+`apply_displays()` and never re-read from the clock, and everything derived from it reads
+that field. The thesis-break timeline's "today" marker is that pinned date, so a committed
+snapshot draws the same picture next year that it draws today, and a test asserts the two
+agree. What is still open is the split itself: `build()` is called during a rebuild, which
+needs credentials and a network, and it is that call that still reads the wall clock. So
+the file no longer reinterprets itself on read, and a rebuild still reclassifies.
+
+## The derivation names a record; nothing resolves it
+
+Each row of the funding-gap table now carries the record it came from: an XBRL tag with
+the CIK and filing date, or a numbered ClinicalTrials.gov version with the date the
+sponsor submitted it. That is a real improvement over "this number is in the snapshot
+somewhere", and it is less than it looks.
+
+The test asserts that a row claiming a tag carries a non-empty record string. It does not
+fetch the filing, resolve the tag, or check that the value on that record equals the value
+in the row. The record is an assertion the builder makes about itself. A row that named
+the wrong version would pass every check here.
+
+The two things that are checked, and were watched failing:
+
+- the result row equals the contract's own `gap_months_1f` (mutated the timeline's gap to
+  `-99.9`, three tests failed)
+- every rendered figure is a substring of the snapshot (planted `8888` in the derivation
+  partial and in an SVG label; the provenance test named both)
+
+The upgrade is the same one the provenance section already names: resolve the record and
+assert the formatter's exact output against the field it claims.
+
+## The timeline is drawn from the snapshot, and its geometry is unchecked
+
+The thesis-break timeline recomputes the exhaustion date and the lapsed-anchor gap from
+raw fields rather than copying the contract's strings, on purpose: an independent
+recomputation that disagrees is a defect worth catching, and a test asserts the agreement.
+That test caught a mutated gap.
+
+Not checked: whether the picture is legible. Marker x positions are asserted to fall
+inside the axis, and nothing more. Two markers a few days apart overlap, their labels
+collide, and every test stays green. On RCKT the filing and lapsed markers sit 39px apart
+and are readable only because they were given different label rows by hand. A contract
+whose dates cluster differently will draw badly and say nothing about it.
 
 ## Untested, and known to be
 
@@ -114,7 +153,13 @@ through the split rather than reading the clock.
 - Whether a rebuild is reproducible. Nothing asserts that building twice from the same
   inputs produces the same bytes, so a hand-edited snapshot would not be detected.
 - Concurrency anywhere. Two decisions appended at once are untested; the ledger has no
-  compare-and-swap on the head.
+  compare-and-swap on the head. This applies to the analyst belief form too: two analysts
+  confirming at the same moment both read the same head hash and both append.
+- Whether a belief written through the form is ever monitored. `POST /belief/new` appends
+  a real CREATE entry to the real chain, and the redline loop still runs off the committed
+  snapshot rather than off the ledger's live cards. So the form records a belief, and
+  nothing yet re-reads it on the next rebuild. Say "records a belief", never "starts
+  monitoring it", which is what the button used to imply.
 
 ## Where these came from
 

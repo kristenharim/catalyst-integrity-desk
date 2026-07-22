@@ -114,20 +114,6 @@
             {{ redline.lapse_display.current_gap_1f }} months
           </span>
         </div>
-        {# Provenance drawer: the headline figure opens onto every step that
-           produced it, each naming an XBRL tag or a numbered registry version.
-           Native <details>, no script. #}
-        {% if c and c.derivation %}
-        <details style="margin-top:10px;">
-          <summary style="cursor:pointer; color:#58a6ff; font-size:11px;">
-            Where this number came from
-          </summary>
-          <div style="margin-top:8px; overflow-x:auto;">
-            {% set rows = c.derivation %}
-            {% include "_derivation.html" with context %}
-          </div>
-        </details>
-        {% endif %}
       </div>
       <div style="background:#3d1414; border:1px solid #f85149; border-radius:4px;
                   padding:10px; text-align:center;">
@@ -161,6 +147,25 @@
     </div>
   </div>
 </div>
+
+{# ------------------------------------------------------------------
+   Provenance drawer for the headline figure.  Every step that produced
+   it, each naming an XBRL tag on a dated filing or a numbered registry
+   version.  Native <details>, no script.  Full width rather than inside
+   the status column, because a derivation squeezed into a third of the
+   page is not one anybody audits.
+   ------------------------------------------------------------------ #}
+{% if c and c.derivation %}
+<details style="max-width:1100px; margin-bottom:24px;">
+  <summary style="cursor:pointer; color:#58a6ff; font-size:12px; padding:4px 0;">
+    Where {{ redline.lapse_display.current_gap_1f }} months came from, step by step
+  </summary>
+  <div style="margin-top:10px; overflow-x:auto; border-left:2px solid #30363d; padding-left:14px;">
+    {% set rows = c.derivation %}
+    {% include "_derivation.html" with context %}
+  </div>
+</details>
+{% endif %}
 
 {# ------------------------------------------------------------------
    Integrity memo: Granite's narrative judgment.

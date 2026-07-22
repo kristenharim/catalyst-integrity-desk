@@ -89,7 +89,18 @@ Then the memo.
 > and nothing to do arithmetic on. Any figure in its output that was not in its input
 > discards the whole response.
 
-**2:05 to 2:40, the human gate and the record.**
+**2:05 to 2:20, where the belief came from.** Cuttable. See the run-long list.
+
+Open `/belief/new`. Do not fill it in on camera, just show it and move.
+
+> One question this has been begging: judged against what? Against this. A human writes the
+> thesis, the trial it depends on, and the funding gap below which they would no longer
+> believe it. The desk does not invent beliefs, it monitors the ones someone signed.
+>
+> The invalidation conditions go in the same field Granite reads, so the challenge is
+> judged against the conditions the analyst said would change their mind.
+
+**2:20 to 2:50, the human gate and the record.**
 
 > The analyst accepts or rejects. Nothing is automatic.
 
@@ -113,7 +124,7 @@ Delete the last line, reload. The badge reads truncated or replaced.
 > outside the chain, and the page checks both. Delete the anchor too and it still refuses
 > to say intact.
 
-**2:40 to 3:00, the close.**
+**2:50 to 3:00, the close.**
 
 > Four contracts monitored. Two active breaches. Three registered completion dates already
 > lapsed. This is not a screen that ranks companies, it is a queue of beliefs that need an
@@ -128,9 +139,12 @@ Delete the last line, reload. The badge reads truncated or replaced.
 
 Drop in this order:
 
-1. The second red node at 0:40, the thirty-day one. The 677 carries the point alone.
-2. The burn band explanation at 1:10.
-3. The second ledger break at 2:30, the deletion. Keep the byte edit.
+1. The belief form at 2:05. It answers a question a judge may not have asked yet, and the
+   receipt at 2:20 already shows a human in the loop. Cut this first, because it is the only
+   beat where nothing is wrong on screen.
+2. The second red node at 0:40, the thirty-day one. The 677 carries the point alone.
+3. The burn band explanation at 1:10.
+4. The second ledger break at 2:30, the deletion. Keep the byte edit.
 
 **Never cut:** the 677 fact, and the lapse at 1:25. Those are the two things the room has
 not seen before, and the second one is the only demo where a thesis breaks because nobody

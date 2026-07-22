@@ -36,7 +36,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 21 passed, 1 skipped
+python3 -m pytest tests/ -q       # 39 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -46,7 +46,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 22 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 40 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -56,8 +56,9 @@ on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 | `/` | redirects to the Rocket detail, on purpose. The 677-day row is the point. |
 | the red node | a revision filed in April 2024 carrying a completion date from June 2022 |
 | the table below it | every input with the XBRL tag it resolved through |
-| `/contracts` | the ranked list, with unreliable rows shown below it and never ranked |
+| `/contracts` | the ranked list, unreliable rows shown below it and never ranked, and below those any ticker that produced no contract at all, with the reason |
 | `/redline` | the thesis breaking: approved against a date that then lapsed, and Granite's memo about it |
+| `/belief/new` | where a belief comes from. The analyst writes the thesis, the trial, and the gap below which they would stop believing it |
 | Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
 
 **The tamper demo:** accept the redline, edit any byte inside the `card` object in
@@ -68,7 +69,7 @@ redirect told it.
 **Reset between runs:**
 
 ```bash
-rm -f data/decisions.jsonl data/review_log.jsonl
+rm -f data/decisions.jsonl data/review_log.jsonl data/ledger.anchor
 ```
 
 Both are gitignored live state, written during a demo and safe to delete. The snapshot is
@@ -148,8 +149,16 @@ edit permission so the three verified engine modules cannot be rewritten, and de
 reviewer mode with no edit permission at all, so a review cannot quietly fix what it is
 judging. Those boundaries held.
 
-Other AI tools were used for review, which the challenge permits. They wrote no product
-code, and `docs/BOB_LOG.md` records those passes separately from the build.
+Other AI tools were used for review, which the challenge permits, and `docs/BOB_LOG.md`
+records those passes separately from the build.
+
+Two later changes were written by hand with Claude Code rather than by Bob, after Bob's
+build was complete, and are logged as such with the same detail as the Bob rows. They are
+the unresolved-ticker row on `/contracts`, which fixed a silent drop, and the thesis-break
+timeline, the derivation table and the analyst belief form. Everything else in the
+console, including all three original views, the snapshot generator and the test suite,
+is Bob's. Saying otherwise would be a worse failure than admitting a second tool
+touched it.
 
 ## How it was verified
 
@@ -166,8 +175,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it lied. With credentials the suite is 22
-  passed; without them that one test skips and you see 21 passed, 1 skipped.
+  precise way an earlier version of it lied. With credentials the suite is 40
+  passed; without them that one test skips and you see 39 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.
@@ -227,9 +236,9 @@ engine/ctgov_history.py   registry revision history, notice and expiry metrics
 engine/gap.py             the catalyst contract join
 engine/ledger.py          hash-chained belief ledger
 orchestrator/             redline loop, challenge builder, Granite client
-console/                  Flask console, three views, snapshot generator
+console/                  Flask console, four views, snapshot generator
 research/                 the monitoring-queue panel, CSV and figure
-tests/                    22 tests, no network, no credentials
+tests/                    40 tests, no network, no credentials
 data/snapshot.json        the frozen demo artifact
 docs/BOB_LOG.md           what Bob built versus what preceded it
 docs/bob-sessions/        full Bob task exports, the evidence behind that log

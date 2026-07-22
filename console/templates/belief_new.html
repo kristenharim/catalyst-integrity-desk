@@ -187,7 +187,7 @@
             style="background:#1a4731; color:#10b981; border:1px solid #10b981;
                    padding:7px 20px; border-radius:4px; cursor:pointer;
                    font-family:inherit; font-size:12px; font-weight:bold;">
-      &#10003; Confirm and start monitoring
+      &#10003; Confirm and record this belief
     </button>
     <a href="/belief/new" style="font-size:12px;">&larr; Change it</a>
   </div>
@@ -201,8 +201,12 @@
 <div style="background:#0f2e21; border:1px solid #10b981; border-radius:6px;
             padding:20px; max-width:940px; margin-bottom:18px;">
   <div style="color:#10b981; font-weight:bold; font-size:13px; margin-bottom:12px;">
-    &#10003; Belief recorded. {{ form.ticker }} is now monitored against {{ form.nct }}.
+    &#10003; Belief recorded against {{ form.nct }}, hash-chained into the ledger.
   </div>
+  <p style="font-size:11px; color:#8b949e; margin-bottom:12px;">
+    Recorded, not yet watched. The redline loop runs off the committed snapshot, so
+    this card is picked up at the next rebuild rather than immediately.
+  </p>
   <table style="max-width:900px;">
     <tbody>
       <tr><td style="color:#8b949e; width:180px;">Card id</td>

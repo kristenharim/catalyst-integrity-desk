@@ -106,7 +106,13 @@ reviewer mode with no edit permission at all so a review cannot quietly fix what
 judging.
 
 `docs/BOB_LOG.md` records every task and separates build work from review passes. Other AI
-tools were used for review, which the challenge permits; they wrote no product code.
+tools were used for review, which the challenge permits.
+
+Two changes after Bob's build was complete were written by hand with Claude Code, not by
+Bob: the unresolved-ticker row on `/contracts`, and the thesis-break timeline, derivation
+table and analyst belief form. Both are logged in `docs/BOB_LOG.md` at the same detail as
+the Bob rows. The console's three original views, the snapshot generator and the test
+suite are Bob's.
 
 ## What makes it credible
 
@@ -135,7 +141,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 21 passed, 1 skipped (22 passed with watsonx credentials)
+python3 -m pytest tests/ -q   # 39 passed, 1 skipped (40 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
