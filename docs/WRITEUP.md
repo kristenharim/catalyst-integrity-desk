@@ -23,7 +23,7 @@ stratum, not over the whole stratum. "Randomly drawn" throughout means that and 
 
 ## The finding: this study cannot separate reconciliation from filing frequency
 
-Most trials carrying an expired commitment never filed a date correction after it lapsed: 4 of
+Most trials carrying an expired commitment have never reconciled a lapsed date: 4 of
 5 in industry, 15 of 19 in OTHER, 20 of 27 in OTHER_GOV. The measure that was going to be this
 study's headline is built from observed corrections and therefore cannot see them.
 

@@ -10,8 +10,7 @@ Nobody was watching, because nobody's job is to watch.
 
 **And Rocket is not unusual. The actual finding is about the registry, not the sponsor.**
 In a random sample of 240 phase 2/3 trials, **this study cannot separate reconciliation from
-filing frequency, and most trials carrying an expired commitment never filed a date correction
-after it lapsed** — 4 of 5 in industry, 20 of 27 for government sponsors, dates that have stood
+filing frequency, and most trials carrying an expired commitment have never reconciled a lapsed date** — 4 of 5 in industry, 20 of 27 for government sponsors, dates that have stood
 a median of 1,101.5 and 2,288.5 days respectively. NIH
 sponsors file a median of 106.5 registry versions per trial and have **zero** trials currently
 carrying an expired completion date. Government and academic sponsors file a median of 2, and
