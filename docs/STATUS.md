@@ -1,4 +1,4 @@
-# Status — 2026-07-21
+# Status — 2026-07-22
 
 Where the build stands and what a session with no prior context needs to know.
 Read `HANDOFF.md` for the idea, `AGENTS.md` for the rules, this for the state.
@@ -327,10 +327,32 @@ What closing it required, in case any of it recurs:
   all-strata section on every run, for as long as the rule against pooling had existed.
   Same lesson as everything else in this file: prose does not enforce anything.
 
-**The headline numbers moved and it needs a human read.** INDUSTRY did not move at all,
-which is the stratum the headline rests on: 80.0%, median 240 days, p90 996, max 2,104, n=60
-throughout. NIH moved on completing from 57 to 60 trials: 80.7% to 80.0%, median 580 to 567
-days. OTHER_GOV and OTHER went from n=6 to n=60 and their earlier figures said nothing.
+- **An adversarial council found what the study could not find about itself.** Three seats
+  blocked the write-up. Two objections were measurement defects, not wording: the stretch
+  measure needs a later filing to close a lapse, so it cannot see a sponsor that goes quiet,
+  and a stretch is counted per filing rather than per lapse, so duration tracked filing
+  frequency. Both were resolved by the owner and the study re-measured.
+- **A wrong figure of my own, published for one revision and retracted.** The first point
+  prevalence read the ESTIMATED/ACTUAL type from a helper that did not return it, so the
+  filter never fired and every completed trial that had correctly recorded its completion
+  date counted as carrying a lapsed one. It read 83.3% industry; the true figure is 8.3%.
+  The defect pattern this file has documented six times over, committed again: a check that
+  silently does not apply looks exactly like a check that passes, and this one was in the
+  flattering direction.
+
+**Where the study now stands.** The headline is the reconciliation split, which is the
+distinction the whole thesis turns on and which separates this from the documented delay
+literature: **52.4% of industry completion-date revisions were filed only after the date had
+already passed** (66 of 126), and 43 of the 52 industry trials that revised a date at all let
+at least one lapse first. A revision filed while the date is still in the future is
+forecasting and the record stays honest; one filed afterwards means the registry carried a
+commitment its author had stopped believing.
+
+Primary frequency is point prevalence: 8.3% of industry trials carry an expired estimate as
+of 2026-07-22, against 45.0% of OTHER_GOV. Primary duration is per-trial longest carry, NIH
+590 days against industry 390, a ratio of 1.5x. The stretch-based figures (80.0%, median 240,
+2.4x) are retained as a labelled secondary and sensitivity. **No all-strata average exists
+anywhere**, and the no-pooling rule now rests on three differences rather than one ratio.
 
 ## Still open
 
