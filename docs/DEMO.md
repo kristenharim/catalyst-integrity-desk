@@ -2,6 +2,16 @@
 
 Runs from a frozen local snapshot. Network off. Backup video recorded.
 
+**Reset before every take**, or the ledger accumulates decisions from the last one and
+the receipt shows a chain you did not just build:
+
+```bash
+rm -f data/decisions.jsonl data/review_log.jsonl
+```
+
+**Say "registered primary-completion expectation" out loud, not "catalyst date".** The
+distinction is a credibility advantage and the first thing a domain judge will test.
+
 The structure is deliberate: open on a fact nobody in the room knows, show the machine
 catching it, hand the decision to a human, then zoom out to the panel. The reveal comes
 before the product, because a product demo that opens on a dashboard has already lost

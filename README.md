@@ -34,10 +34,49 @@ No credentials, no API keys, no network. The demo runs from a committed snapshot
 ```bash
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 13 tests
+python3 -m pytest tests/ -q       # 13 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
+
+**The guarantee:** the console makes no network call and reads no credential. Everything
+it renders comes from `data/snapshot.json`, which is committed. Clone, install Flask, run.
+Nothing else.
+
+**The one skipped test** is the live Granite fabrication check, which needs watsonx
+credentials. With them the suite is 14 passed. That test is verified not to pass on the
+stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+
+**The 90 second tour:**
+
+| | |
+|---|---|
+| `/` | redirects to the Rocket detail, on purpose. The 677-day row is the point. |
+| the red node | a revision filed in April 2024 carrying a completion date from June 2022 |
+| the table below it | every input with the XBRL tag it resolved through |
+| `/contracts` | the ranked list, with unreliable rows shown below it and never ranked |
+| `/redline` | a scripted amendment that flips the gap negative, and Granite's memo about it |
+| Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
+
+**The tamper demo:** accept the redline, edit any byte inside the `card` object in
+`data/decisions.jsonl`, reload the confirm page. The badge goes from `✓ intact` to
+`✗ tampered`, because it calls `verify()` at render time rather than trusting what the
+redirect told it.
+
+**Reset between runs:**
+
+```bash
+rm -f data/decisions.jsonl data/review_log.jsonl
+```
+
+Both are gitignored live state, written during a demo and safe to delete. The snapshot is
+not: `data/snapshot.json` is the frozen evidence and is committed deliberately.
+
+**Where the frozen evidence comes from.** The snapshot was built against live SEC XBRL
+company facts, live ClinicalTrials.gov version history, and a live IBM Granite call whose
+classification is recorded in the file with `source: "granite"`. Rebuilding it requires
+credentials and is never done during a demo. The `docs/bob-sessions/` transcripts show it
+being built.
 
 The console opens on the Rocket revision timeline, because the 677-day row is the point.
 
@@ -140,9 +179,13 @@ failing.
 - Each console check was re-broken afterwards: the marker class renamed, `stub` forced
   into the memo, `days_expired` changed from 677 to 123. All four failed as they should.
 
-One honest limit. The provenance check matches by substring, so a format that truncates a
-full-precision value passes for free. It catches planted literals and computed values,
-which is what it is for. It is not proof that no template formats anything.
+Stated precisely, because it is easy to oversell: the provenance check **detects
+unintended displayed literals**. It does not prove every rendered value is correctly
+formatted. It matches by substring, so a format that truncates a full-precision value
+passes for free, and it walks text nodes only, so attribute values such as SVG
+coordinates and stroke widths are never examined. Within those limits it does the job it
+exists for, which is catching a number that entered the page from somewhere other than
+the snapshot.
 
 ## What it found
 

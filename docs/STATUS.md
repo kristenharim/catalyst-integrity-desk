@@ -223,11 +223,13 @@ and the badge goes from green `✓ intact` to red `✗ tampered`.
 
 Two things to know rather than fix:
 
-The provenance check matches by substring, so a format that truncates a
-full-precision number passes for free. `"%.3f"` of `-0.5913757700205339` renders
-`-0.591`, which is a literal prefix of the stored value. The check catches planted
-literals and computed values, which is what it exists for, but it is not proof that
-no template formats anything. Do not describe it as more than it is.
+The provenance check detects unintended displayed literals. It does not prove every
+rendered value is correctly formatted, and it should never be described as though it
+does. It matches by substring, so `"%.3f"` of `-0.5913757700205339` renders `-0.591`,
+a literal prefix of the stored value, and passes. It walks text nodes only, so
+attribute values such as SVG coordinates and stroke widths are never examined. Both
+exclusions are deliberate. Within them it catches a number that entered the page from
+somewhere other than the snapshot, which is the job.
 
 The app now reads `PORT` and defaults to 8050, because 5000 is held by macOS
 ControlCenter.
