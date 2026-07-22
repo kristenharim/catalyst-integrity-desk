@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Catalyst Integrity Desk{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-monospace, "Cascadia Code", "Menlo", monospace;
+      font-size: 13px;
+      background: #0f1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    nav {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    nav .brand {
+      font-weight: bold;
+      color: #e6edf3;
+      letter-spacing: 0.03em;
+    }
+    nav a { color: #8b949e; font-size: 12px; }
+    nav a:hover { color: #e6edf3; }
+    main { padding: 24px; max-width: 1280px; }
+    h1 { font-size: 16px; font-weight: bold; color: #e6edf3; margin-bottom: 16px; }
+    h2 { font-size: 13px; font-weight: bold; color: #8b949e;
+         text-transform: uppercase; letter-spacing: 0.08em;
+         margin: 24px 0 10px; }
+    table { border-collapse: collapse; width: 100%; }
+    th {
+      text-align: left;
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid #30363d;
+      padding: 6px 12px;
+    }
+    td { padding: 7px 12px; border-bottom: 1px solid #21262d; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: #21262d;
+      color: #8b949e;
+      border: 1px solid #30363d;
+    }
+    hr { border: none; border-top: 1px solid #30363d; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand">Catalyst Integrity Desk</span>
+    <a href="/contracts">Contracts</a>
+    <a href="/redline">Pending Redline</a>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

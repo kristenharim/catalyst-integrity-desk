@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Pending Redline — Catalyst Integrity Desk{% endblock %}
+{% block content %}
+
+<h1>Pending Redline</h1>
+
+{% set cls_label = redline.classification.label %}
+
+<div style="background:#161b22; border:1px solid #30363d; border-radius:6px;
+            padding:20px; max-width:860px; margin-bottom:24px;">
+
+  {# Header row: card id + classification badge #}
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+    <span style="font-weight:bold; color:#e6edf3;">{{ redline.card_id }}</span>
+    {% if cls_label == "direct_contradiction" %}
+      <span style="background:#3d1414; color:#f85149; border:1px solid #f85149;
+                   font-size:11px; padding:2px 8px; border-radius:3px;">
+        DIRECT CONTRADICTION
+      </span>
+    {% elif cls_label == "assumption_weakened" %}
+      <span style="background:#2d1f00; color:#d29922; border:1px solid #d29922;
+                   font-size:11px; padding:2px 8px; border-radius:3px;">
+        ASSUMPTION WEAKENED
+      </span>
+    {% else %}
+      <span style="background:#0d2033; color:#58a6ff; border:1px solid #58a6ff;
+                   font-size:11px; padding:2px 8px; border-radius:3px;">
+        {{ cls_label | upper | replace("_", " ") }}
+      </span>
+    {% endif %}
+    <span style="color:#8b949e; font-size:11px;">
+      conf {{ redline.classification.confidence }}
+      &nbsp;|&nbsp; source: {{ redline.classification.source }}
+    </span>
+  </div>
+
+  {# Breach detail #}
+  <table style="margin-bottom:16px; max-width:560px;">
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Observed</th>
+        <th>Approved band</th>
+        <th>Direction</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tag">{{ redline.breach.metric }}</span></td>
+        <td>
+          {% if redline.breach.observed < 0 %}
+            <span style="color:#f85149">{{ "%.1f"|format(redline.breach.observed) }}</span>
+          {% else %}
+            {{ "%.1f"|format(redline.breach.observed) }}
+          {% endif %}
+        </td>
+        <td>[{{ "%.1f"|format(redline.breach.expected_low) }}, {{ "%.1f"|format(redline.breach.expected_high) }}]</td>
+        <td>{{ redline.breach.direction }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {# Proposed redline #}
+  <p style="margin-bottom:12px; font-size:12px;">
+    <strong>Proposed redline:</strong>
+    <code style="background:#0d1117; padding:2px 6px; border-radius:3px;">
+      {{ redline.redline }}
+    </code>
+    <span style="color:#8b949e; font-size:11px; margin-left:8px;">
+      (shifted PCD {{ redline.original_pcd }} &rarr; {{ redline.shifted_pcd }},
+      +{{ redline.shift_months }} months)
+    </span>
+  </p>
+
+  {# Granite memo #}
+  <div style="background:#0d1117; border:1px solid #30363d; border-radius:4px;
+              padding:14px; font-size:12px; line-height:1.6; white-space:pre-wrap;">{{ redline.memo }}</div>
+
+</div>
+
+{# Accept / Reject form #}
+<div style="max-width:860px;">
+  <h2>Decision</h2>
+
+  <form method="post" action="/redline/decide" style="margin-top:12px;">
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px; color:#8b949e;">
+        Reason (optional):
+        <input type="text" name="reason" placeholder="e.g. trial date slip is expected"
+               style="margin-left:8px; background:#0d1117; border:1px solid #30363d;
+                      color:#c9d1d9; padding:4px 8px; border-radius:3px;
+                      font-family:inherit; font-size:12px; width:380px;">
+      </label>
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button type="submit" name="verdict" value="approve"
+              style="background:#1a4731; color:#3fb950; border:1px solid #3fb950;
+                     padding:7px 20px; border-radius:4px; cursor:pointer;
+                     font-family:inherit; font-size:12px; font-weight:bold;">
+        &#10003; Accept
+      </button>
+      <button type="submit" name="verdict" value="reject"
+              style="background:#3d1414; color:#f85149; border:1px solid #f85149;
+                     padding:7px 20px; border-radius:4px; cursor:pointer;
+                     font-family:inherit; font-size:12px; font-weight:bold;">
+        &#10007; Reject
+      </button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

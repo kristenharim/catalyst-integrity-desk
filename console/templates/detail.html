@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}{{ ticker }} — Catalyst Integrity Desk{% endblock %}
+{% block content %}
+
+<h1>{{ ticker }} &mdash; {{ c.runway.name }}</h1>
+<p style="margin-bottom:20px">
+  <a href="/contracts">&larr; Back to contract list</a>
+</p>
+
+{# ------------------------------------------------------------------
+   Revision timeline SVG — appears first, above the fold.
+   Coordinates are precomputed in make_snapshot.py; no arithmetic here.
+   ------------------------------------------------------------------ #}
+{% if c.history and c.history.revisions %}
+<h2>{{ c.history.nct }} &mdash; Primary completion date revisions</h2>
+<div style="overflow-x:auto; background:#161b22; border:1px solid #30363d;
+            border-radius:6px; padding:12px 0 8px;">
+<svg width="1220" height="180" style="display:block;">
+  {# Axis line #}
+  <line x1="40" y1="110" x2="1180" y2="110"
+        stroke="#30363d" stroke-width="1"/>
+
+  {% for r in c.history.revisions %}
+    {% if r.carried_expired %}
+      {# Expired-date node: red, larger, lifted above axis, bold label #}
+      <circle cx="{{ r.svg_x }}" cy="72" r="11"
+              fill="#dc2626" stroke="#f87171" stroke-width="1.5"
+              class="revision-node carried-expired"/>
+      <text x="{{ r.svg_x }}" y="50" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10"
+            font-weight="bold" fill="#f87171">
+        carried expired &mdash; {{ r.days_expired }} days
+      </text>
+      {# Connector from node to axis #}
+      <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
+            stroke="#dc2626" stroke-width="1" stroke-dasharray="3,3"/>
+      {# Date labels below axis #}
+      <text x="{{ r.svg_x }}" y="126" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+        {{ r.submitted }}
+      </text>
+      <text x="{{ r.svg_x }}" y="140" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#f87171">
+        &#8594; {{ r.pcd }}
+      </text>
+    {% else %}
+      {# Normal revision node: gray circle on axis #}
+      <circle cx="{{ r.svg_x }}" cy="110" r="8"
+              fill="#6b7280" stroke="#9ca3af" stroke-width="1"
+              class="revision-node"/>
+      <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+        {{ r.submitted }}
+      </text>
+      <text x="{{ r.svg_x }}" y="144" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#6b7280">
+        &#8594; {{ r.pcd }}
+      </text>
+    {% endif %}
+  {% endfor %}
+</svg>
+</div>
+
+<p style="font-size:11px; color:#8b949e; margin:6px 0 20px;">
+  {{ c.history.revisions|length }} revisions across {{ c.history.n_versions }} versions
+  &nbsp;|&nbsp; net slip {{ c.history.total_slip_days }} days
+  &nbsp;|&nbsp; {{ c.history.n_late_moves }} moved with &lt;90 days notice
+</p>
+{% endif %}
+
+{# ------------------------------------------------------------------
+   Gap calculation table — every input labeled by XBRL tag or version.
+   All values come from the snapshot; nothing is recomputed here.
+   ------------------------------------------------------------------ #}
+<h2>Funding gap calculation</h2>
+<table style="max-width:860px;">
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Value</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cash</td>
+      <td>${{ c.runway.display.cash_m }}M</td>
+      <td><span class="tag">{{ c.runway.provenance.cash }}</span></td>
+    </tr>
+    <tr>
+      <td>Short-term securities</td>
+      <td>${{ c.runway.display.securities_m }}M</td>
+      <td>
+        {% if c.runway.provenance.securities != "none" %}
+          <span class="tag">{{ c.runway.provenance.securities }}</span>
+        {% else %}
+          <span style="color:#8b949e">none on cash date</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td>Liquidity total</td>
+      <td>${{ c.runway.display.liquidity_m }}M</td>
+      <td><span style="color:#8b949e">cash + securities</span></td>
+    </tr>
+    <tr>
+      <td>Burn (TTM annual)</td>
+      <td>${{ c.runway.display.burn_ttm_annual_m }}M/yr</td>
+      <td><span class="tag">{{ c.runway.provenance.burn }}</span></td>
+    </tr>
+    <tr>
+      <td>Burn (recent qtr ann.)</td>
+      <td>${{ c.runway.display.burn_recent_annual_m }}M/yr</td>
+      <td><span class="tag">{{ c.runway.provenance.burn }}</span></td>
+    </tr>
+    <tr>
+      <td>Runway band</td>
+      <td>
+        {% if c.runway.display.months_low_1f is not none %}
+          {{ c.runway.display.months_low_1f }}–{{ c.runway.display.months_high_1f }} months
+        {% else %}
+          n/a
+        {% endif %}
+      </td>
+      <td><span style="color:#8b949e">liquidity / burn band</span></td>
+    </tr>
+    <tr>
+      <td>Registered primary completion (catalyst date)</td>
+      <td>{{ c.catalyst_date or "—" }}</td>
+      <td>
+        {% if c.history %}
+          <span class="tag">{{ c.history.nct }}</span>
+        {% else %}
+          <span class="tag">{{ c.trial.nct }}</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Funding gap</strong></td>
+      <td>
+        {% if c.gap_months_1f is not none %}
+          {% if c.gap_months >= 0 %}
+            <strong style="color:#3fb950">+{{ c.gap_months_1f }} months</strong>
+          {% else %}
+            <strong style="color:#f85149">{{ c.gap_months_1f }} months</strong>
+          {% endif %}
+        {% else %}
+          n/a
+        {% endif %}
+      </td>
+      <td><span class="tag">engine/gap.py</span></td>
+    </tr>
+  </tbody>
+</table>
+
+{% if c.runway.notes %}
+<div style="margin-top:12px;">
+  {% for note in c.runway.notes %}
+  <p style="font-size:11px; color:#d29922; margin:4px 0;">&#9888; {{ note }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<p style="margin-top:12px; font-size:11px; color:#8b949e;">
+  <strong>Verdict:</strong> {{ c.verdict }}
+  &nbsp;|&nbsp; as of {{ c.runway.as_of }}
+</p>
+
+{% endblock %}

@@ -21,7 +21,16 @@
           "securities": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
           "burn": "NetCashProvidedByUsedInOperatingActivities"
         },
-        "notes": []
+        "notes": [],
+        "display": {
+          "cash_m": "64",
+          "securities_m": "71",
+          "liquidity_m": "135",
+          "burn_ttm_annual_m": "156",
+          "burn_recent_annual_m": "171",
+          "months_low_1f": "9.5",
+          "months_high_1f": "10.4"
+        }
       },
       "trial": {
         "nct": "NCT06559176",
@@ -104,7 +113,8 @@
       },
       "gap_months": -35.58110882956879,
       "catalyst_date": "2030-01-01",
-      "verdict": "financing required before catalyst"
+      "verdict": "financing required before catalyst",
+      "gap_months_1f": "-35.6"
     },
     "RCKT": {
       "runway": {
@@ -127,7 +137,16 @@
           "securities": "ShortTermInvestments",
           "burn": "NetCashProvidedByUsedInOperatingActivities"
         },
-        "notes": []
+        "notes": [],
+        "display": {
+          "cash_m": "50",
+          "securities_m": "95",
+          "liquidity_m": "144",
+          "burn_ttm_annual_m": "180",
+          "burn_recent_annual_m": "182",
+          "months_low_1f": "9.5",
+          "months_high_1f": "9.6"
+        }
       },
       "trial": {
         "nct": "NCT04248439",
@@ -208,7 +227,8 @@
       },
       "gap_months": 8.37782340862423,
       "catalyst_date": "2026-05-05",
-      "verdict": "funded to catalyst"
+      "verdict": "funded to catalyst",
+      "gap_months_1f": "8.4"
     }
   },
   "redline": {

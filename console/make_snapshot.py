@@ -44,8 +44,28 @@ RCKT_SHIFT_MONTHS = 9
 # Serialise one CatalystContract
 # ---------------------------------------------------------------------------
 
+def _fmt_m(v: float) -> str:
+    """Format dollars as '$NNNm' with zero decimal places (e.g. '$182M').
+    Stored in the snapshot so the template can output the string verbatim
+    and the provenance test finds it as a substring of the snapshot.
+    """
+    return f"{round(v / 1e6)}"
+
+
+def _fmt_1f(v: float | None) -> str | None:
+    """Format a float to 1 decimal place.  None -> None."""
+    if v is None:
+        return None
+    return f"{v:.1f}"
+
+
 def _serialise_runway(r) -> dict:
-    """Runway dataclass fields plus all properties the template needs."""
+    """Runway dataclass fields plus all properties the template needs.
+
+    The 'display' sub-dict holds every formatted string the templates render
+    so the provenance test can find them verbatim in the snapshot.  Rounding
+    happens here, not in the template.
+    """
     return {
         "ticker": r.ticker,
         "cik": r.cik,
@@ -63,6 +83,17 @@ def _serialise_runway(r) -> dict:
         "inflow_quarters": r.inflow_quarters,
         "provenance": r.provenance,
         "notes": r.notes,
+        # Pre-formatted display strings: templates use these verbatim so every
+        # number in the HTML is a substring of the snapshot JSON.
+        "display": {
+            "cash_m": _fmt_m(r.cash),
+            "securities_m": _fmt_m(r.securities),
+            "liquidity_m": _fmt_m(r.liquidity),
+            "burn_ttm_annual_m": _fmt_m(r.burn_ttm_annual),
+            "burn_recent_annual_m": _fmt_m(r.burn_recent_annual),
+            "months_low_1f": _fmt_1f(r.months_low),
+            "months_high_1f": _fmt_1f(r.months_high),
+        },
     }
 
 
@@ -126,6 +157,9 @@ def _serialise_contract(c: CatalystContract) -> dict:
         "trial": c.trial,
         "history": _serialise_history(c.history),
         "gap_months": c.gap_months,
+        # Pre-formatted gap string: "+8.4" or "-0.6" — stored so the template
+        # outputs it verbatim and the provenance test finds it in the snapshot.
+        "gap_months_1f": _fmt_1f(c.gap_months),
         "catalyst_date": _iso(c.catalyst_date),
         "verdict": c.verdict,
     }

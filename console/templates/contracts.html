@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Contracts — Catalyst Integrity Desk{% endblock %}
+{% block content %}
+<h1>Catalyst Contracts</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rank</th>
+      <th>Ticker</th>
+      <th>Company</th>
+      <th>Gap (months)</th>
+      <th>Runway band</th>
+      <th>Catalyst date</th>
+      <th>Revisions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ticker, c in reliable %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><a href="/contract/{{ ticker }}">{{ ticker }}</a></td>
+      <td>{{ c.runway.name }}</td>
+      <td>
+        {% if c.gap_months_1f is not none %}
+          {% if c.gap_months >= 0 %}
+            <span style="color:#3fb950">+{{ c.gap_months_1f }} mo</span>
+          {% else %}
+            <span style="color:#f85149">{{ c.gap_months_1f }} mo</span>
+          {% endif %}
+        {% else %}
+          n/a
+        {% endif %}
+      </td>
+      <td>
+        {% if c.runway.display.months_low_1f is not none %}
+          {{ c.runway.display.months_low_1f }}–{{ c.runway.display.months_high_1f }} mo
+        {% else %}
+          n/a
+        {% endif %}
+      </td>
+      <td>{{ c.catalyst_date or "—" }}</td>
+      <td>
+        {% if c.history %}{{ c.history.revisions|length }}{% else %}—{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if unreliable %}
+<hr>
+<h2>Flagged — not ranked</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Ticker</th>
+      <th>Company</th>
+      <th>Flag reason</th>
+      <th>Catalyst date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ticker, c in unreliable %}
+    <tr>
+      <td><a href="/contract/{{ ticker }}">{{ ticker }}</a></td>
+      <td>{{ c.runway.name }}</td>
+      <td>{{ c.runway.notes | join("; ") }}</td>
+      <td>{{ c.catalyst_date or "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
