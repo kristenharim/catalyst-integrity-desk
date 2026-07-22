@@ -315,8 +315,8 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 - **Publish the repo on GitHub.** Submission requires a public repository with a
   README, and there is currently no remote at all. History is clean of
   credentials, checked across every commit, so no rewrite is needed first.
-- The SkillsBuild certificate. One of two named activities, uploaded with the
-  submission.
+- ~~The SkillsBuild certificate.~~ Obtained 2026-07-21. Still has to be *uploaded* with
+  the submission, so it is not done until it is attached to the Project Page.
 - The Project Page on the platform, all sections marked complete.
 - The contract list has only two rows: SANA has no live pivotal trial. Thin for a
   view about ranking, but the list is not the demo beat. Revisit only if cheap.
