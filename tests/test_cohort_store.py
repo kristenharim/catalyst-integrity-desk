@@ -32,8 +32,49 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from research import cohort
+from engine.ctgov_history import CACHE
 
 REPO = os.path.join(os.path.dirname(__file__), "..")
+
+
+def _have_cache() -> bool:
+    return os.path.isdir(CACHE) and any(os.scandir(CACHE))
+
+
+def test_month_convention_reconstructs_the_first_of_month():
+    """The second date reading is a bound only if it is computed off the same
+    revision set as the first. The reconstruction from the cache must reproduce
+    the stored first-of-month aggregates exactly, or end-of-month is a bound on a
+    different measurement. Cache-present; skips on a clone without it.
+
+    This is the independent check of the end-of-month figures that the prose
+    guard reads from the snapshot rather than recomputes, because CI has no cache.
+    """
+    if not _have_cache():
+        pytest.skip("no version cache; the second date reading cannot be checked")
+    snap = cohort.load_snapshot()
+    if snap is None:
+        pytest.skip("no snapshot frozen yet")
+    rows = [r for r in cohort.load_results() if "error" not in r]
+    for cls in cohort.STRATA:
+        sub = [r for r in rows if r["sponsor_class"] == cls]
+        pro = lapse = est = 0
+        for r in sub:
+            p, l, e = cohort._held_split(r["nct"], False)
+            pro += p
+            lapse += l
+            est += e
+        s = snap["strata"][cls]
+        assert (pro, lapse, est) == (
+            s["revisions_prospective"], s["revisions_after_lapse"],
+            s["revisions_after_lapse_to_estimate"]), (
+            f"{cls}: the cache reconstruction does not reproduce the stored "
+            f"first-of-month split, so the end-of-month reading is not a bound on "
+            f"the same measurement")
+    # And the stored end-of-month figures recompute from the cache.
+    assert snap["month_convention"] == cohort.month_convention(rows)
+    assert snap["silent_carrier_audit"] == cohort.silent_carrier_audit(
+        rows, cohort._parse_date(snap["as_of"]))
 
 
 def _rows():
@@ -186,6 +227,26 @@ def test_snapshot_figures_match_a_recomputation():
     for cls in cohort.STRATA:
         assert snap["strata"][cls] == cohort.stats(rows, cls, as_of), cls
     assert snap["n_distinct_trials"] == len(rows)
+
+
+def test_a_hand_edit_to_any_published_figure_is_caught():
+    """`snapshot_id` hashes the measured rows, not the derived blocks, so editing
+    `anchor_case` or `month_convention` in the committed json did not move it and
+    the figure published. `figures_hash` covers every block the reader sees and
+    is recomputed from the snapshot's own bytes, no cache. Watched failing on the
+    977-days edit a reviewer demonstrated.
+    """
+    snap = cohort.load_snapshot()
+    if snap is None:
+        pytest.skip("no snapshot frozen yet")
+    assert snap.get("figures_hash") == cohort.figures_hash(snap), (
+        "the snapshot's figures_hash disagrees with a recomputation over its own "
+        "published blocks, so a figure was edited without re-freezing")
+    import copy
+    tampered = copy.deepcopy(snap)
+    tampered["anchor_case"]["days_carried"] = 977
+    assert tampered["figures_hash"] != cohort.figures_hash(tampered), (
+        "editing the anchor case did not change the figures hash")
 
 
 def test_point_prevalence_is_pinned_not_read_from_the_clock():

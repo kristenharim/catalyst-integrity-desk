@@ -29,6 +29,7 @@
     ],
     "window_half_width_days": 45
   },
+  "figures_hash": "figs-f4d3a0cd5b25940b",
   "frame": {
     "enumeration_cap_per_stratum": 3000,
     "first_posted_from": "2016-01-01",
@@ -42,10 +43,56 @@
     "study_type": "INTERVENTIONAL"
   },
   "frozen_at": "2026-07-22",
+  "month_convention": {
+    "anchor_days_eom": 648,
+    "dated_revisions_that_flip": 16,
+    "dated_revisions_total": 446,
+    "strata": {
+      "INDUSTRY": {
+        "dead_days_p50_eom": 239.5,
+        "lapse_to_estimate_rate_eom": 0.2222222222222222,
+        "n_stretches_eom": 178,
+        "revisions_after_lapse_eom": 58,
+        "revisions_after_lapse_to_estimate_eom": 28,
+        "trial_days_p50_eom": 390.0
+      },
+      "NIH": {
+        "dead_days_p50_eom": 568.0,
+        "lapse_to_estimate_rate_eom": 0.19889502762430938,
+        "n_stretches_eom": 491,
+        "revisions_after_lapse_eom": 55,
+        "revisions_after_lapse_to_estimate_eom": 36,
+        "trial_days_p50_eom": 590.0
+      },
+      "OTHER": {
+        "dead_days_p50_eom": 302.0,
+        "lapse_to_estimate_rate_eom": 0.3516483516483517,
+        "n_stretches_eom": 92,
+        "revisions_after_lapse_eom": 46,
+        "revisions_after_lapse_to_estimate_eom": 32,
+        "trial_days_p50_eom": 439.0
+      },
+      "OTHER_GOV": {
+        "dead_days_p50_eom": 261.0,
+        "lapse_to_estimate_rate_eom": 0.3333333333333333,
+        "n_stretches_eom": 46,
+        "revisions_after_lapse_eom": 29,
+        "revisions_after_lapse_to_estimate_eom": 16,
+        "trial_days_p50_eom": 388.5
+      }
+    }
+  },
   "n_distinct_trials": 240,
   "n_failed_to_measure": 0,
   "n_rows_stored": 240,
   "seed": 20260722,
+  "silent_carrier_audit": {
+    "counterexample": "NCT03613558",
+    "multi": 21,
+    "multi_filed_after": 0,
+    "single": 18,
+    "single_filed_after": 1
+  },
   "snapshot_id": "cohort-5b03269658b8",
   "snapshot_version": 1,
   "strata": {

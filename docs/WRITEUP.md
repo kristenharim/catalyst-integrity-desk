@@ -14,13 +14,17 @@ measurement cannot launder through it. Every other figure is filled in from a na
 differs, so a figure cannot be edited here at all: it can only be changed by changing the
 field it renders. **No figure in this document was copied from the snapshot by a person.**
 
-That closes the class of defect five review rounds kept finding and it does not close
-everything. Four residuals, named because the guard this replaced gave a narrower account of
-itself than was true. A cell bound to the wrong field renders wrongly and regenerates
-identically. A figure small enough to pass as an ordinary constant can be typed into the
-generator. A count spelled in words is invisible to a rule about digits, and one shipped in
-three documents on the pass that wrote this. And a sentence with no number in it can still
-be false; nothing here checks the arguments.
+That closes the class of defect the review rounds kept finding in retyped prose, and it does
+not close everything. The residuals are named here rather than discovered later, because the
+guard this replaced gave a narrower account of itself than was true. A cell in a table
+renders wrongly if it is bound to the wrong field, so every table cell in every document is
+recomputed from the store by a second implementation and the headers are pinned; a figure in
+a sentence the recomputation does not cover is not checked. A number spelled in words is
+invisible to a rule about digits, and one, a count of strata as "three of the four", shipped
+in three documents. A digit assembled at runtime evaluates past the literal rule. And the
+recomputation shares the measurement's own reading of a field, so a claim that
+misunderstands what a field means can pass both, which is the hole the withdrawn "by
+construction" claim went through. `docs/LIMITS.md` carries the full account.
 
 The draw is uniform over the first 3,000 trials in the registry's own ordering within each
 stratum, not over the whole stratum. "Randomly drawn" throughout means that and not more.
@@ -76,15 +80,19 @@ Those dates have stood a long time. The median is 1,101.5 days in INDUSTRY, 2,28
 OTHER_GOV, 1,178 days in OTHER, which is 3.0 to 6.3 years, and the shortest anywhere is 203
 days.
 
-**These are not trials that kept filing while one field went stale.** Not one of the 39
-carrying an expired estimate that no correction has ever ended has filed anything at all
-since its date passed, and that is by construction rather than by observation: the condition
-quoted above is that no stretch was ever emitted, and a stretch is emitted for any filing
-arriving over an already-passed date. They are not busy filers in general either. 18 of them
-have never filed a second registry version of any kind, and the median across the whole life
-of one of these trials is 2 registry versions against a median of 106.5 for an NIH trial.
-The busiest filed 10, and an earlier draft used that one trial as an illustration of the
-population; it is withdrawn as Correction 11 below.
+**Most of these are not trials that kept filing while one field went stale, and the record
+is silent on the rest.** The population splits by whether the stretch measure could see it
+at all. For the 21 carriers with more than one registry version, the measure ran and found
+no filing arriving over a standing expired date: 0 of them filed anything after the date had
+passed. For the 18 with a single version there is no consecutive pair to measure, so their
+zero is an empty loop rather than a clean record, and 1 of them, `NCT03613558`, registered
+its single filing years after the date it recorded had already gone by. So the honest
+reading is: no multi-version silent carrier reconciled and kept filing, and the
+single-version ones filed once, at a time relative to expiry that runs both ways. They are
+not busy filers in general: 18 have never filed a second registry version of any kind, and
+the median across the whole life of one of these trials is 2 registry versions against a
+median of 106.5 for an NIH trial. An earlier draft asserted a stronger, false claim over the
+whole population, corrected as Correction 13 below.
 
 A trial is **carrying an expired commitment** when the predicate above holds. Measured as of
 2026-07-22, against two denominators, beside how often each stratum files at all:
@@ -148,10 +156,10 @@ the first:
 | OTHER | 61.7% | 31.7% | 4 |
 | OTHER_GOV | 53.3% | 45.0% | 2 |
 
-Read alone, the stretch measure would have said government and academic sponsors lapse and
-file again least often. They are the most likely to be carrying an expired date now. A
-measure that needs its subject to keep talking cannot see the subject that stops, and any
-frequency statistic built from observed corrections has the same blind spot.
+Read alone, the stretch measure would have said the non-industry public and institutional
+strata lapse and file again least often. They are the most likely to be carrying an expired
+date now. A measure that needs its subject to keep talking cannot see the subject that
+stops, and any frequency statistic built from observed corrections has the same blind spot.
 
 ## The mechanism, among sponsors that are still filing
 
@@ -176,20 +184,25 @@ revision carries how much time the old date still had when it was moved:
 
 None of the three describes what anyone knew or intended, which a registry diff cannot show.
 
-| Stratum | dated revisions | after a lapse | of those, recorded ACTUAL | **estimate to estimate** | rate |
+| Stratum | dated revisions | after a lapse | of those, recorded ACTUAL | **estimate to estimate** | rate (end-of-month to first) |
 |---|---:|---:|---:|---:|---:|
-| INDUSTRY | 126 | 66 | 33 | 33 | 26.2% |
-| NIH | 181 | 57 | 20 | 37 | 20.4% |
-| OTHER_GOV | 48 | 32 | 14 | 18 | 37.5% |
-| OTHER | 91 | 49 | 14 | 35 | 38.5% |
+| INDUSTRY | 126 | 66 | 33 | 33 | 22.2% to 26.2% |
+| NIH | 181 | 57 | 20 | 37 | 19.9% to 20.4% |
+| OTHER_GOV | 48 | 32 | 14 | 18 | 33.3% to 37.5% |
+| OTHER | 91 | 49 | 14 | 35 | 35.2% to 38.5% |
 
 At the trial level, the share of trials that revised a date at all and did this at least
 once is 24 of 52 for INDUSTRY, 21 of 55 for NIH, 16 of 28 for OTHER_GOV, 21 of 38 for OTHER.
 
-So among sponsors that are still filing, 26.2% of industry revisions are something delay
-does not account for. An earlier draft reported the undivided after-lapse rate here, which
-counted the mandated update-to-actual filing as a failure to reconcile; that is retracted as
-Correction 8.
+So among sponsors that are still filing, **at least 22.2% of industry revisions** are
+something delay does not account for. That figure is a bound, not a point: whether a
+revision counts as filed-after-a-lapse turns on the date it replaced, and a month-only date
+has two readings. The rate column above carries both, 22.2% to 26.2% for industry, and the
+smaller end-of-month reading is the one quoted here because it is the weaker claim. An
+earlier draft reported the undivided after-lapse rate here, which counted the mandated
+update-to-actual filing as a failure to reconcile; that is retracted as Correction 8. A
+separate earlier draft disclosed the month convention as touching only days-since-expiry and
+moving no revision-level figure; it moves this one, and that is Correction 12.
 
 **This measure is conditional on a revision existing**, which is the same blind spot as the
 stretch measure, one level up: a trial that lapses and never files again contributes to
@@ -199,15 +212,20 @@ it that matters here, trials carrying an expired estimate and never having revis
 of 60 for INDUSTRY, 18 of 60 for OTHER_GOV. It is why this section supports the finding
 above rather than standing on its own.
 
-Two conventions that move figures by a little, stated because the document already discloses
-one that moves nothing. A revision filed on the exact day the date came due has zero days
-remaining and is counted as prospective rather than as a lapse; that is 2 of 446 dated
-revisions across all four strata and it moves no published figure. And a registry date given
-to the month rather than to the day is resolved to the first of that month, so every
-days-since-expiry figure for such a trial is inflated by up to the length of a month. That
-is 19 of 51 trials carrying an expired estimate, so the medians in the finding section and
-in the innocence check are all slightly high, by less than a month each and by less than
-that in aggregate.
+A boundary convention: a revision filed on the exact day the date came due has zero days
+remaining and is counted as prospective rather than as a lapse. That is 2 of 446 dated
+revisions across all four strata and it moves no published figure.
+
+**The month-only convention, which does move figures, in one place.** A registry date given
+to the month rather than the day names no day, so it has two readings: the first of the
+month or the last. Resolving to the last pushes every date later, which lengthens the runway
+a revision had and shortens every carry, so end-of-month is the smaller reading of every
+figure it touches and is the one this document quotes with "at least". It is not a rounding
+footnote. Of the 446 dated revisions across all four strata, 16 cross between prospective
+and after-a-lapse when the reading is switched, which is why the rate above is a band. Every
+days-since-expiry median in the finding section and the innocence check is the
+first-of-month reading and is therefore the high end of its own bound. The tables that
+follow carry both readings where the convention moves them.
 
 ## What is being measured, and what is not
 
@@ -282,6 +300,11 @@ which are the ones a monitor would actually alert on, contribute no duration at 
 study counts them and does not say how long they run or where the replacement date lands.
 Recorded in `docs/PARKING.md` as the next measurement rather than estimated here.
 
+The medians in this table are the first-of-month reading, which is the longer one. Under the
+end-of-month reading OTHER_GOV's per-trial median falls from 336 to 388.5 days and OTHER's
+holds; industry and NIH do not move, because neither has a month-only date in this measure.
+Where a stratum moves, the smaller figure is the bound.
+
 **Sensitivity, per stretch.** A stretch is emitted per consecutive version pair, so one
 lapse spanning many filings contributes many overlapping rows measuring the same expiry to
 successively later endpoints, and a frequent filer contributes more of them. One NIH trial,
@@ -303,6 +326,12 @@ direction and adds one in the other, and both have shipped from this document.
 On this unit the NIH against industry ratio is **2.4x** rather than 1.5x. **The gap between
 the two is the filing-frequency artifact, not a finding**, which is why the per-trial unit
 is primary and this one is labelled as a sensitivity.
+
+The month convention moves this table too, and further than it moves the per-trial one,
+because a stretch can cease to be a lapse entirely when the later reading of its date lands
+after the filing that would have ended it. Under end-of-month OTHER_GOV's stretch median
+runs from 222 to 261 days and 4 of 50 of its stretches disappear. The first-of-month figures
+are printed above and are the high end.
 
 ### Why the strata are not pooled
 
@@ -393,8 +422,9 @@ concluded that the batching explanation stood for OTHER and OTHER_GOV because th
 intervals bunch near anniversaries. Their closed-spell durations are neither excluded nor
 explained by anything measured here.
 
-Both withdrawals are Correction 10. The test is published below because it was run, not
-because it settles anything.
+Both of these legs were withdrawn by Correction 10, which gave the test its missing control;
+the earlier Correction 9 only stopped it being shown for one stratum. The test is published
+below because it was run, not because it settles anything.
 
 ### The clustering test, and the control windows that undercut it
 
@@ -424,9 +454,11 @@ strata, and lower by a few hundredths in the fourth**, anniversary against contr
 against 2.23x. Windows that no cadence hypothesis singles out score about the same as the
 ones it does. So the ratio measures the shape of the interval distribution, which is
 concentrated at short lags, against a null that assumes an even spread and is therefore
-wrong. It does not measure anniversaries. Both the earlier "no annual bunching" conclusion
-drawn from industry alone and the later "the explanation stands for OTHER and OTHER_GOV" are
-withdrawn, as Correction 9 and Correction 10.
+wrong. It does not measure anniversaries. Two things were withdrawn in sequence and they are
+not the same withdrawal: Correction 9 retired the *presentation* that showed the industry
+row alone under "there is no annual bunching", by publishing all four strata, and Correction
+10 retired the *conclusions* drawn from any of them, by adding the control the test never
+had. The industry "no annual bunching" reading survived Correction 9 and falls only here.
 
 **Nothing survives for any stratum, including the one the earlier draft cleared.**
 Industry's anniversary windows hold about half what its control windows do, 17 of 126 at the
@@ -453,11 +485,30 @@ trial passes or fails, and no stretch here is called a breach. Naming the duty i
 claims lexicon requires before any statement touching disclosure obligations is permitted at
 all. Naming it is not alleging it was breached.
 
+**And the duty does not reach every stratum, which an earlier draft did not say.** 42 CFR
+11.64(a)(1)(ii) is U.S. law, and it binds the applicable clinical trials the statute
+defines: broadly, trials with a U.S. site or a U.S.-regulated product. The two strata this
+study most wants to contrast are industry and NIH, where the duty plausibly applies. The
+OTHER_GOV stratum, drawn here, is not U.S. federal agencies: the drawn sponsors are non-U.S.
+public bodies, a Turkish institute, a Thai ministry, a Mexican social-security system, and a
+trial run by one of them with no U.S. arm is generally not an applicable clinical trial at
+all. So the reference line is drawn against industry and NIH and is **not** extended to
+OTHER_GOV or OTHER. What survives for those strata is the registry fact, stated without the
+regulation: their dates passed and stayed standing, for the durations reported, and no U.S.
+duty is asserted over them. This is Correction 14, and the registry has a separate
+lead-sponsor class, FED, for U.S. federal agencies other than NIH, which this study never
+drew; `docs/PARKING.md` records it as the follow-up, because it is the stratum where the
+duty applies most directly.
+
 ## The case this project was built around
 
-This project opened on a single company that had published a completion date 677 days after
-it passed, sitting on a public registry the whole time. The trial is `NCT04248439`, the date
-expired 2022-06-01 and was corrected 2024-04-08. The cohort places that case: the **85th
+This project opened on a single company that had published a completion date **at least 648
+days** after it passed, sitting on a public registry the whole time. The trial is
+`NCT04248439`. Its registered date is a month, June 2022, which names no day: read as the
+first of the month it was carried 677 days before the correction on 2024-04-08, read as the
+last of the month 648. The smaller figure is the one to lead with, and it is still roughly
+twenty-one times the thirty-day window the regulation sets for the strata that window
+reaches. The cohort places the case on the first-of-month distribution: the **85th
 percentile** of the industry stretches, and the **67th percentile** of the industry trials
 counted one observation each. Long, and inside the distribution rather than outside it.
 
@@ -559,30 +610,60 @@ was wrong arithmetically; it had no control, and a comparison with no control is
 evidence. The innocence check now ends unresolved for those strata rather than conceding to
 them.
 
-**Correction 11: an anecdote the store refutes, published as an illustration.** A draft
-named the busiest of these trials and wrote that it had filed its 10 registry versions
-*while* sitting past its date, offered as evidence that the silent carriers keep filing
-other things and stop touching one field. The version count is real and it is a **lifetime**
-count. The timing is not merely unsupported, which is how this correction first read: it is
-contradicted, and contradicted by construction. A trial is in that population only if
-`dead_date_stretches` is zero, and that field counts every consecutive version pair where a
-filing arrived over an already-passed date, across all cached versions rather than only
-date-changing ones. Zero stretches therefore means **no filing of any kind arrived after the
-date had passed**. Checked on the trial itself: every one of its versions was submitted
-before its registered date, the last of them weeks before it. The draft selected the maximum
-of a population as an illustration of that population, and the fact it illustrated was the
-opposite of what the population shows.
+**Correction 11: an anecdote asserting a timing the record does not carry.** A draft named
+the busiest of these trials and wrote that it had filed its 10 registry versions *while*
+sitting past its date, offered as evidence that the silent carriers keep filing other things
+and stop touching one field. The version count is real and it is a **lifetime** count:
+nothing in the count says when those versions were filed relative to the expiry, so the word
+"while" was invented. The generated form did not prevent this and would not have. The
+version count is emitted from a field in the replacement sentence above; the error was in a
+word with no digit in it, which is the residual the banner names, arriving in the correction
+log of the same pass that built the guard.
 
-The generated form did not prevent this and would not have. The version count is emitted
-from a field in the replacement sentence above; the word "while" was the error, and it
-carries no digits. That is the residual the banner names, arriving in the correction log of
-the same pass that built the guard.
+**Correction 12: a disclosure that understated its own scope.** The same pass that built the
+generated form added a note that a month-only registry date is resolved to the first of its
+month and so inflates days-since-expiry figures, and scoped that note to those figures and
+to nothing else. It moves more than that. The same resolved date sets the sign of every
+after-a-lapse revision, so switching to the end-of-month reading moves 16 of the 446 dated
+revisions across the prospective boundary and moves the mechanism headline from 26.2% to
+22.2% for industry. The convention now appears where the mechanism figure is stated, both
+readings are carried in the tables, and the smaller reading is the one quoted with "at
+least". Found by an adversarial reviewer computing the alternate resolution the note said
+would not matter.
+
+**Correction 13: a claim upgraded, under review, from unsupported to false.** An earlier
+draft said no silent carrier had filed anything since its date passed and called it true "by
+construction", on the reasoning that a zero stretch count means no filing arrived over a
+standing expired date. `research.backtest.carried_until_corrected` pairs consecutive
+versions, so it cannot emit a stretch for a trial's first filing, and 18 of the 39 carriers
+have a single version and therefore no pair at all. For those the zero is an empty loop, not
+a clean record. One of them, `NCT03613558`, registered its single filing years after the
+date it recorded had already passed, so it is in the population and it did file after its
+date passed. The claim is now split: 0 of the 21 multi-version carriers filed after a lapse,
+and the 18 single-version ones filed once at a time that runs both ways. The prior text said
+only that the store failed to support the anecdote; the version under review asserted
+refutation on a mechanism that does not deliver it. A correction written under review
+pressure is where the next defect goes, and this is the instance.
+
+**Correction 14: a regulation quoted against a stratum it does not reach.** The document
+used the 42 CFR 11.64(a)(1)(ii) thirty-day window as a reference line against all four
+strata, including OTHER_GOV. That stratum is not U.S. federal agencies; the drawn sponsors
+are non-U.S. public bodies, and a trial one of them runs with no U.S. arm is generally not
+an applicable clinical trial the U.S. rule binds at all. The window is now drawn against
+industry and NIH and explicitly not extended to OTHER_GOV or OTHER, the registry facts for
+those strata are stated without the regulation, and the undrawn FED stratum, where the duty
+applies most directly, is recorded in `docs/PARKING.md` as the follow-up. The finding
+sharpens: where the U.S. duty plainly applies, industry still carries an expired estimate at
+a rate the mechanism table reports, and where no such duty exists reconciliation is rarer
+still.
 
 **A note on what the corrections have in common.** Most of them were found by breaking
-something or by an outside reader, and two were found only on a second pass over material
-the same reviewer had already read without catching it. One round of review would have
-shipped both. Correction 10 is the first one found by giving an existing test a control
-rather than by reading its output.
+something or by an outside reader, and several were found only on a later pass over material
+an earlier pass had already read without catching it. Correction 10 is the first one found
+by giving an existing test a control rather than by reading its output, and Correction 13 is
+the first where a fix written under review made a true-but-weak claim false. The count is
+not falling to zero, and this document does not claim it will: the section titled for what
+went wrong grows every round it is read by someone new.
 
 ## What this does not license
 

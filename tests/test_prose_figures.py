@@ -292,7 +292,7 @@ def _expected_rows() -> dict:
                   "stretch_p50": _pctile(stretches, .5),
                   "est": est, "dated": dated, "carr": len(carr),
                   "silent": len(silent), "rev": len(revising),
-                  "t_est": len(t_est), "n": n,
+                  "t_est": len(t_est), "n": n, "open": len(openest),
                   "sil_p50": _pctile(sil_days, .5)}
 
         out.setdefault("headline", {})[c] = [
@@ -303,9 +303,16 @@ def _expected_rows() -> dict:
         out.setdefault("reversal", {})[c] = [
             f"{len(ever) / n * 100:.1f}%", f"{len(carr) / n * 100:.1f}%",
             _num(versions)]
+        # The rate is a band: first-of-month is recomputed here from the store,
+        # end-of-month depends on the second date reading and needs the version
+        # cache, which CI does not have. That half is read from the snapshot's
+        # month_convention block and validated independently, cache present, by
+        # test_month_convention_reconstructs_the_first_of_month below. So the
+        # band's high end is double entry and its low end is checked elsewhere.
+        eom = snap["month_convention"]["strata"][c]["lapse_to_estimate_rate_eom"]
         out.setdefault("mechanism", {})[c] = [
             _num(dated), _num(lapse), _num(actual), _num(est),
-            f"{est / dated * 100:.1f}%"]
+            f"{eom * 100:.1f}%", f"{est / dated * 100:.1f}%"]
         out.setdefault("trial_duration", {})[c] = [
             _num(len(per_trial)), _num(_pctile(per_trial, .5)),
             _num(round(_pctile(per_trial, .9), 1)), _num(max(per_trial))]
@@ -323,6 +330,49 @@ def _expected_rows() -> dict:
             _num(hit(ctrl)), _num(len(iv)), f"{hit(ctrl) / len(iv) * 100:.1f}%",
             f"{base * 100:.1f}%",
             f"{hit(anniv) / len(iv) / base:.2f}", f"{hit(ctrl) / len(iv) / base:.2f}"]
+        # The tables that live in the shared blocks, in the other four documents.
+        # A reviewer bound a cell in each to a different real field and watched it
+        # publish, because check() scanned only the write-up. They are re-presentations
+        # of fields already checked above, but a wrong-field binding does not care.
+        mc = snap["month_convention"]["strata"][c]
+        out.setdefault("block_primary", {})[c] = [
+            _num(len(carr)), _num(n), f"{len(carr) / n * 100:.1f}%",
+            _num(len(silent)), _num(_pctile(per_trial, .5)), _num(versions)]
+        out.setdefault("block_secondary", {})[c] = [
+            _num(n), f"{len(ever) / n * 100:.1f}%", _num(_pctile(stretches, .5)),
+            _num(round(_pctile(stretches, .9), 1)), _num(max(stretches)),
+            _num(trans), f"{cont / trans * 100:.1f}%", f"{ref / trans * 100:.1f}%"]
+        out.setdefault("block_silence", {})[c] = [
+            f"{len(ever) / n * 100:.1f}%", f"{len(carr) / n * 100:.1f}%",
+            _num(len(silent)), _num(versions)]
+        out.setdefault("block_refusal", {})[c] = [
+            _num(trans), f"{scope / trans * 100:.1f}%", f"{sup / trans * 100:.1f}%",
+            f"{unread / trans * 100:.1f}%"]
+
+    # Table headers, pinned to independent literals. The documents are generated,
+    # so a header swapped in the generator changes the committed file too and the
+    # byte comparison sees nothing; a reviewer swapped two adjacent numeric column
+    # headers and published NIH's version count under the date-change label. These
+    # must be present verbatim, so a swap fails against the literal rather than
+    # against a copy of itself.
+    out["headers"] = [
+        "| Stratum | carrying an expired estimate | of trials whose commitment is "
+        "still open | invisible to the stretch measure | median registry versions "
+        "| median date revisions |",
+        "| Stratum | dated revisions | after a lapse | of those, recorded ACTUAL "
+        "| **estimate to estimate** | rate (end-of-month to first) |",
+        "| Stratum | trials with a carry | median | p90 | max |",
+        "| Stratum | stretches | median | p90 | max | ever carried |",
+        "| Stratum | Transitions | Contingent | Refused | scope changed | "
+        "superseded | **unreadable** |",
+        "| Stratum | intervals | median interval | within the anniversary windows "
+        "| within the control windows | even-spread null | anniversary ratio | "
+        "control ratio |",
+        "| Stratum | carrying an expired estimate now | invisible to the stretch "
+        "measure | longest carry p50 | median versions |",
+        "| Stratum | carried at some point (stretch measure) | carrying one now | "
+        "invisible to the stretch measure | median versions |",
+    ]
 
     # Sentences whose figure is a relation between strata, which is where a
     # direction can invert without any single cell being wrong.
@@ -344,6 +394,11 @@ def _expected_rows() -> dict:
          f"{i['silent']} of {i['carr']} in INDUSTRY"),
         ("silent-carrier median, industry",
          f"{_num(i['sil_p50'])} days in INDUSTRY"),
+        # Figures that live only in the shared blocks of the other documents.
+        ("OTHER_GOV of-open, the README headline",
+         f"{per['OTHER_GOV']['carr']} of {per['OTHER_GOV']['open']} of their"),
+        ("industry silent, invisible-to-stretches sentence",
+         f"{i['silent']} of {i['carr']} industry trials currently carrying"),
     ]
     return out
 
@@ -400,21 +455,35 @@ def check(docs: dict, source: str) -> list:
             out.append(f"{doc}: stale, the committed bytes are not what the "
                        f"snapshot renders. Run `python3 -m research.render_writeup`.")
 
-    # Every table row, against a recomputation from the store.
+    # Every table row, against a recomputation from the store. Searched over the
+    # whole rendered output, not only the write-up: the block tables that carry
+    # the same fields live in the other four documents, and scanning only the
+    # write-up left them unchecked, which a reviewer went through.
     expected = _expected_rows()
-    writeup = rendered[mod.WRITEUP]
+    everything = "\n".join(rendered.values())
+    all_rows = [ln for text in rendered.values() for ln in text.splitlines()]
     for table, per_cls in expected.items():
-        if table == "sentences":
+        if table in ("sentences", "headers"):
             continue
         for cls, want in per_cls.items():
-            got = [_NUM.findall(r) for r in _rendered_rows(writeup, cls)]
+            got = [_NUM.findall(ln) for ln in all_rows
+                   if ln.strip().startswith(f"| {cls} |")]
             if want not in got:
-                out.append(f"{mod.WRITEUP}: no {cls} row renders the {table} "
-                           f"table's fields; recomputed from the store they are "
-                           f"{want}")
-    everything = "\n".join(rendered.values())
+                out.append(f"no {cls} row renders the {table} table's fields; "
+                           f"recomputed from the store they are {want}")
+
+    # Headers, against independent literals, so a swap fails on a mismatch rather
+    # than on a copy of itself.
+    for header in expected["headers"]:
+        if header not in everything:
+            out.append(f"a generated table header is missing or reworded; the "
+                       f"pinned form is {header[:70]!r}...")
+
+    # Whitespace-collapsed, because `_wrap` reflows prose and a figure can
+    # straddle a line break: "27 of 29" wraps to "27\nof 29" in the README.
+    flat = " ".join(everything.split())
     for label, want in expected["sentences"]:
-        if want not in everything:
+        if " ".join(want.split()) not in flat:
             out.append(f"generated text: {label} does not read {want!r}, which "
                        f"is what the store gives")
 

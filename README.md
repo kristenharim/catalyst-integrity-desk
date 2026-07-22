@@ -4,8 +4,10 @@ An auditable monitor for the moment an investment thesis quietly stops being tru
 
 <!-- generated: anchor -->
 In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
-carrying a primary completion date of June 2022. **That date had already been expired for
-677 days**, in public, on a federal registry, machine readable the entire time.
+carrying a primary completion date of June 2022. That date names a month, not a day, so read
+at its latest it **had already been expired for at least 648 days** when the revision was
+filed, and at its earliest 677 days. Either way it stood in public, on a federal registry,
+machine readable the entire time.
 <!-- /generated -->
 
 Nobody was watching, because nobody's job is to watch.
@@ -18,10 +20,11 @@ reconciliation from filing frequency, and most trials carrying an expired commit
 never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
 OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
 OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
-trial and have **zero** trials currently carrying an expired completion date. Government
-sponsors outside NIH file a median of 2, and **27 of 29 of their still-open commitments have
-already expired**. The ordering is monotone in filing frequency across all four strata,
-which is an association across four points rather than a tested relationship.
+trial and have **zero** trials currently carrying an expired completion date. Non-U.S.
+government and institutional sponsors, the OTHER_GOV stratum, file a median of 2, and **27
+of 29 of their still-open commitments have already expired**. The ordering is monotone in
+filing frequency across all four strata, which is an association across four points rather
+than a tested relationship.
 <!-- /generated -->
 
 That inverts the measure this project started with. Counting lapses that a later filing
@@ -30,16 +33,17 @@ visible when the sponsor files again. A measure that needs its subject to keep t
 see the subject that stops.
 
 <!-- generated: mechanism -->
-The supporting mechanism, among sponsors still filing: **26.2% of industry completion-date
-revisions replace an estimate that had already expired** (33 of 126), and 24 of 52 (46.2%)
-industry trials that revised a date at all did it at least once. That is narrower than
-running late, which is well documented, and narrower than the raw after-lapse count, because
-a revision recording an *actual* completion is the update the regulation requires rather
-than a failure to file it.
+The supporting mechanism, among sponsors still filing: **at least 22.2% of industry
+completion-date revisions replace an estimate that had already expired**, a bound because a
+month-only date has two readings and this is the smaller; the first-of-month reading is
+26.2% (33 of 126). 24 of 52 (46.2%) industry trials that revised a date at all did it at
+least once. That is narrower than running late, which is well documented, and narrower than
+the raw after-lapse count, because a revision recording an *actual* completion is the update
+the regulation requires rather than a failure to file it.
 
 Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
-still open. The anchor case's 677 days sits at the **85th percentile** of 188 such
-stretches: long, but not the tail.
+still open. The anchor case's carry of at least 648 days sits at the **85th percentile** of
+188 such stretches: long, but not the tail.
 <!-- /generated -->
 
 `docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the
@@ -128,7 +132,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 166 passed, 1 skipped
+python3 -m pytest tests/ -q       # 169 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -138,7 +142,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 167 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 170 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -291,8 +295,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 167
-  passed; without them that one test skips and you see 166 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. With credentials the suite is 170
+  passed; without them that one test skips and you see 169 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.

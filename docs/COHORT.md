@@ -132,10 +132,11 @@ reconciliation from filing frequency, and most trials carrying an expired commit
 never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
 OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
 OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
-trial and have **zero** trials currently carrying an expired completion date. Government
-sponsors outside NIH file a median of 2, and **27 of 29 of their still-open commitments have
-already expired**. The ordering is monotone in filing frequency across all four strata,
-which is an association across four points rather than a tested relationship.
+trial and have **zero** trials currently carrying an expired completion date. Non-U.S.
+government and institutional sponsors, the OTHER_GOV stratum, file a median of 2, and **27
+of 29 of their still-open commitments have already expired**. The ordering is monotone in
+filing frequency across all four strata, which is an association across four points rather
+than a tested relationship.
 <!-- /generated -->
 
 The revision-level split below is the supporting mechanism among sponsors that are still
@@ -146,12 +147,12 @@ filing, not the headline.
 Registered dates are revised, and **when** and **to what** they are revised is the distinction:
 
 <!-- generated: mechanism_table -->
-| Stratum | dated revisions | after a lapse | of those, recorded ACTUAL | **estimate to estimate** | rate |
+| Stratum | dated revisions | after a lapse | of those, recorded ACTUAL | **estimate to estimate** | rate (end-of-month to first) |
 |---|---:|---:|---:|---:|---:|
-| INDUSTRY | 126 | 66 | 33 | 33 | 26.2% |
-| NIH | 181 | 57 | 20 | 37 | 20.4% |
-| OTHER_GOV | 48 | 32 | 14 | 18 | 37.5% |
-| OTHER | 91 | 49 | 14 | 35 | 38.5% |
+| INDUSTRY | 126 | 66 | 33 | 33 | 22.2% to 26.2% |
+| NIH | 181 | 57 | 20 | 37 | 19.9% to 20.4% |
+| OTHER_GOV | 48 | 32 | 14 | 18 | 33.3% to 37.5% |
+| OTHER | 91 | 49 | 14 | 35 | 35.2% to 38.5% |
 <!-- /generated -->
 
 A revision filed after the old date lapsed is not automatically a failure to reconcile. If it
@@ -193,8 +194,9 @@ That rule was stated here and violated in the code: `report()` printed a pooled 
 on every run for as long as the rule had existed, and nobody noticed because the section
 looked like a summary. It is gone, and `stats()` now raises on any stratum name outside the
 four, so the pooled figure cannot be computed rather than merely not printed. The two
-government and academic strata are reported because they are the contrast that says whether
-this is a property of commercial sponsors, and on this evidence it is not.
+non-industry public and institutional strata, OTHER_GOV and OTHER, are reported because they
+are the contrast that says whether this is a property of commercial sponsors, and on this
+evidence it is not.
 
 ## The refusal bundle is resolved in every stratum, and the hole was empty
 
@@ -273,6 +275,14 @@ figures in `docs/WRITEUP.md`. That is a statement about the duty and not a refut
 behaviour: a roughly annual housekeeping cycle is consistent with the durations observed
 here, and naming the rule does not rule it out. The write-up's innocence check is where that
 is worked through.
+
+**The duty does not reach every stratum, and the write-up scopes it.** 42 CFR Part 11 is
+U.S. law and binds applicable clinical trials, broadly those with a U.S. site or a
+U.S.-regulated product. Industry and NIH are where it plausibly applies. OTHER_GOV as drawn
+here is non-U.S. public bodies, not U.S. federal agencies, so the reference line is drawn
+against industry and NIH and not extended to OTHER_GOV or OTHER; for those strata the registry
+facts stand without the regulation. The undrawn FED stratum, where the duty applies most
+directly, is the recorded follow-up. This is worked through in `docs/WRITEUP.md`.
 
 **What that does and does not license, precisely.** The rule concerns updating the date to
 *actual* once a trial reaches its actual primary completion. What is observed here is a

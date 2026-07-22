@@ -698,6 +698,172 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
     }
 
 
+def _resolve_pcd(raw: str | None, end_of_month: bool):
+    """A registry date, resolved to the first or the last day of its month.
+
+    `engine._parse_date` resolves a month-only date to the first, always. That
+    is one reading of `2022-06`, not a fact: the record names a month, and the
+    sponsor committed to no day. The other reading is the last of the month, and
+    the gap between the two bounds every duration and every held-days sign that a
+    month-precision date touches. This is deliberately not in the engine, which
+    must keep one resolution; it is the second reading, used only to compute the
+    bound the write-up quotes as "at least".
+    """
+    import calendar
+    if not raw:
+        return None
+    parts = raw.split("-")
+    try:
+        y, m = int(parts[0]), int(parts[1])
+    except (IndexError, ValueError):
+        return None
+    if len(parts) == 3:
+        try:
+            return date(y, m, int(parts[2]))
+        except ValueError:
+            return None
+    return date(y, m, calendar.monthrange(y, m)[1] if end_of_month else 1)
+
+
+def _eom_revisions(nct: str) -> list[dict]:
+    """The date-changing revision sequence, rebuilt from the cache.
+
+    Reconstructed exactly as `fetch_history` builds it -- version 0 plus the
+    status-touching versions are what the cache holds, and a version whose
+    first-of-month resolved date equals its predecessor's is a status change for
+    some other reason and is skipped. The reconstruction is validated field by
+    field against the stored first-of-month aggregates in the test, because a
+    second convention computed off a different revision set would not be a bound
+    on the same measurement.
+    """
+    out, prev = [], None
+    for v in _cached_versions(nct):
+        p = _resolve_pcd(v.get("pcd"), False)
+        if p is None:
+            continue
+        if prev is not None and p == prev:
+            continue
+        out.append({"submitted": v.get("submitted"), "pcd": v.get("pcd"),
+                    "pcd_type": (v.get("pcd_type") or "").upper()})
+        prev = p
+    return out
+
+
+def _held_split(nct: str, end_of_month: bool) -> tuple[int, int, int]:
+    """(prospective, after-lapse, after-lapse-to-estimate) for one trial."""
+    pro = lapse = est = 0
+    prev = None
+    for r in _eom_revisions(nct):
+        p = _resolve_pcd(r["pcd"], end_of_month)
+        s = _parse_date(r["submitted"])
+        if prev is not None and s is not None:
+            if (prev - s).days >= 0:
+                pro += 1
+            else:
+                lapse += 1
+                if r["pcd_type"] != "ACTUAL":
+                    est += 1
+        prev = p
+    return pro, lapse, est
+
+
+def _eom_stretches(nct: str, end_of_month: bool) -> list[int]:
+    """Carried-expired stretch durations for one trial, under one resolution."""
+    vs = _cached_versions(nct)
+    out = []
+    for prev, nxt in zip(vs, vs[1:]):
+        p = _resolve_pcd(prev.get("pcd"), end_of_month)
+        s = _parse_date(nxt.get("submitted"))
+        if p is None or s is None or p >= s:
+            continue
+        out.append((s - p).days)
+    return out
+
+
+def month_convention(rows: list[dict]) -> dict:
+    """Every published statistic a month-only date touches, under both readings.
+
+    Reads the version cache, so it runs at freeze time and is committed, the same
+    as `anchor_case`. The first-of-month figures here must equal the ones already
+    in `strata`; a test asserts it, so this cannot silently measure a different
+    thing and call it a bound.
+
+    The direction is uniform and stated so the prose can quote it: resolving a
+    month to its last day pushes every date later, which lengthens the runway a
+    revision had (fewer after-lapse revisions, a lower estimate-to-estimate rate)
+    and shortens every carry (smaller durations, and a stretch can vanish when the
+    later date lands after the filing that would have ended it). So end-of-month
+    is the conservative reading of every figure it touches, and it is the one the
+    write-up quotes with "at least".
+    """
+    out = {"anchor_days_eom": _eom_stretches(ANCHOR_NCT, True)
+           and max(_eom_stretches(ANCHOR_NCT, True)),
+           "strata": {}}
+    flips = 0
+    for cls in STRATA:
+        sub = [r for r in rows if r["sponsor_class"] == cls]
+        pro_e = lapse_e = est_e = 0
+        for r in sub:
+            pf = _held_split(r["nct"], False)
+            pe = _held_split(r["nct"], True)
+            pro_e += pe[0]
+            lapse_e += pe[1]
+            est_e += pe[2]
+            flips += abs(pf[1] - pe[1])          # revisions that cross the sign
+        dated_e = pro_e + lapse_e
+        stretches_e = [d for r in sub for d in _eom_stretches(r["nct"], True)]
+        per_trial_e = [max(_eom_stretches(r["nct"], True)) for r in sub
+                       if _eom_stretches(r["nct"], True)]
+        out["strata"][cls] = {
+            "revisions_after_lapse_eom": lapse_e,
+            "revisions_after_lapse_to_estimate_eom": est_e,
+            "lapse_to_estimate_rate_eom": (est_e / dated_e) if dated_e else None,
+            "n_stretches_eom": len(stretches_e),
+            "dead_days_p50_eom": _pct(stretches_e, .5),
+            "trial_days_p50_eom": _pct(per_trial_e, .5),
+        }
+    out["dated_revisions_that_flip"] = flips
+    out["dated_revisions_total"] = sum(
+        s["revisions_prospective"] + s["revisions_after_lapse"]
+        for s in (stats(rows, c) for c in STRATA))
+    return out
+
+
+def silent_carrier_audit(rows: list[dict], as_of: date) -> dict:
+    """The silent-carrier population split by whether the measure can speak to it.
+
+    `dead_date_stretches == 0` was published as "filed nothing since the date
+    passed, by construction". It does not entail that. `carried_until_corrected`
+    pairs consecutive versions, so it cannot emit a stretch for a trial's first
+    filing, and a single-version trial has no pair at all. For those trials zero
+    stretches is an empty loop, not a clean record.
+
+    So the population splits: multi-version carriers, where the measure ran and
+    found no filing over a standing expired date; and single-version carriers,
+    where the record is one filing and its timing relative to expiry is whatever
+    it is. This reads the cache to establish, per trial, whether any filing was
+    submitted after the registered date had passed -- which is the claim the
+    prose can actually make.
+    """
+    audit = {"multi": 0, "single": 0, "multi_filed_after": 0,
+             "single_filed_after": 0, "counterexample": None}
+    for r in rows:
+        if not silent_carrier(r, as_of):
+            continue
+        p = _parse_date(r.get("last_pcd"))
+        after = any((s := _parse_date(v.get("submitted"))) and p and s > p
+                    for v in _cached_versions(r["nct"]))
+        if (r.get("n_versions") or 0) > 1:
+            audit["multi"] += 1
+            audit["multi_filed_after"] += int(after)
+        else:
+            audit["single"] += 1
+            audit["single_filed_after"] += int(after)
+            if after and audit["counterexample"] is None:
+                audit["counterexample"] = r["nct"]
+    return audit
+
+
 def anchor_case(rows: list[dict]) -> dict:
     """The 677-day case, placed against the industry distribution.
 
@@ -794,17 +960,45 @@ def freeze() -> dict:
             "control_centres_days": list(CONTROL_MULTIPLES),
         },
         "anchor_case": anchor_case(rows),
+        "month_convention": month_convention(rows),
+        "silent_carrier_audit": silent_carrier_audit(rows, as_of),
         "n_distinct_trials": len(rows),
         "n_failed_to_measure": len(errors),
         "n_rows_stored": (sum(1 for _ in open(_results_path()))
                           if os.path.exists(_results_path()) else 0),
         "strata": by_stratum,
     }
+    # A content hash over every published block, so a hand-edit to a figure that
+    # is NOT in `strata` is caught. `snapshot_id` hashes the measured rows, so it
+    # moves when a measurement changes but not when someone edits `anchor_case`
+    # or `month_convention` in the committed json: those are derived from the
+    # cache, not from a row, and a reviewer edited days_carried to 977 and
+    # watched it publish. This hash covers what the reader sees. It is recomputed
+    # from the snapshot's own bytes with no cache, so the check runs on a clone.
+    # Residual, and it is the ledger-anchor residual again: an edit to a figure
+    # AND to this hash together defeats it, but that is two consistent edits in a
+    # committed file rather than one, and it shows in the diff.
+    snap["figures_hash"] = figures_hash(snap)
     tmp = f"{_snapshot_path()}.{os.getpid()}.tmp"
     with open(tmp, "w") as f:
         json.dump(snap, f, indent=2, sort_keys=True)
     os.replace(tmp, _snapshot_path())
     return snap
+
+
+def figures_hash(snap: dict) -> str:
+    """A hash over every published block of a snapshot, its own bytes only.
+
+    Pure function of the stored snapshot, so it needs neither the store nor the
+    cache and can be checked from a clone. Excludes `figures_hash` itself and the
+    bookkeeping counts that are not published figures.
+    """
+    published = {k: snap[k] for k in
+                 ("strata", "anchor_case", "month_convention",
+                  "silent_carrier_audit", "clustering", "frame", "as_of", "seed")
+                 if k in snap}
+    return "figs-" + hashlib.sha256(
+        json.dumps(published, sort_keys=True).encode()).hexdigest()[:16]
 
 
 def load_snapshot() -> dict | None:

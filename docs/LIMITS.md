@@ -402,10 +402,12 @@ stretch is emitted per consecutive version pair, so one lapse spanning many fili
 contributes many overlapping rows measuring the same expiry to successively later endpoints.
 They are nested prefixes, not independent observations.
 
-`NCT02931474` has 97 registry versions, **3** completion-date revisions, and **91** stretches,
-with durations running 42, 114, 356, 357, 359, 364, 400, 402 and upward. At most three real
-episodes produced 91 rows, and that single trial is 18% of the NIH stratum's entire duration
-distribution. The top five NIH trials are 49% of it.
+`NCT02931474` has 97 registry versions, **2** completion-date changes, and **91** stretches,
+with durations running 42, 114, 356, 357, 359, 364, 400, 402 and upward. A handful of real
+episodes produced 91 rows, and that single trial is a sixth of the NIH stratum's entire
+duration distribution. (This line read "3 completion-date revisions" for a while, the
+`n_pcd_revisions` field that counts the initial registration, which is the exact off-by-one
+`docs/WRITEUP.md` warns about; the write-up renders `n_date_changes` and reads 2.)
 
 Because the row count tracks how often a sponsor files for unrelated reasons while a date
 sits dead, the duration distribution is weighted toward frequent filers. Measuring one
@@ -466,24 +468,27 @@ documents, emitting every figure from a named snapshot field. `tests/test_prose_
 enforces two rules:
 
 - **no numerals in prose, over the whole generator.** Every string constant in the module is
-  checked for digits, not selected lines of the output; every numeric literal at or above 100,
-  and every non-integer literal, is rejected unless it is in a three-entry declared set of
-  units. A figure cannot be typed into prose because prose cannot contain a digit.
+  checked for digits, not selected lines of the output; **every** numeric literal is rejected
+  unless it appears in a declared table naming what it is for, indices and layout widths
+  included. A figure cannot be typed into prose because prose cannot contain a digit.
 - **the committed documents are byte-identical to a fresh render.** A figure cannot drift from
   the field it renders, because nothing copies it.
 
-Three figures that were exceptions became fields instead, which is the difference between the
-two designs: the anchor case's days carried and its two percentile ranks (`anchor_case`), and
-the clustering test's window parameters (`clustering`). Adding them did not move the snapshot
-id, which hashes the measured rows and the frame.
+Several figures that were exceptions became fields instead, which is the difference between
+the two designs: the anchor case's days carried and its two percentile ranks (`anchor_case`),
+the clustering window parameters (`clustering`), and the two readings of a month-only date
+(`month_convention`). A snapshot-wide `figures_hash` covers every published block, so a
+hand-edit to one that is not in `strata` is caught even though the snapshot id, which hashes
+only the measured rows, does not move.
 
-**What this does not prove, and it is now the whole of the residual.** A cell bound to the
-wrong field renders wrongly and regenerates identically forever. `figures()` could emit
-`open_estimates` where the column says `carrying_now` and every check would pass. That defect
-class is real: two instances of it were caught during construction, a ratio computed the wrong
-way round (rendering 0.7x for 1.5x) and a version-spread ratio inverted. Both are now fixtures.
-The mutation corpus is therefore aimed at the generator rather than at the text, and it is a
-sample, not a proof.
+**What this does not prove, and it is the whole of the residual.** A cell bound to the wrong
+field renders wrongly and regenerates identically forever. That defect class is real: several
+instances of it were caught during construction and by review, a ratio computed the wrong way
+round and a block-table cell rebound to a different real field. The tests recompute every
+table's cells, in every document, from the store by a second implementation, and pin the table
+headers to independent literals so a header swap fails too. That is double entry, not proof:
+where a figure sits in a sentence the recomputation does not cover it is unguarded, and a
+shared misunderstanding of what a field means passes both implementations.
 
 **A seventh review round attacked the guard rather than the figures, and it was right about
 most of it.** What it demonstrated, each watched publishing a wrong figure with the whole
@@ -504,7 +509,8 @@ suite green, and each now a committed fixture:
   lives in the test now.
 - **The literal rule allowed anything under a hundred**, and `4 * 31` published an invented
   minimum while a bare `60` published a methodology parameter the test had not run at. Every
-  numeric literal in the generator must now be declared with what it is for.
+  numeric literal in the generator must now be declared, with no magnitude exemption; a later
+  round showed `ord("~")` and `0.5 / 2` slip past a magnitude rule, which is why there is none.
 - **`CITATIONS` was `NON_SNAPSHOT` reborn.** Its values are exempt from the digit rule, and
   the laundering check only rejected figures that matched a real field, so an invented rate
   passed by construction. A citation may no longer carry a percentage or a
@@ -520,18 +526,90 @@ suite green, and each now a committed fixture:
   so a figure added to a quoted docstring published straight through. The quoted source must
   be digit-free.
 
+**An eighth round attacked the hardened guard and the trusted roots.** It found the recompute
+layer was inert: `check()` returned findings that no test read, so a wrong-field binding named
+in plain English left the suite green. That is the eighth instance in this file of a correct
+check nothing consults, and it is closed by one assertion over the whole of `check()`. It also
+found that everything in the snapshot outside `strata` was a trusted root, and a hand-edit to
+`anchor_case.days_carried` published a fabricated headline; `figures_hash` closes that. And it
+confirmed the residuals below rather than refuting them.
+
 **What is still open, and it is the honest residual.** A number spelled in words is invisible
-to every rule here, and one shipped on this pass: a count of strata written as "three of the
-four" was wrong in three documents and no test could see it. A digit assembled at runtime
-would pass. A figure bound to the wrong field in a sentence the recomputation does not cover
-would pass. And the recomputation is a second implementation, so a shared misunderstanding of
-what a field means is invisible to both. The rule this file keeps recording applies to the
-guard as much as to the product: a check that has only ever been watched passing on the case
-it was written for is not yet evidence.
+to every rule here, and one shipped on the seventh pass: a count of strata written as "three
+of the four" was wrong in three documents. A digit assembled at runtime, `ord("~")` or
+`0.5 / 2`, evaluates to a figure with no literal to catch. A figure bound to the wrong field
+in a sentence the recomputation does not cover would pass, and the covered set is the tables
+and a named list of sentences, not every sentence. And the recomputation is a second
+implementation, so a shared misunderstanding of what a field means is invisible to both, which
+is the hole the "by construction" retraction went through. The rule this file keeps recording
+applies to the guard as much as to the product: a check watched passing only on the case it
+was written for is not yet evidence.
 
 Also guarded mechanically, because it failed once: a hedge present in four claim documents and
 absent from the fifth. One fix pass deleted the only qualifier in `docs/SUBMISSION.md`, the
 most externally facing of the five, while the other four kept theirs.
+
+## The regulation reaches some strata and not others
+
+**Found 2026-07-22 by an adversarial reviewer checking what the lead-sponsor classes are.**
+
+The write-up used the 42 CFR 11.64(a)(1)(ii) thirty-day window as a reference line against all
+four strata. It should not have. Part 11 is U.S. law and binds applicable clinical trials,
+broadly those with a U.S. site or a U.S.-regulated product. Industry and NIH are where the duty
+plausibly applies.
+
+`OTHER_GOV` in this draw is not U.S. federal agencies. The drawn lead sponsors are non-U.S.
+public bodies, a Turkish institute, a Thai ministry, a Mexican social-security system, a
+Mozambican health institute. A trial one of them runs with no U.S. arm is generally not an
+applicable clinical trial the U.S. rule reaches at all. So the reference line is now drawn
+against industry and NIH and explicitly not extended to OTHER_GOV or OTHER; for those strata
+the registry facts stand without any regulatory claim.
+
+The registry has a separate lead-sponsor class, `FED`, for U.S. federal agencies other than
+NIH, the VA, DoD and CDC among them. That is the stratum where the duty applies most directly,
+and this study never drew it. It is recorded in `docs/PARKING.md` as the follow-up. The
+finding does not weaken: where the U.S. duty plainly applies, industry still carries an expired
+estimate at the rate the mechanism table reports, and where no such duty exists reconciliation
+is rarer still.
+
+## A month-only date has two readings, and the figures it touches are bounds
+
+**The scope of an earlier disclosure was too narrow, found 2026-07-22.** A registry date given
+to the month, `2022-06`, names no day. The engine resolves it to the first of the month, which
+is one reading; the last of the month is the other, and the two bound every figure the date
+touches. An earlier note disclosed this as affecting days-since-expiry figures only. It affects
+more: the same resolved date sets the sign of every after-a-lapse revision, so switching the
+reading moves 16 of the 446 dated revisions across the prospective boundary and moves the
+industry estimate-to-estimate headline down by several points, from its first-of-month reading
+to its end-of-month one, both of which the write-up quotes in full. It also shortens the
+durations and can drop a stretch that ceases to be a lapse under the later reading.
+
+End-of-month is the conservative reading of everything it touches, so the write-up quotes it
+with "at least" and carries the first-of-month reading beside it. The anchor case is "at least
+648 days" rather than 677. Both readings are snapshot fields (`month_convention`), computed from
+the cache at freeze time the way `anchor_case` is, and a test asserts the reconstruction
+reproduces the stored first-of-month split so the second reading bounds the same measurement.
+
+Direction, stated plainly: every headline survives at the conservative reading. 648 days is
+still about twenty-one times the thirty-day window; 22.2% is still better than a fifth of
+industry revisions. The finding never rested on the optimistic resolution.
+
+## The "filed nothing since it passed" claim was false, and was made stronger under review
+
+**Found 2026-07-22, and it is the instructive one.** A draft said no silent carrier had filed
+anything since its date passed, "by construction". The construction does not hold.
+`carried_until_corrected` pairs consecutive versions, so it emits no stretch for a trial's
+first filing, and 18 of the 39 silent carriers have a single version and so no pair. For those
+the zero stretch count is an empty loop, not a clean record. One of them, `NCT03613558`,
+registered its single filing years after the date it recorded had already passed.
+
+The claim is now split: of the 21 multi-version carriers, none filed after a lapse; the 18
+single-version ones filed once, at a time relative to expiry that runs both ways. What makes
+this worth its own section is the direction of the error. The prior text said only that the
+store failed to support an anecdote, which was true. The version under review upgraded it to
+refutation, on a mechanism that does not deliver refutation. A fix written under review pressure
+made a true-but-weak claim false, and the recomputation could not catch it because the
+recomputation reads `dead_date_stretches` too and shares the misunderstanding.
 
 ## The clustering test had no control, and its conclusion is withdrawn
 

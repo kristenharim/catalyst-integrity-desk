@@ -43,6 +43,27 @@ growing or shrinking is a genuinely different study and the more interesting one
 needs the frame rebuilt as of several historical dates. Out of scope here, and the single
 most obvious follow-up.
 
+## From round eight of the write-up review, 2026-07-22
+
+**The FED stratum, where the regulation applies most directly, was never drawn.** The study
+stratifies on INDUSTRY, NIH, OTHER_GOV, OTHER. The registry has a fifth lead-sponsor class,
+FED, for U.S. federal agencies other than NIH: the VA, the Department of Defense, the CDC,
+Walter Reed. That is the stratum where 42 CFR Part 11's duty to reconcile a completion date
+applies most cleanly, and this study has no read on it. `OTHER_GOV` as drawn turned out to be
+non-U.S. public bodies, so the regulatory framing was scoped off it (`docs/LIMITS.md`). Adding
+FED is one `--draw` under a fifth stratum name and it is the obvious next measurement: it is
+the population the whole regulatory argument is about. Not done now, because it changes the
+frame and the study is being frozen for submission, but it is the first thing a second cycle
+should do.
+
+**The month-only date convention is disclosed as a bound, not resolved.** A registry date given
+to the month is resolved to the first of the month by the engine, and the last of the month is
+an equally valid reading; the write-up now carries both and quotes the conservative one. What
+is not done is a systematic treatment: a sixth of the drawn trials carry at least one
+month-only date, and a cleaner study would either restrict the frame to day-precision dates,
+at the cost of sample size, or model the uncertainty rather than bounding it. Bounding it was the honest minimum
+under a freeze; it is not the last word.
+
 **The version-cache read is a full directory glob per trial.** `measure()` now calls
 `_versions()` to get the true latest registered date and its ESTIMATED/ACTUAL type, which
 globs every cached file for that trial. On a 700-version trial that is 700 file reads for two

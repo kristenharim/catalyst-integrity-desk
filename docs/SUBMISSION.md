@@ -65,8 +65,10 @@ hash-chains into a tamper-evident ledger.
 
 <!-- generated: anchor -->
 In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
-carrying a primary completion date of June 2022. **That date had already been expired for
-677 days**, in public, on a federal registry, machine readable the entire time.
+carrying a primary completion date of June 2022. That date names a month, not a day, so read
+at its latest it **had already been expired for at least 648 days** when the revision was
+filed, and at its earliest 677 days. Either way it stood in public, on a federal registry,
+machine readable the entire time.
 <!-- /generated -->
 
 No press release, no 8-K, and nothing in the thesis that depended on it moved.
@@ -84,10 +86,11 @@ reconciliation from filing frequency, and most trials carrying an expired commit
 never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
 OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
 OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
-trial and have **zero** trials currently carrying an expired completion date. Government
-sponsors outside NIH file a median of 2, and **27 of 29 of their still-open commitments have
-already expired**. The ordering is monotone in filing frequency across all four strata,
-which is an association across four points rather than a tested relationship.
+trial and have **zero** trials currently carrying an expired completion date. Non-U.S.
+government and institutional sponsors, the OTHER_GOV stratum, file a median of 2, and **27
+of 29 of their still-open commitments have already expired**. The ordering is monotone in
+filing frequency across all four strata, which is an association across four points rather
+than a tested relationship.
 <!-- /generated -->
 
 Counting only lapses that a later filing corrected inverts that ranking, because a lapse
@@ -95,16 +98,17 @@ becomes visible only when the sponsor files again. A measure that needs its subj
 talking cannot see the subject that stops.
 
 <!-- generated: mechanism -->
-The supporting mechanism, among sponsors still filing: **26.2% of industry completion-date
-revisions replace an estimate that had already expired** (33 of 126), and 24 of 52 (46.2%)
-industry trials that revised a date at all did it at least once. That is narrower than
-running late, which is well documented, and narrower than the raw after-lapse count, because
-a revision recording an *actual* completion is the update the regulation requires rather
-than a failure to file it.
+The supporting mechanism, among sponsors still filing: **at least 22.2% of industry
+completion-date revisions replace an estimate that had already expired**, a bound because a
+month-only date has two readings and this is the smaller; the first-of-month reading is
+26.2% (33 of 126). 24 of 52 (46.2%) industry trials that revised a date at all did it at
+least once. That is narrower than running late, which is well documented, and narrower than
+the raw after-lapse count, because a revision recording an *actual* completion is the update
+the regulation requires rather than a failure to file it.
 
 Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
-still open. The anchor case's 677 days sits at the **85th percentile** of 188 such
-stretches: long, but not the tail.
+still open. The anchor case's carry of at least 648 days sits at the **85th percentile** of
+188 such stretches: long, but not the tail.
 <!-- /generated -->
 
 <!-- generated: provenance -->
@@ -245,7 +249,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 166 passed, 1 skipped (167 passed with watsonx credentials)
+python3 -m pytest tests/ -q   # 169 passed, 1 skipped (170 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a

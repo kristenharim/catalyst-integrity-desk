@@ -358,23 +358,25 @@ reconciliation from filing frequency, and most trials carrying an expired commit
 never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
 OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
 OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
-trial and have **zero** trials currently carrying an expired completion date. Government
-sponsors outside NIH file a median of 2, and **27 of 29 of their still-open commitments have
-already expired**. The ordering is monotone in filing frequency across all four strata,
-which is an association across four points rather than a tested relationship.
+trial and have **zero** trials currently carrying an expired completion date. Non-U.S.
+government and institutional sponsors, the OTHER_GOV stratum, file a median of 2, and **27
+of 29 of their still-open commitments have already expired**. The ordering is monotone in
+filing frequency across all four strata, which is an association across four points rather
+than a tested relationship.
 <!-- /generated -->
 
 <!-- generated: mechanism -->
-The supporting mechanism, among sponsors still filing: **26.2% of industry completion-date
-revisions replace an estimate that had already expired** (33 of 126), and 24 of 52 (46.2%)
-industry trials that revised a date at all did it at least once. That is narrower than
-running late, which is well documented, and narrower than the raw after-lapse count, because
-a revision recording an *actual* completion is the update the regulation requires rather
-than a failure to file it.
+The supporting mechanism, among sponsors still filing: **at least 22.2% of industry
+completion-date revisions replace an estimate that had already expired**, a bound because a
+month-only date has two readings and this is the smaller; the first-of-month reading is
+26.2% (33 of 126). 24 of 52 (46.2%) industry trials that revised a date at all did it at
+least once. That is narrower than running late, which is well documented, and narrower than
+the raw after-lapse count, because a revision recording an *actual* completion is the update
+the regulation requires rather than a failure to file it.
 
 Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
-still open. The anchor case's 677 days sits at the **85th percentile** of 188 such
-stretches: long, but not the tail.
+still open. The anchor case's carry of at least 648 days sits at the **85th percentile** of
+188 such stretches: long, but not the tail.
 <!-- /generated -->
 
 A draft published the undivided after-lapse rate for that mechanism, which counted the
@@ -389,9 +391,6 @@ The stretch-based figures are a labelled secondary and cannot see a sponsor that
 filing. **No all-strata average exists anywhere**, and the no-pooling rule rests on three
 differences rather than on one ratio.
 <!-- /generated -->
-
-**No all-strata average exists
-anywhere**, and the no-pooling rule now rests on three differences rather than one ratio.
 
 ## Still open
 

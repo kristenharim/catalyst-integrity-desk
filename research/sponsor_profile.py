@@ -5,18 +5,21 @@ investigation. The cohort answers "what is normal". This answers "where does
 this one sit", which is the only form in which a single company's record means
 anything.
 
-The framing rule, and it is the whole reason this file is careful: 80.0% of the
-industry-sponsored trials in the cohort carried an already-passed registered
-completion date at some point, so *doing it* separates nobody. What varies is
-*how long*, and the distribution has a long tail: median 240 days, p90 996. So a
-profile reports a percentile against the cohort, never a verdict, and the
-sentence it supports is "this sponsor's longest stretch sits at the Nth
-percentile of trials examined", not anything about the sponsor.
+The framing rule, and it is the whole reason this file is careful: four in five
+of the industry-sponsored trials in the cohort carried an already-passed
+registered completion date at some point, so *doing it* separates nobody. What
+varies is *how long*, and the distribution has a long tail. So a profile reports
+a percentile against the cohort, never a verdict, and the sentence it supports is
+"this sponsor's longest stretch sits at the Nth percentile of trials examined",
+not anything about the sponsor.
 
-Those two figures are from snapshot `cohort-5b03269658b8` and are quoted here to
-explain the design. Nothing in this module reads them: every number it prints is
-computed from the cohort at call time, so the prose above can go stale without
-the output ever doing so.
+No cohort figure is retyped here. An earlier version of this docstring quoted the
+ever-carried rate and the industry median and p90 from the snapshot to explain
+the design, and a reviewer falsified all three and watched the suite stay green:
+this file is a product module, not a claim document, and it was scanned by
+nothing. The rates now live only in the claim documents, which are generated from
+the snapshot; this file states the shape of the finding in words and no numeral,
+so there is nothing here to go stale.
 
     python3 -m research.sponsor_profile NCT04248439
     python3 -m research.sponsor_profile --trial NCT04248439
