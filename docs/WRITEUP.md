@@ -1,4 +1,4 @@
-# Most trials carrying an expired commitment never filed again
+# Most trials carrying an expired commitment have never reconciled a lapsed date
 
 **Every cohort figure in this document is a field of snapshot `cohort-5b03269658b8`, frozen
 2026-07-22, with point prevalence computed as of that same date: 240 drawn trials, 60 in each
@@ -27,10 +27,16 @@ Most trials carrying an expired commitment never filed a date correction after i
 5 in industry, 15 of 19 in OTHER, 20 of 27 in OTHER_GOV. The measure that was going to be this
 study's headline is built from observed corrections and therefore cannot see them.
 
-**"Never filed again" is one measured thing**, and it is stated rather than left to inference:
-no completion-date correction filed between the date lapsing and 2026-07-22. Those dates have
-stood a long time. The median is 1,101.5 days in industry, 1,178 in OTHER and 2,288.5 in
-OTHER_GOV, which is three to six years, and the shortest anywhere is 203 days.
+**The measured condition is stronger than "has not filed lately", and it is stated rather
+than left to inference: the trial has never had a lapsed date ended by a later correction, at
+any point in its history.** Not once. The weaker reading, no correction since this particular
+date lapsed, is true of essentially every carrier by construction, since a correction would
+have moved the date; it measures nothing and is not what is counted here.
+
+Those dates have stood a long time. The median is 1,101.5 days in industry, 1,178 in OTHER
+and 2,288.5 in OTHER_GOV, which is three to six years, and the shortest anywhere is 203 days.
+Note the unit: these trials kept filing other things. `NCT05245474` filed ten registry
+versions while sitting 873 days past its date. They stopped touching one field.
 
 A trial is **carrying an expired commitment** when its most recent registered primary
 completion date is in the past and still typed as an estimate. A past date typed ACTUAL is the
@@ -302,19 +308,44 @@ estimate-to-estimate subset does not rebut batching either: a sponsor on a yearl
 replace an expired estimate with a fresh one at the next pass, which is exactly what that
 subset counts. **A cadence hypothesis is not refuted by evidence that the cadence is slow.**
 
-**The concession splits, and only half of it stands.** Batching cannot explain the trials
-currently carrying an expired estimate: a yearly sweep does not leave a date standing a median
-of 1,101.5 days in industry or 2,288.5 in OTHER_GOV. For that population the explanation is
-excluded on duration alone. It remains formally unexcluded only for the closed-spell durations
-reported further down, where a slow cycle and a slow reconciliation look alike.
+**The concession splits three ways, and the split is by stratum.**
 
-The clustering test is now run rather than deferred. Intervals between consecutive
-date-changing industry filings, n=126, have a median of 289 days, and **17 of 126 (13.5%) fall
-within 45 days of a one-, two- or three-year multiple** — at or below what an even spread over
-the observed range would give. There is no annual bunching. Keying convention, because it
-changes the answer: each interval runs between the submit dates of two consecutive versions
-that changed the completion date, so a trial's first interval runs from its initial
-registration. The figures are snapshot fields, not a reviewer's spot check.
+*One, the currently-carrying population, excluded everywhere on duration.* Measured on that
+population rather than on the silent subset of it, the median date has stood 720 days in
+industry, 1,178 in OTHER and 2,028 in OTHER_GOV. A yearly sweep does not leave a date standing
+that long. It is not excluded for all of them: 6 of the 51 carriers have been expired under a
+year, the shortest 2 days, and for those a slow cycle and a non-reconciliation look alike.
+
+*Two, industry filing timing, clean.* Industry intervals sit at 0.88 times an even spread, so
+for that stratum there is no cadence signal to explain anything away with.
+
+*Three, OTHER and OTHER_GOV closed-spell durations, unexcluded.* Those strata bunch near
+anniversaries at 1.83 and 2.13 times the null, and their closed-spell durations are the
+figures a batching cycle would inflate. For them the explanation stands.
+
+The clustering test is run rather than deferred, and it comes out differently in each
+stratum, so all four are published. An interval is the gap between the submit dates of two
+consecutive versions that changed the completion date; a trial's first interval runs from its
+initial registration. The null is the share of each stratum's observed interval range covered
+by the three windows, which is what an even spread would land in.
+
+| Stratum | intervals | median | within 45 days of a 1/2/3-year multiple | even-spread null | ratio |
+|---|---:|---:|---:|---:|---:|
+| INDUSTRY | 126 | 289 | **17 of 126 (13.5%)** | 15.3% | **0.88x** |
+| NIH | 181 | 287 | 35 of 181 (19.3%) | 12.8% | 1.51x |
+| OTHER | 91 | 372 | 18 of 91 (19.8%) | 10.8% | 1.83x |
+| OTHER_GOV | 48 | 529 | 10 of 48 (20.8%) | 9.8% | 2.13x |
+
+Industry is the only stratum at or below its null. The other three sit at 1.5 to 2.1 times it,
+and OTHER's median interval of 372 days is a year to within a week. An earlier draft published
+the industry row alone under the sentence "there is no annual bunching", which was a
+four-stratum conclusion drawn from the one stratum that supported it.
+
+**Two limits keep even this from settling the question.** The windows stop at three years while
+intervals run past 1,800 days, so long gaps sit in the denominator and can never score. And a
+trial that never changed its date contributes no interval at all, so the carriers this section
+is about supply almost none of what is measured. The test describes the cadence of sponsors
+that file. It cannot describe the cadence of sponsors that do not.
 
 **What the regulation does and does not license, precisely.** The rule concerns updating the
 date to *actual* once a trial reaches its actual primary completion. Much of what is observed

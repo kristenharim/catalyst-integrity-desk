@@ -75,7 +75,7 @@ and passed.
 
 **Rocket is ordinary, and the actual finding is about the registry.** In a random sample of
 240 phase 2/3 trials, this study cannot separate reconciliation from filing frequency, and most trials carrying an
-expired commitment never filed a date correction after it lapsed: 4 of 5 in industry,
+expired commitment have never reconciled a lapsed date: 4 of 5 in industry,
 20 of 27 for government sponsors. The ordering is monotone
 across all four strata, which is an ordering across four points and not a tested relationship: NIH sponsors file a median of
 106.5 registry versions per trial and have zero trials carrying an expired completion date,

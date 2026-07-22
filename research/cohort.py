@@ -494,6 +494,14 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
     intervals = [d for r in sub for d in (r.get("submit_intervals") or [])]
     near = sum(1 for d in intervals
                if any(abs(d - y) <= NEAR for y in YEARS))
+    # The null the comparison is against, published rather than asserted: the
+    # share of the observed range covered by the three windows. An even spread
+    # would land in them at this rate.
+    baseline = None
+    if intervals and max(intervals) > min(intervals):
+        lo, hi = min(intervals), max(intervals)
+        cov = sum(max(0, min(hi, y + NEAR) - max(lo, y - NEAR)) for y in YEARS)
+        baseline = cov / (hi - lo)
 
     # Trials still carrying an open commitment: the last registered date is an
     # estimate rather than an actual. The denominator a reader who only looks at
@@ -532,6 +540,9 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
         "submit_intervals_p50": _pct(sorted(intervals), .5),
         "submit_intervals_near_year_multiple": near,
         "submit_intervals_near_year_rate": (near / len(intervals)) if intervals else None,
+        "submit_intervals_even_spread_baseline": baseline,
+        "submit_intervals_bunching_ratio": (
+            (near / len(intervals)) / baseline if intervals and baseline else None),
         "carrying_now_of_open_rate": (carrying_now / len(open_est)) if open_est else None,
         "trial_days_p50": _pct(per_trial, .5),
         "trial_days_p90": _pct(per_trial, .9),
