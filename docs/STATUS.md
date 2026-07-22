@@ -244,6 +244,31 @@ documented command. Same defect pattern as everything else here: the check did n
 touch the path it claimed to cover. `python3 -m console.app` works today and is what
 the README now says.
 
+## The real breach, verified 2026-07-21
+
+The scripted amendment is gone. `/redline` now shows an event that actually happened:
+the thesis was approved against `NCT04248439` at 2026-05-05 for +8.4 months funded, that
+date passed, the binding catalyst became `NCT06092034` at 2028-04, and the same runway
+gives -14.5. The centre column says it plainly: **no amendment was filed, the registered
+completion date passed.** That is the strongest sentence in the project, and it removes
+the last invented element.
+
+Verified internally consistent: `breach.observed` is -14.5 against a `[0.0, 10.4]` band
+anchored to the approved thesis, and Granite's memo quotes the same two figures. No
+scripted leftovers. Classification is live Granite. 17 tests, four engine gates, tamper
+demo still flips on reload, 677 row still above the fold.
+
+**An untested gap, found by mutation and still open.** Display strings can drift from the
+values they claim to render and nothing catches it. Setting `prior_gap_months` to 99.9
+while the page kept showing 8.4 left all 17 tests green, as did setting `runway.cash` to
+1.0 while the page kept showing $50M. The provenance test proves a rendered number came
+from the snapshot; it does not prove the string is a faithful rendering of the field it
+labels. That was checked by hand, twice, and a hand check rots. The fix is a test that
+recomputes every display string from its source and asserts equality.
+
+Cosmetic leftover: one literal `--` remains in the consequence sentence prose on the
+detail page.
+
 ## The live Granite test, verified 2026-07-21
 
 With `.env` sourced the suite is **14 passed, no skips**, including

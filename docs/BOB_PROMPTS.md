@@ -175,8 +175,16 @@ someone who types the file path instead, plus the check that would have caught i
 > port, poll until it answers or time out, assert `GET /` returns 302, then terminate
 > it. Watch it fail before you add the `sys.path` line.
 
+> Second, close the display-drift gap. A display string can currently disagree with the
+> field it renders and every test stays green: `prior_gap_months` set to 99.9 while the
+> page shows 8.4, `runway.cash` set to 1.0 while the page shows $50M. Add a test that
+> walks every `display` sub-dict in the snapshot, recomputes each string from its own
+> source value with the same formatter that produced it, and asserts equality. Watch it
+> fail by editing one source number before you add the fix.
+
 **Accept when:** `python3 console/app.py` serves, `python3 -m console.app` still serves,
-the new test fails without the fix, and `pytest tests/` is green.
+the entry-point test and the drift test each fail without their fix, and `pytest tests/`
+is green.
 
 ### Prompt 3, widening: a real ranked list and a real flagged row
 
