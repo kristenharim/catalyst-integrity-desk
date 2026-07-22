@@ -6,7 +6,7 @@ A sample selected on the outcome cannot produce a base rate. This is the first a
 one.
 
 **Status: complete and frozen.** All 240 drawn trials are measured, 60 in every stratum,
-none failed. Frozen as snapshot **`cohort-8326c1c1e964`** on 2026-07-22, with point prevalence
+none failed. Frozen as snapshot **`cohort-5b03269658b8`** on 2026-07-22, with point prevalence
 computed as of that same pinned date. Every number below is a statement about that snapshot
 and nothing else, and the id is content-addressed, so changing one measured row changes it.
 
@@ -65,7 +65,7 @@ and not a rounding one.
 | INDUSTRY | 60 | **80.0%** | **240** / 996 / 2104 | 126 | 7.1% | 39.7% | 34.1% | 5.6% | **0%** |
 | NIH | 60 | **80.0%** | **567** / 1589 / 2716 | 181 | 5.0% | 34.8% | 25.4% | 9.4% | **0%** |
 | OTHER_GOV | 60 | 53.3% | 222 / 686 / 2556 | 48 | 2.1% | 25.0% | 22.9% | 2.1% | **0%** |
-| OTHER | 60 | 61.7% | 270 / 874 / 1929 | 91 | 3.3% | 33.0% | 24.2% | 8.8% | **0%** |
+| OTHER | 60 | 61.7% | 270 / 873.5 / 1929 | 91 | 3.3% | 33.0% | 24.2% | 8.8% | **0%** |
 
 There is deliberately no ALL row. **This table is the secondary measure**, kept because it
 is what earlier revisions published and because a duration distribution over stretches is
@@ -81,21 +81,23 @@ The primary figures are point prevalence and per-trial longest carry:
 | OTHER | 19 of 60 (31.7%) | 15 | 439 | 4 |
 | OTHER_GOV | 27 of 60 (45.0%) | 20 | 336 | 2 |
 
-The two frequency measures rank the strata in exactly opposite order, and the ordering is
+The two frequency measures reverse the ordering, with industry and NIH tied at the top of
+the stretch measure, and the ordering is
 filing frequency.
 
 ## Resolved: the measure changed, and the primary figures with it
 
 An adversarial review on 2026-07-22 found two measurement problems, both confirmed against the
 store. The owner resolved them the same day and the study was re-measured and re-frozen as
-`cohort-8326c1c1e964`.
+`cohort-5b03269658b8`.
 
 1. **A stretch needs a later filing to close it**, so a sponsor that lets a date lapse and
    then files nothing scored as never having carried one. **Point prevalence is now the
    primary frequency measure**: a trial whose most recent registered date is in the past and
    still typed as an estimate. The stretch-based rate is retained and labelled "lapsed and
    subsequently filed again". The silent population is a first-class result: the two measures
-   rank the four strata in exactly opposite order, and 20 of OTHER_GOV's 27
+   reverse the ordering, with industry and NIH tied on the stretch
+   measure, and 20 of OTHER_GOV's 27
    currently-expired trials are invisible to the stretch measure.
 2. **A stretch is counted per filing, not per lapse.** **Per-trial longest carry is now the
    primary duration measure** at a NIH/industry ratio of 1.5x; the per-stretch figures are a
@@ -256,7 +258,7 @@ trial that did owes an update to actual, but this data does not say which happen
 - The batching explanation is **not** ruled out by the regulation, which is a statement about
   the duty and not about anyone's cadence. It *is* ruled out for the trials currently carrying
   an expired estimate, on duration alone: a yearly sweep does not leave a date standing a
-  median of 1,102 days in industry or 2,288 in OTHER_GOV. And the clustering test reported in
+  median of 1,101.5 days in industry or 2,288.5 in OTHER_GOV. And the clustering test reported in
   `docs/WRITEUP.md` finds no annual bunching, 17 of 126 industry intervals within 45 days of a
   year multiple. See that document for the full split; an earlier version of this file said
   the explanation was ruled out by the regulation alone, which does not follow.

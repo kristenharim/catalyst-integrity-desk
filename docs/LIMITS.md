@@ -355,7 +355,8 @@ the flattering direction and survived a manual review. Corrected 2026-07-22 unde
 `cohort-8326c1c1e964`; a test now asserts a past ACTUAL date does not count.
 
 **The cross-stratum comparison is inverted by this**, and on the corrected figures the two
-measures rank the four strata in exactly opposite order. OTHER_GOV is lowest on the stretch
+measures reverse the ordering, with industry and NIH tied at the top of the stretch
+measure. OTHER_GOV is lowest on the stretch
 measure and highest on point prevalence, with 20 of its 27 currently-expired trials invisible
 to the stretch measure because they lapsed and never filed again. `docs/COHORT.md` and
 `docs/WRITEUP.md` both said government and academic sponsors "did it less often". On this
@@ -517,7 +518,7 @@ strata are exactly the four measured ones.
 
 A rate with no version is a claim about whatever the store happened to contain the day
 somebody read it. `data/cohort/snapshot.json` freezes the measurement under a
-content-addressed id (currently `cohort-8326c1c1e964`, 240 trials, 60 per stratum), hashed
+content-addressed id (currently `cohort-5b03269658b8`, 240 trials, 60 per stratum), hashed
 over the measured rows and the frame together, because a rate means nothing without the
 denominator that produced it.
 

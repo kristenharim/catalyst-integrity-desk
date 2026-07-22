@@ -310,7 +310,7 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 ## The cohort study, closed 2026-07-22
 
 The random cohort is finished and frozen. 240 trials drawn, 60 in each of four sponsor
-strata, all 240 measured, none failed. Snapshot **`cohort-8326c1c1e964`**, and every
+strata, all 240 measured, none failed. Snapshot **`cohort-5b03269658b8`**, and every
 published figure now cites it. `docs/WRITEUP.md` is the publishable write-up;
 `docs/COHORT.md` is the working record with the full correction history.
 

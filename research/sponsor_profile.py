@@ -13,7 +13,7 @@ profile reports a percentile against the cohort, never a verdict, and the
 sentence it supports is "this sponsor's longest stretch sits at the Nth
 percentile of trials examined", not anything about the sponsor.
 
-Those two figures are from snapshot `cohort-65fdf1f71b1d` and are quoted here to
+Those two figures are from snapshot `cohort-5b03269658b8` and are quoted here to
 explain the design. Nothing in this module reads them: every number it prints is
 computed from the cohort at call time, so the prose above can go stale without
 the output ever doing so.

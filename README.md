@@ -12,7 +12,7 @@ Nobody was watching, because nobody's job is to watch.
 In a random sample of 240 phase 2/3 trials, **this study cannot separate reconciliation from
 filing frequency, and most trials carrying an expired commitment never filed a date correction
 after it lapsed** — 4 of 5 in industry, 20 of 27 for government sponsors, dates that have stood
-a median of 1,102 and 2,288 days respectively. NIH
+a median of 1,101.5 and 2,288.5 days respectively. NIH
 sponsors file a median of 106.5 registry versions per trial and have **zero** trials currently
 carrying an expired completion date. Government and academic sponsors file a median of 2, and
 **27 of their 29 still-open commitments have already expired**. The ordering is monotone in
@@ -35,7 +35,7 @@ still open. Rocket's 677 days sits at the **85th percentile** of 188 such stretc
 not the tail.
 
 `docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the working record. Every
-cohort figure is a field of snapshot `cohort-8326c1c1e964`: 240 trials, 60 in each of four
+cohort figure is a field of snapshot `cohort-5b03269658b8`: 240 trials, 60 in each of four
 sponsor strata, all measured, point prevalence as of 2026-07-22.
 
 ## The claim, in one sentence
@@ -113,7 +113,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 165 passed, 1 skipped
+python3 -m pytest tests/ -q       # 166 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -123,7 +123,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 166 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 167 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -276,8 +276,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 166
-  passed; without them that one test skips and you see 165 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. With credentials the suite is 167
+  passed; without them that one test skips and you see 166 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.

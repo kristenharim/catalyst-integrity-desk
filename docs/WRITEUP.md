@@ -1,6 +1,6 @@
 # Most trials carrying an expired commitment never filed again
 
-**Every cohort figure in this document is a field of snapshot `cohort-8326c1c1e964`, frozen
+**Every cohort figure in this document is a field of snapshot `cohort-5b03269658b8`, frozen
 2026-07-22, with point prevalence computed as of that same date: 240 drawn trials, 60 in each
 of four sponsor strata, all measured.** The id is content-addressed over the measured rows
 and the frame together, so it cannot be re-cut under the same name, and a test recomputes
@@ -29,7 +29,7 @@ study's headline is built from observed corrections and therefore cannot see the
 
 **"Never filed again" is one measured thing**, and it is stated rather than left to inference:
 no completion-date correction filed between the date lapsing and 2026-07-22. Those dates have
-stood a long time. The median is 1,102 days in industry, 1,178 in OTHER and 2,288 in
+stood a long time. The median is 1,101.5 days in industry, 1,178 in OTHER and 2,288.5 in
 OTHER_GOV, which is three to six years, and the shortest anywhere is 203 days.
 
 A trial is **carrying an expired commitment** when its most recent registered primary
@@ -39,7 +39,7 @@ of 2026-07-22, against two denominators, beside how often each stratum files at 
 
 | Stratum | carrying an expired estimate | of trials whose commitment is still open | invisible to the stretch measure | median registry versions | median date revisions |
 |---|---:|---:|---:|---:|---:|
-| NIH | 0 of 60 (0.0%) | 0 of 18 (**0.0%**) | 0 | 106.5 | 3 |
+| NIH | 0 of 60 (0.0%) | 0 of 18 (**0.0%**) | 0 of 0 | 106.5 | 3 |
 | INDUSTRY | 5 of 60 (8.3%) | 5 of 15 (33.3%) | **4 of 5** | 9 | 2 |
 | OTHER | 19 of 60 (31.7%) | 19 of 28 (67.9%) | 15 of 19 | 4 | 1 |
 | OTHER_GOV | 27 of 60 (45.0%) | 27 of 29 (**93.1%**) | 20 of 27 | 2 | 0 |
@@ -230,12 +230,11 @@ with 97 versions and two date changes contributes 91 of that stratum's 493 stret
 | INDUSTRY | 188 | 240 | 996 | 2,104 | 80.0% |
 | NIH | 493 | 567 | 1,589 | 2,716 | 80.0% |
 | OTHER_GOV | 50 | 222 | 686 | 2,556 | 53.3% |
-| OTHER | 96 | 270 | 874 | 1,929 | 61.7% |
+| OTHER | 96 | 270 | 873.5 | 1,929 | 61.7% |
 
-Percentiles linearly interpolated and reported to the nearest day: industry median 239.5 as
-240 and p90 995.6 as 996, OTHER p90 873.5 as 874, OTHER_GOV per-trial p90 726.9 as 727. NIH
+Percentiles linearly interpolated and reported to the nearest day: industry p90 995.6 as 996 and the half-integer medians printed in full, OTHER p90 873.5 printed as 873.5, OTHER_GOV per-trial p90 726.9 as 727. NIH
 median registry versions is 106.5 and is printed as such rather than rounded, because `:.0f`
-rounds half to even and would show 106.
+rounds half to even and would drop the half.
 On this unit the NIH/industry ratio is 2.4x rather than 1.5x. **The gap between 1.5x and 2.4x
 is the filing-frequency artifact, not a finding**, which is why the per-trial unit is primary
 and this one is labelled as a sensitivity.
@@ -305,7 +304,7 @@ subset counts. **A cadence hypothesis is not refuted by evidence that the cadenc
 
 **The concession splits, and only half of it stands.** Batching cannot explain the trials
 currently carrying an expired estimate: a yearly sweep does not leave a date standing a median
-of 1,102 days in industry or 2,288 in OTHER_GOV. For that population the explanation is
+of 1,101.5 days in industry or 2,288.5 in OTHER_GOV. For that population the explanation is
 excluded on duration alone. It remains formally unexcluded only for the closed-spell durations
 reported further down, where a slow cycle and a slow reconciliation look alike.
 
@@ -448,7 +447,7 @@ python3 -m pytest tests/test_cohort_store.py -q
 The report refuses to describe the snapshot as current if the store has moved since the
 freeze. The store is `data/cohort/results.jsonl`, one row per trial; superseded measurements
 are kept in `results-archive.jsonl`. The frozen figures are in `data/cohort/snapshot.json`
-under the id `cohort-8326c1c1e964`, and a test recomputes every one of them from the store,
+under the id `cohort-5b03269658b8`, and a test recomputes every one of them from the store,
 field by field, against the snapshot's own pinned as-of date. Every cohort figure quoted in
 this document is one of those fields; the classes that are not are named in the opening
 section.

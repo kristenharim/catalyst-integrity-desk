@@ -75,7 +75,8 @@ and passed.
 
 **Rocket is ordinary, and the actual finding is about the registry.** In a random sample of
 240 phase 2/3 trials, this study cannot separate reconciliation from filing frequency, and most trials carrying an
-expired commitment never filed a date correction after it lapsed. The ordering is monotone
+expired commitment never filed a date correction after it lapsed: 4 of 5 in industry,
+20 of 27 for government sponsors. The ordering is monotone
 across all four strata, which is an ordering across four points and not a tested relationship: NIH sponsors file a median of
 106.5 registry versions per trial and have zero trials carrying an expired completion date,
 while government and academic sponsors file a median of 2 and **27 of their 29 still-open
@@ -88,7 +89,7 @@ that had already expired** (33 of 126). Industry point prevalence is 8.3% of all
 33.3% of those still carrying an open commitment. Rocket's 677 days is the 85th percentile of
 188 such stretches.
 
-Every cohort figure is a field of snapshot `cohort-8326c1c1e964`: 240 trials, 60 in each of
+Every cohort figure is a field of snapshot `cohort-5b03269658b8`: 240 trials, 60 in each of
 four sponsor strata, all measured, point prevalence as of 2026-07-22. `docs/COHORT.md` has the
 frame and the limits; `docs/WRITEUP.md` is the write-up.
 
@@ -220,7 +221,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 165 passed, 1 skipped (166 passed with watsonx credentials)
+python3 -m pytest tests/ -q   # 166 passed, 1 skipped (167 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
