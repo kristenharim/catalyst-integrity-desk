@@ -194,16 +194,31 @@ only because those digits happen to appear in the file. Dollars render to whole
 millions, so cash shows `$50M` against a 10-Q reading 49.61. `app.run(port=5000)`
 collides with macOS ControlCenter on this machine and will not bind on demo day.
 
+## Attribution, resolved 2026-07-21
+
+Bob built the console. One Bob session did sub-task 1 and sub-tasks 2 to 6 in a
+single run past its stopping point: `make_snapshot.py`, `app.py`, all five
+templates, `test_console.py`, `requirements.txt`.
+
+`docs/BOB_LOG.md` had said Claude Code for that work and for the redline loop.
+Bob writes its own log row and was naming the wrong tool. The correct split is
+now three Bob rows plus the governance port, against one genuine Claude row for
+verification and gate checks. `AGENTS.md` now states what Bob is called, which is
+where the fix belongs, since correcting rows afterwards does not stop the next one.
+
+That leaves the console defensibly Bob's, which is the requirement with no partial
+credit. Export the two console sessions into `docs/bob-sessions/` and the two
+`pending export` rows become real. Scan them first:
+
+```bash
+grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
+```
+
 ## Still open
 
-- The confirm-page integrity badge, and a test for it
-- Who the console is attributed to. `docs/BOB_LOG.md` names Claude Code for
-  sub-tasks 1 through 6 and for Prompt 2, leaving one row attributed to Bob. But
-  `docs/bob-sessions/phase2-redline-loop.json` is a genuine Bob task export whose
-  title is Prompt 2 verbatim, so that row and its transcript disagree. The README
-  is written from this log, the challenge requires Bob as the primary development
-  tool, and the Bob budget is still unspent. Resolve the attribution before the
-  README, not after.
+- The badge repair, Prompt 3 repair in `docs/BOB_PROMPTS.md`. Bob, exported. It
+  calls no live API, so it cannot repeat the rate-limit episode.
+- Export the two console Bob sessions and fill in the two `pending export` rows
 - The contract list has only two rows: SANA has no live pivotal trial. Thin for a
   view about ranking, but the list is not the demo beat. Revisit only if cheap.
 - The README, written from `docs/BOB_LOG.md` rather than from memory

@@ -111,3 +111,10 @@ demo for this submission. Phase 2 copies four files out of it, listed in
 Add a row to `docs/BOB_LOG.md` for each task, naming the tool. The README's Bob
 section is written from that file rather than from memory, so a line that says
 "by hand" must never be described later as yours.
+
+**You are IBM Bob. Write `IBM Bob` in the Tool column, and nothing else.** Do not
+copy the value from the row above and do not name the model you believe you are.
+This has already gone wrong twice: you wrote `Claude Code` for your own work on
+the redline loop and again on the console, which understated your contribution on
+the one requirement the submission cannot lose. In the Transcript column name the
+export file if one exists yet, otherwise write `pending export`.

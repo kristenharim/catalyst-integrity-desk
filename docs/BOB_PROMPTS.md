@@ -110,6 +110,53 @@ substantial Bob spend on this project, so it is one conversation and not five.
 seen failing on a planted token, `make_snapshot.py --displays` is idempotent, and
 `/` lands on the timeline with the 677 row above the fold.
 
+### Prompt 3, repair: the integrity badge
+
+Verification of sub-tasks 2 to 6 found one defect and three smaller ones. The defect
+is the tamper demo itself. Nothing in this task calls watsonx, so the rate-limit
+episode that ate the last budget cannot repeat here.
+
+Items are in priority order. If anything goes wrong, stopping after item 2 still
+leaves the demo intact.
+
+> Read the verification section of `docs/STATUS.md` first.
+>
+> **1. The integrity badge is decorative.** `GET /redline/confirm` reads `intact`
+> from the query string, set once at decision time by the POST handler. Tamper the
+> ledger and reload, which is exactly what the page instructs, and the badge still
+> reads intact. Measured: `BeliefLedger.verify()` returns `False` on disk while the
+> page returns `✓ intact`. The confirm handler must open the ledger and call
+> `verify()` itself, at render time.
+>
+> Write the test before the fix and watch it fail. It must POST a decision, tamper a
+> byte the hash actually covers, and assert the badge flips. Note that the verdict
+> word lives in `data/review_log.jsonl`, not the ledger, so editing `approve` changes
+> nothing hashed and `verify()` stays `True`. That was a real false negative during
+> verification. Change something inside the `card` payload instead.
+>
+> **2. The app cannot bind its port.** `app.run(port=5000)` collides with macOS
+> ControlCenter, so `python3 console/app.py` fails to start on the demo machine. Read
+> the port from the `PORT` environment variable, defaulting to something free.
+>
+> **3. Add a `--displays` flag to `make_snapshot.py`.** Display strings are currently
+> produced inside `_serialise_runway` and `_serialise_contract`, so the only way to
+> change a display format is a full rebuild, and a full rebuild needs Granite. Extract
+> the formatting into a function that takes a loaded snapshot dict and adds the display
+> fields, call it from both the build path and a new `--displays` flag that loads
+> `data/snapshot.json`, applies it, and writes it back. No credential check on that
+> path, it needs none. Running it twice must leave the file byte-identical.
+>
+> **4. Close the provenance gap.** `redline.html` still formats numbers in the template
+> with `%.1f`, and `/redline` is missing from the provenance test's route list. It
+> passes today only because those digits happen to appear in the snapshot. Give the
+> breach its display strings, render those, add `/redline` to the parametrize, and
+> refresh the file with `--displays`.
+>
+> Do not regenerate `data/snapshot.json`, do not call watsonx, do not edit `engine/`.
+
+**Accept when:** the badge test fails before the fix and passes after, `pytest tests/`
+is green, `--displays` is idempotent, and `/redline` is in the provenance parametrize.
+
 ---
 
 ## Prompt 4: the panel
