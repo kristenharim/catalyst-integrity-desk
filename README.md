@@ -34,7 +34,7 @@ No credentials, no API keys, no network. The demo runs from a committed snapshot
 ```bash
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 13 passed, 1 skipped
+python3 -m pytest tests/ -q       # 16 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -44,7 +44,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 14 passed. That test is verified not to pass on the
+credentials. With them the suite is 17 passed. That test is verified not to pass on the
 stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -55,7 +55,7 @@ stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 | the red node | a revision filed in April 2024 carrying a completion date from June 2022 |
 | the table below it | every input with the XBRL tag it resolved through |
 | `/contracts` | the ranked list, with unreliable rows shown below it and never ranked |
-| `/redline` | a scripted amendment that flips the gap negative, and Granite's memo about it |
+| `/redline` | the thesis breaking: approved against a date that then lapsed, and Granite's memo about it |
 | Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
 
 **The tamper demo:** accept the redline, edit any byte inside the `card` object in
@@ -77,13 +77,6 @@ company facts, live ClinicalTrials.gov version history, and a live IBM Granite c
 classification is recorded in the file with `source: "granite"`. Rebuilding it requires
 credentials and is never done during a demo. The `docs/bob-sessions/` transcripts show it
 being built.
-
-The console opens on the Rocket revision timeline, because the 677-day row is the point.
-
-`data/snapshot.json` is committed on purpose. It is the demo artifact, not a build
-product, so anyone cloning this repo sees the same numbers without an IBM account. To
-rebuild it against live SEC, registry and Granite APIs you need watsonx credentials in
-`.env`, then `python3 console/make_snapshot.py`.
 
 ## The theme: intelligent systems for the future of work
 
@@ -194,8 +187,13 @@ the snapshot.
 
 ## What it found
 
-**Rocket Pharmaceuticals, `NCT04248439`:** a completion date revised in April 2024 that
-had already been expired for 677 days. Four revisions, 1,008 days of net slip.
+**Rocket Pharmaceuticals.** A completion date revised in April 2024 that had already been
+expired for 677 days, on `NCT04248439`. Four revisions, 1,008 days of net slip. That date
+has since passed too, so the binding catalyst is now `NCT06092034` at 2028-04, against
+which the same runway gives **-14.5 months, financing required**. Anchored to the old date
+the thesis read +8.4 months, funded. No amendment was filed. The date simply arrived, and
+passed. The successor trial had already carried an expired date of its own, for 30 days,
+after a 943 day move.
 
 **Mirati, `NCT04613596`:** 95 protocol versions, 6 of which moved the completion date,
 2,193 days of net slip, including a +1,317 day move reversed two months later.
