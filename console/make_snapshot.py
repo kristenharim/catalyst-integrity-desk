@@ -13,6 +13,10 @@ Verify an existing snapshot:
 
 Refresh display strings without a full rebuild (no credentials needed):
     python3 console/make_snapshot.py --displays
+
+Recompute which requested tickers produced no contract, and why (network, but
+no watsonx credentials, and it leaves the contracts and redline blocks alone):
+    python3 console/make_snapshot.py --unresolved
 """
 from __future__ import annotations
 
@@ -27,9 +31,9 @@ from datetime import date
 # Repo root is one level up from this file.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from engine.gap import build, CatalystContract
+from engine.gap import build, find_trials, CatalystContract
 from engine.ledger import BeliefCard
-from engine.runway import ticker_to_cik
+from engine.runway import compute_runway, ticker_to_cik
 from orchestrator.granite import GraniteClassifier
 from orchestrator.redline import ContractDelta, run_redline
 
@@ -116,6 +120,40 @@ def _cmd_bar(contracts: dict) -> dict:
         "active_breaches": active_breaches,
         "lapsed_expectations": lapsed_expectations,
     }
+
+
+def _unresolved_row(ticker: str, cik_map) -> dict:
+    """Say why a requested ticker produced no contract, instead of dropping it.
+
+    `build()` returns None for two different reasons and the caller cannot tell
+    them apart from the None alone.  Re-deriving here rather than changing the
+    signature keeps `engine/gap.py` untouched, and both reasons are worth
+    distinguishing on screen:
+
+      no trial matched  - the sponsor-name search returned nothing.  A matching
+                          problem, not a finding about the company.
+      every date lapsed - the sponsor has registered pivotal completions and
+                          every one of them is in the past.  That is the
+                          strongest date-integrity signal there is, and it is
+                          exactly the row that must never disappear quietly.
+
+    Needs network (SEC and ClinicalTrials.gov), like the rest of the build.  No
+    credentials, and never called at render time.
+    """
+    r = compute_runway(ticker, cik_map)
+    trials = find_trials(r.name)
+    if not trials:
+        reason = "no pivotal trial matched this sponsor name in the registry"
+    else:
+        latest = max((t["pcd"] for t in trials if t.get("pcd")), default=None)
+        reason = (
+            f"every registered pivotal completion has lapsed "
+            f"(latest {latest})" if latest else
+            "every registered pivotal completion has lapsed"
+        )
+    # `name` is the string the registry search was actually run against, which is
+    # why the no-match reason is readable: it names what was searched for.
+    return {"ticker": ticker, "name": r.name, "reason": reason}
 
 
 def apply_displays(snapshot: dict) -> dict:
@@ -401,11 +439,17 @@ def build_snapshot() -> dict:
     contracts: dict[str, dict] = {}
     rckt_contract: CatalystContract | None = None
 
+    unresolved: list[dict] = []
     for ticker in TICKERS:
         print(f"  building {ticker}...", flush=True)
         c = build(ticker, cik_map)
         if c is None:
-            print(f"  {ticker}: no live pivotal trial found, skipping", file=sys.stderr)
+            # Shown on the screen, never silently dropped.  A requested ticker
+            # that vanishes with only a stderr line is the failure this project
+            # exists to catch, so it gets a row and a reason.
+            row = _unresolved_row(ticker, cik_map)
+            print(f"  {ticker}: unresolved, {row['reason']}", file=sys.stderr)
+            unresolved.append(row)
             continue
         contracts[ticker] = _serialise_contract(c)
         if ticker == "RCKT":
@@ -452,6 +496,7 @@ def build_snapshot() -> dict:
     snapshot = {
         "contracts": contracts,
         "redline": redline_data,
+        "unresolved": unresolved,
     }
     # Add display strings for the redline breach so the template needs none.
     apply_displays(snapshot)
@@ -497,12 +542,41 @@ def refresh_displays() -> None:
     print(f"Display strings refreshed: {SNAPSHOT_PATH}")
 
 
+def refresh_unresolved() -> None:
+    """Recompute the unresolved block of an existing snapshot and write it back.
+
+    Any ticker in TICKERS with no contract gets a row saying why.  Hits SEC and
+    ClinicalTrials.gov, needs no watsonx credentials, and leaves the contracts
+    and redline blocks untouched, so it cannot disturb the Granite-sourced
+    classification the way a full rebuild would.
+    """
+    if not os.path.exists(SNAPSHOT_PATH):
+        print(f"ERROR: {SNAPSHOT_PATH} does not exist. Run make_snapshot.py first.",
+              file=sys.stderr)
+        sys.exit(1)
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+
+    cik_map = ticker_to_cik()
+    missing = [t for t in TICKERS if t not in snap.get("contracts", {})]
+    snap["unresolved"] = [_unresolved_row(t, cik_map) for t in missing]
+
+    with open(SNAPSHOT_PATH, "w") as f:
+        json.dump(snap, f, indent=2)
+    for row in snap["unresolved"]:
+        print(f"  {row['ticker']}: {row['reason']}")
+    print(f"Unresolved block refreshed ({len(missing)} of {len(TICKERS)}): {SNAPSHOT_PATH}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build or verify data/snapshot.json")
     parser.add_argument("--verify", action="store_true",
                         help="Load and verify an existing snapshot instead of rebuilding")
     parser.add_argument("--displays", action="store_true",
                         help="Refresh display strings in an existing snapshot (no credentials needed)")
+    parser.add_argument("--unresolved", action="store_true",
+                        help="Recompute the unresolved-ticker block in an existing snapshot "
+                             "(network, but no watsonx credentials)")
     args = parser.parse_args()
 
     if args.verify:
@@ -511,6 +585,10 @@ def main() -> None:
 
     if args.displays:
         refresh_displays()
+        return
+
+    if args.unresolved:
+        refresh_unresolved()
         return
 
     print("Building snapshot...")

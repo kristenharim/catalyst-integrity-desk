@@ -93,7 +93,8 @@ def contract_list():
         else:
             unreliable.append((ticker, c))
     reliable.sort(key=lambda tc: tc[1]["gap_months"] if tc[1]["gap_months"] is not None else float("inf"))
-    return render_template("contracts.html", reliable=reliable, unreliable=unreliable)
+    return render_template("contracts.html", reliable=reliable, unreliable=unreliable,
+                           unresolved=SNAPSHOT.get("unresolved", []))
 
 
 @app.get("/contract/<ticker>")

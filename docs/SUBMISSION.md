@@ -88,10 +88,9 @@ vocabulary, and stops. The judgement stays human; the vigilance is what gets aut
 
 ## How IBM Bob was used
 
-Bob was the primary development tool. Eleven logged tasks, eight full session transcripts
-committed to the repository at `docs/bob-sessions/`, 5.4 MB of them. Those eight back ten
-of the eleven rows, two of them covering two rows each. The remaining row is marked
-`pending export` in the log rather than counted as evidence it does not have.
+Bob was the primary development tool. Twelve logged tasks, nine full session transcripts
+committed to the repository at `docs/bob-sessions/`, 6.1 MB of them. Every row is backed:
+nine transcripts cover twelve rows because three Bob sessions each produced two.
 
 Bob built: the governance port (ledger, challenge, classifier, Granite client), the redline
 loop, the entire console including all three views and the test suite, the snapshot

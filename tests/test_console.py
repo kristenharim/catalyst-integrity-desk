@@ -602,3 +602,35 @@ def test_display_strings_match_their_sources(snapshot_raw):
     assert committed.get("cmd_bar") == recomputed.get("cmd_bar"), (
         "command bar counts do not match the contracts they summarise"
     )
+
+
+def test_unresolved_ticker_is_shown_not_dropped(client):
+    """A monitored ticker that produces no contract must still reach the screen.
+
+    SANA is in console.make_snapshot.TICKERS and has a reliable runway, but the
+    sponsor-name search matches no trial, so build() returns None. It used to be
+    dropped with only a line on stderr, which meant /contracts silently showed
+    four of five requested tickers. A screen that hides its hard cases is worse
+    than one that shows them, so it gets a row and a stated reason.
+    """
+    r = client.get("/contracts")
+    assert r.status_code == 200
+    body = r.data.decode()
+    assert "SANA" in body, "/contracts must show SANA rather than dropping it"
+    assert "no pivotal trial matched" in body, (
+        "/contracts must say why SANA produced no contract, not just list it"
+    )
+
+
+def test_every_monitored_ticker_appears_on_contracts(client):
+    """Nothing in TICKERS may vanish from /contracts without appearing somewhere.
+
+    Ranked, flagged, or unresolved: every requested ticker lands in one of the
+    three sections. This is the general form of the SANA bug, so a sixth ticker
+    added later cannot reintroduce it silently.
+    """
+    from console.make_snapshot import TICKERS
+
+    body = client.get("/contracts").data.decode()
+    missing = [t for t in TICKERS if t not in body]
+    assert not missing, f"tickers requested but absent from /contracts: {missing}"

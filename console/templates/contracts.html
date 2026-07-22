@@ -72,4 +72,27 @@
   </tbody>
 </table>
 {% endif %}
+
+{% if unresolved %}
+<hr>
+<h2>Unresolved &middot; requested, no contract</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Ticker</th>
+      <th>Company</th>
+      <th>Why there is no contract</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in unresolved %}
+    <tr>
+      <td>{{ u.ticker }}</td>
+      <td>{{ u.name }}</td>
+      <td>{{ u.reason }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
 {% endblock %}

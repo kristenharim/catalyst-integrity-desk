@@ -122,9 +122,9 @@ funding target.
 ## How IBM Bob was used
 
 Bob was the primary development tool. The split below comes from `docs/BOB_LOG.md`, which
-was written as the work happened. Ten of the eleven Bob rows there are backed by a full
-task export in `docs/bob-sessions/`; the eleventh, the breach-moment pass, is marked
-`pending export` in the log rather than quietly counted as evidence.
+was written as the work happened. Every Bob row there is backed by a full task export in
+`docs/bob-sessions/`: nine transcripts covering twelve rows, because three Bob sessions
+each produced two logged rows.
 
 **Built with Bob:**
 

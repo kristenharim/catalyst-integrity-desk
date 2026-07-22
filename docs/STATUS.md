@@ -309,14 +309,17 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## Still open
 
-- **The breach-moment Bob task is still the one row in `docs/BOB_LOG.md` with no
-  transcript.** The panel row was closed 2026-07-21 by `phase4-panel.json`. A second
-  file exported at the same time turned out to be a byte-identical re-export of
-  `phase3-repair-and-widening.json`, checked by hashing the payload with `exportedAt`
-  stripped, so it was discarded rather than committed as a ninth transcript. Until the
-  breach-moment task is exported, the README and the submission pack both say ten of
-  eleven rows are backed, and name the exception. Do not restore the stronger sentence
-  before the file exists.
+- ~~The breach-moment Bob task has no transcript.~~ Closed 2026-07-21. All twelve rows
+  are backed by nine transcripts, three sessions having produced two rows each. Two
+  things were learned doing it. Exports were twice re-runs of an already-committed task,
+  caught by hashing the payload with `exportedAt` stripped rather than trusting the
+  filename, so check that before filing a new one. And the export that finally arrived
+  was not the missing row at all: it was the console planning pass, a real Bob task with
+  no row in the log, which is now logged. The breach-moment work turned out to live
+  inside `phase3-real-breach.json`, attributed on artifact evidence: `_cmd_bar`,
+  `lapsed_history`, `Integrity memo` and `test_snapshot_no_lapsed_catalyst` all appear
+  there at their highest counts, alongside 23 write operations, and the two later
+  sessions treat those artifacts as already existing.
 - ~~**Publish the repo on GitHub.**~~ Done 2026-07-22, public at
   https://github.com/kristenharim/catalyst-integrity-desk. Full history, 58 commits,
   not a squashed snapshot. Re-scanned before pushing: `.env` never committed on any

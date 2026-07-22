@@ -723,5 +723,12 @@
     "monitored": 4,
     "active_breaches": 2,
     "lapsed_expectations": 3
-  }
+  },
+  "unresolved": [
+    {
+      "ticker": "SANA",
+      "name": "Sana Biotechnology, Inc.",
+      "reason": "no pivotal trial matched this sponsor name in the registry"
+    }
+  ]
 }

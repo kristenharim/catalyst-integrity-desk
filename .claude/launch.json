@@ -4,8 +4,9 @@
     {
       "name": "console",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["console/app.py"],
-      "port": 5000
+      "runtimeArgs": ["-m", "console.app"],
+      "port": 8050,
+      "autoPort": true
     }
   ]
 }
