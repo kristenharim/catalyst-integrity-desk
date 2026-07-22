@@ -107,8 +107,10 @@ through the split rather than reading the clock.
 
 ## Untested, and known to be
 
-- The decision receipt's two hashes. Breaking the `entry_hash` lookup leaves every test
-  green. The values were verified against the ledger file by hand, which is not a test.
+- ~~The decision receipt's two hashes.~~ Closed. The receipt used to travel in the query
+  string and a hand-written URL could forge every field; it is now read from the ledger's
+  last entry at render time, with a test that requests the page carrying forged values and
+  asserts the real ones render.
 - Whether a rebuild is reproducible. Nothing asserts that building twice from the same
   inputs produces the same bytes, so a hand-edited snapshot would not be detected.
 - Concurrency anywhere. Two decisions appended at once are untested; the ledger has no
