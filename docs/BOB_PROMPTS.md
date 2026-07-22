@@ -218,6 +218,87 @@ reason, `pytest tests/` is green with `.env` sourced, and the 677 row is still o
 
 ---
 
+### Prompt 3, the breach moment: language, consequence, and the decision receipt
+
+The engine changed underneath the console. `build()` now binds to the nearest registered
+primary completion **still in the future**, and carries lapsed pivotal trials on
+`contract.lapsed` and `contract.lapsed_history` as date-integrity signals. Rocket now
+binds to `NCT06092034` at 2028-04 and reads **-14.5 months, financing required**, where it
+previously read +8.4 "funded to catalyst" against a date that had lapsed 77 days earlier.
+`NCT04248439`, the 677-day trial, is now a lapsed signal rather than the catalyst.
+
+That is the demo. Rocket looks funded only if you count a completion date that already
+passed. Everything below serves making that impossible to miss.
+
+**Three hard constraints. Breaking any of them breaks the project's central claim.**
+
+No template computes a number. Every figure prints a `display.*` string from the
+snapshot. This includes the command bar counts below: precompute them in
+`make_snapshot.py`, never with a Jinja `|length` or a comparison in the view.
+
+The provenance test must stay green, including on any new route. If a figure has no
+display string, add one to the snapshot rather than formatting in the template.
+
+Do not regenerate the Granite classification casually. The rebuild in item 1 does call
+Granite, so source `.env` first and let the existing backoff do its work.
+
+> **1. Serialize the new engine fields and rebuild.** `make_snapshot.py` must carry
+> `lapsed` and `lapsed_history` per contract, with the same `svg_x` treatment the binding
+> history already gets, so a lapsed trial's timeline can be drawn identically. Rebuild
+> with `set -a; . ./.env; set +a; python3 console/make_snapshot.py`. Then add a test that
+> asserts no contract in the snapshot binds to a catalyst date in the past. The stale
+> snapshot passed every existing test while disagreeing with the engine, so that check is
+> the one that would have caught it.
+>
+> **2. Fix the visible language.** Replace every visible "Catalyst date" label with
+> "Registered primary completion". The distinction between a registered completion
+> expectation and a readout is a credibility advantage and the first thing a domain judge
+> tests. Keep the product name "Catalyst Integrity Desk" and the concept "catalyst
+> contract"; it is the *date* that must never be called a catalyst date. While you are in
+> the templates, remove the em dashes from visible UI text, including `&mdash;`. House
+> rule, no em dashes.
+>
+> **3. Make the consequence explicit.** Beside the Rocket timeline, one sentence in plain
+> language, built from snapshot fields and not hardcoded: a thesis anchored to the lapsed
+> date would have shown Rocket funded to its catalyst, while its nearest future registered
+> completion implies financing is required. Someone with no finance background should
+> understand the stakes without doing arithmetic.
+>
+> **4. The breach moment.** Restructure `/redline` into three columns that read left to
+> right as a story: the registered expectation, the new amendment, the thesis status.
+> When the amendment lands, the old date shows struck through, the new date arrives in
+> red on the timeline, and the funding gap flips from green to red. CSS transitions are
+> fine. No numbers may be introduced by the animation.
+>
+> Beside it, Granite's memo as an "Integrity memo" card, and the analyst's original
+> sentence with the invalidated clause marked, next to the proposed replacement.
+>
+> **5. The decision receipt.** After Accept or Reject, replace the bare badge with a
+> compact receipt: who decided, what changed, the timestamp, the previous ledger hash, the
+> new ledger hash, and the resulting thesis state. Those hashes are already in the ledger
+> entries as `prev_hash` and `entry_hash`. Show the chain as
+> `observation -> Granite memo -> human decision -> hash verified`. The hash chain is the
+> most impressive thing in the system and currently the most abstract.
+>
+> **6. A monitoring command bar** across the top: contracts monitored, active breaches,
+> lapsed registered expectations. Counts precomputed in the snapshot. It should read as an
+> operational desk, not a static research page.
+>
+> **7. Colour discipline.** Red only for integrity failure. Emerald for verified or
+> within band. One restrained electric blue as the Granite accent. The current dark
+> console is a good base, so change the palette's meaning, not its mood. No chat bubbles,
+> no confidence gauges, no neural-network decoration. The flashy surface is a thesis
+> breaking in real time, nothing else.
+>
+> Items 2, 3 and 4 matter most. If anything goes wrong, stop after those three.
+
+**Accept when:** no visible label calls a completion date a catalyst date, `/contract/RCKT`
+states the consequence in a sentence, `/redline` reads as before, change, decision, the
+confirm page shows a receipt with both hashes, `pytest tests/` is green with `.env`
+sourced, and the snapshot binds no lapsed catalyst.
+
+---
+
 ### Prompt 4, reduced: the panel the demo actually needs
 
 `docs/SPEC.md` Phase 4 specifies a 60 to 100 company panel assembled from SEC DERA
@@ -229,9 +310,11 @@ This is the reduced version: it fills the demo beat honestly, in one session, us
 the engine already produces. Do this one first. The full DERA panel below stays available
 if budget and days allow.
 
-> Build `research/panel.py`. For the twelve tickers already in `engine/runway.py`'s demo
-> list, join each company's runway band to the full registry revision history of its live
-> trials, and emit a tidy CSV, one row per revision, with the sponsor's cash position and
+> Build `research/panel.py`. Position it as a monitoring queue, not a screen: the question
+> it answers is "which existing beliefs need an analyst's attention today", sorted by
+> active breach and lapsed-date severity first, with runway as context rather than as the
+> ranking. For the twelve tickers already in `engine/runway.py`'s demo list, join each
+> company's runway band to the full registry revision history of its live trials, and emit a tidy CSV, one row per revision, with the sponsor's cash position and
 > whether that revision carried an already-expired date.
 >
 > Then produce one figure for the demo: the distribution of registered-date revisions
