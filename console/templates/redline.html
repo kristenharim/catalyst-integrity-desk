@@ -114,6 +114,20 @@
             {{ redline.lapse_display.current_gap_1f }} months
           </span>
         </div>
+        {# Provenance drawer: the headline figure opens onto every step that
+           produced it, each naming an XBRL tag or a numbered registry version.
+           Native <details>, no script. #}
+        {% if c and c.derivation %}
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer; color:#58a6ff; font-size:11px;">
+            Where this number came from
+          </summary>
+          <div style="margin-top:8px; overflow-x:auto;">
+            {% set rows = c.derivation %}
+            {% include "_derivation.html" with context %}
+          </div>
+        </details>
+        {% endif %}
       </div>
       <div style="background:#3d1414; border:1px solid #f85149; border-radius:4px;
                   padding:10px; text-align:center;">

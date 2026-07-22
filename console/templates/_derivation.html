@@ -1,0 +1,44 @@
+{# ------------------------------------------------------------------
+   Derivation table: every step from filed data to the funding gap, each
+   row naming the exact record it came from.  Takes `rows`, which is
+   c.derivation, built in make_snapshot.py.  No arithmetic here.
+   ------------------------------------------------------------------ #}
+<table style="max-width:940px;">
+  <thead>
+    <tr>
+      <th>Step</th>
+      <th>Value</th>
+      <th>Source</th>
+      <th>Record</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>
+        {% if row.kind == "result" %}<strong>{{ row.step }}</strong>
+        {% else %}{{ row.step }}{% endif %}
+      </td>
+      <td>
+        {% if row.kind == "result" %}
+          {% if c.gap_months is not none and c.gap_months >= 0 %}
+            <strong class="verdict-ok">+{{ row.value }}</strong>
+          {% else %}
+            <strong class="verdict-alert">{{ row.value }}</strong>
+          {% endif %}
+        {% else %}
+          {{ row.value }}
+        {% endif %}
+      </td>
+      <td>
+        {% if row.kind == "tag" %}
+          <span class="tag">{{ row.source }}</span>
+        {% else %}
+          <span style="color:#8b949e">{{ row.source }}</span>
+        {% endif %}
+      </td>
+      <td><span style="color:#6e7681; font-size:11px;">{{ row.record }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

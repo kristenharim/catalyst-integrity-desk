@@ -116,7 +116,98 @@
       "catalyst_date": "2030-01-01",
       "verdict": "financing required before catalyst",
       "lapsed": [],
-      "lapsed_history": []
+      "lapsed_history": [],
+      "thesis_timeline": {
+        "x0": 90,
+        "x1": 1010,
+        "filing": {
+          "x": 139.1,
+          "date": "2026-03-31"
+        },
+        "runway": {
+          "x_lo": 312.2,
+          "x_hi": 328.4,
+          "date_lo": "2027-01-14",
+          "date_hi": "2027-02-10",
+          "months_lo_1f": "9.5",
+          "months_hi_1f": "10.4"
+        },
+        "today": {
+          "x": 206.2,
+          "date": "2026-07-21"
+        },
+        "catalyst": {
+          "x": 960.9,
+          "date": "2030-01-01",
+          "nct": "NCT06559176",
+          "gap_1f": "-35.6"
+        },
+        "lapsed": null,
+        "shortfall": {
+          "x_from": 312.2,
+          "x_to": 960.9,
+          "months_1f": "35.6"
+        },
+        "short": true
+      },
+      "derivation": [
+        {
+          "step": "Cash",
+          "value": "$64M",
+          "source": "CashAndCashEquivalentsAtCarryingValue",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0001894562, as of 2026-03-31"
+        },
+        {
+          "step": "Short-term securities",
+          "value": "$71M",
+          "source": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0001894562, as of 2026-03-31"
+        },
+        {
+          "step": "Liquidity",
+          "value": "$135M",
+          "source": "cash + short-term securities",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Burn, conservative end of band",
+          "value": "$171M/yr",
+          "source": "NetCashProvidedByUsedInOperatingActivities",
+          "kind": "tag",
+          "record": "most recent quarter, annualised"
+        },
+        {
+          "step": "Runway, conservative end",
+          "value": "9.5 months",
+          "source": "liquidity / burn",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Runway exhaustion date",
+          "value": "2027-01-14",
+          "source": "filing date 2026-03-31 + 9.5 months",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Registered primary completion",
+          "value": "2030-01-01",
+          "source": "NCT06559176",
+          "kind": "tag",
+          "record": "ClinicalTrials.gov version 6, submitted 2025-01-22"
+        },
+        {
+          "step": "Funding gap",
+          "value": "-35.6 months",
+          "source": "exhaustion date - registered completion date",
+          "kind": "result",
+          "record": ""
+        }
+      ]
     },
     "RCKT": {
       "runway": {
@@ -285,6 +376,102 @@
           "total_slip_days": 1008,
           "n_late_moves": 0
         }
+      ],
+      "thesis_timeline": {
+        "x0": 90,
+        "x1": 1010,
+        "filing": {
+          "x": 139.4,
+          "date": "2026-03-31"
+        },
+        "runway": {
+          "x_lo": 464.7,
+          "x_hi": 468.1,
+          "date_lo": "2027-01-15",
+          "date_hi": "2027-01-18",
+          "months_lo_1f": "9.5",
+          "months_hi_1f": "9.6"
+        },
+        "today": {
+          "x": 265.0,
+          "date": "2026-07-21"
+        },
+        "catalyst": {
+          "x": 960.6,
+          "date": "2028-04-01",
+          "nct": "NCT06092034",
+          "gap_1f": "-14.5"
+        },
+        "lapsed": {
+          "x": 178.6,
+          "date": "2026-05-05",
+          "nct": "NCT04248439",
+          "gap_1f": "8.4"
+        },
+        "shortfall": {
+          "x_from": 464.7,
+          "x_to": 960.6,
+          "months_1f": "14.5"
+        },
+        "short": true
+      },
+      "derivation": [
+        {
+          "step": "Cash",
+          "value": "$50M",
+          "source": "CashAndCashEquivalentsAtCarryingValue",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0001281895, as of 2026-03-31"
+        },
+        {
+          "step": "Short-term securities",
+          "value": "$95M",
+          "source": "ShortTermInvestments",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0001281895, as of 2026-03-31"
+        },
+        {
+          "step": "Liquidity",
+          "value": "$144M",
+          "source": "cash + short-term securities",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Burn, conservative end of band",
+          "value": "$182M/yr",
+          "source": "NetCashProvidedByUsedInOperatingActivities",
+          "kind": "tag",
+          "record": "most recent quarter, annualised"
+        },
+        {
+          "step": "Runway, conservative end",
+          "value": "9.5 months",
+          "source": "liquidity / burn",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Runway exhaustion date",
+          "value": "2027-01-15",
+          "source": "filing date 2026-03-31 + 9.5 months",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Registered primary completion",
+          "value": "2028-04-01",
+          "source": "NCT06092034",
+          "kind": "tag",
+          "record": "ClinicalTrials.gov version 3, submitted 2025-10-01"
+        },
+        {
+          "step": "Funding gap",
+          "value": "-14.5 months",
+          "source": "exhaustion date - registered completion date",
+          "kind": "result",
+          "record": ""
+        }
       ]
     },
     "BEAM": {
@@ -377,7 +564,98 @@
       "catalyst_date": "2026-12-01",
       "verdict": "funded to catalyst",
       "lapsed": [],
-      "lapsed_history": []
+      "lapsed_history": [],
+      "thesis_timeline": {
+        "x0": 90,
+        "x1": 1010,
+        "filing": {
+          "x": 139.4,
+          "date": "2026-03-31"
+        },
+        "runway": {
+          "x_lo": 729.9,
+          "x_hi": 960.6,
+          "date_lo": "2028-08-07",
+          "date_hi": "2029-07-09",
+          "months_lo_1f": "28.3",
+          "months_hi_1f": "39.3"
+        },
+        "today": {
+          "x": 216.3,
+          "date": "2026-07-21"
+        },
+        "catalyst": {
+          "x": 307.6,
+          "date": "2026-12-01",
+          "nct": "NCT05885464",
+          "gap_1f": "20.2"
+        },
+        "lapsed": null,
+        "shortfall": {
+          "x_from": 307.6,
+          "x_to": 729.9,
+          "months_1f": "20.2"
+        },
+        "short": false
+      },
+      "derivation": [
+        {
+          "step": "Cash",
+          "value": "$288M",
+          "source": "CashAndCashEquivalentsAtCarryingValue",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0001745999, as of 2026-03-31"
+        },
+        {
+          "step": "Short-term securities",
+          "value": "$923M",
+          "source": "MarketableSecuritiesCurrent",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0001745999, as of 2026-03-31"
+        },
+        {
+          "step": "Liquidity",
+          "value": "$1212M",
+          "source": "cash + short-term securities",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Burn, conservative end of band",
+          "value": "$514M/yr",
+          "source": "NetCashProvidedByUsedInOperatingActivities",
+          "kind": "tag",
+          "record": "most recent quarter, annualised"
+        },
+        {
+          "step": "Runway, conservative end",
+          "value": "28.3 months",
+          "source": "liquidity / burn",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Runway exhaustion date",
+          "value": "2028-08-07",
+          "source": "filing date 2026-03-31 + 28.3 months",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Registered primary completion",
+          "value": "2026-12-01",
+          "source": "NCT05885464",
+          "kind": "tag",
+          "record": "ClinicalTrials.gov version 10, submitted 2025-01-06"
+        },
+        {
+          "step": "Funding gap",
+          "value": "20.2 months",
+          "source": "exhaustion date - registered completion date",
+          "kind": "result",
+          "record": ""
+        }
+      ]
     },
     "SRPT": {
       "runway": {
@@ -667,6 +945,102 @@
           "total_slip_days": -2463,
           "n_late_moves": 0
         }
+      ],
+      "thesis_timeline": {
+        "x0": 90,
+        "x1": 1010,
+        "filing": {
+          "x": 608.7,
+          "date": "2026-03-31"
+        },
+        "runway": {
+          "x_lo": 960.9,
+          "x_hi": 960.9,
+          "date_lo": "2027-01-19",
+          "date_hi": "2027-01-19",
+          "months_lo_1f": "9.7",
+          "months_hi_1f": "9.7"
+        },
+        "today": {
+          "x": 742.9,
+          "date": "2026-07-21"
+        },
+        "catalyst": {
+          "x": 865.1,
+          "date": "2026-10-31",
+          "nct": "NCT03992430",
+          "gap_1f": "2.6"
+        },
+        "lapsed": {
+          "x": 139.1,
+          "date": "2025-03-04",
+          "nct": "NCT06246513",
+          "gap_1f": "22.5"
+        },
+        "shortfall": {
+          "x_from": 865.1,
+          "x_to": 960.9,
+          "months_1f": "2.6"
+        },
+        "short": false
+      },
+      "derivation": [
+        {
+          "step": "Cash",
+          "value": "$464M",
+          "source": "CashAndCashEquivalentsAtCarryingValue",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0000873303, as of 2026-03-31"
+        },
+        {
+          "step": "Short-term securities",
+          "value": "$189M",
+          "source": "ShortTermInvestments",
+          "kind": "tag",
+          "record": "SEC XBRL company facts, CIK 0000873303, as of 2026-03-31"
+        },
+        {
+          "step": "Liquidity",
+          "value": "$653M",
+          "source": "cash + short-term securities",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Burn, conservative end of band",
+          "value": "$811M/yr",
+          "source": "NetCashProvidedByUsedInOperatingActivities",
+          "kind": "tag",
+          "record": "most recent quarter, annualised"
+        },
+        {
+          "step": "Runway, conservative end",
+          "value": "9.7 months",
+          "source": "liquidity / burn",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Runway exhaustion date",
+          "value": "2027-01-19",
+          "source": "filing date 2026-03-31 + 9.7 months",
+          "kind": "calc",
+          "record": ""
+        },
+        {
+          "step": "Registered primary completion",
+          "value": "2026-10-31",
+          "source": "NCT03992430",
+          "kind": "tag",
+          "record": "ClinicalTrials.gov version 26, submitted 2024-12-18"
+        },
+        {
+          "step": "Funding gap",
+          "value": "2.6 months",
+          "source": "exhaustion date - registered completion date",
+          "kind": "result",
+          "record": ""
+        }
       ]
     }
   },
@@ -717,7 +1091,8 @@
     "lapse_display": {
       "prior_gap_1f": "8.4",
       "current_gap_1f": "-14.5"
-    }
+    },
+    "ticker": "RCKT"
   },
   "cmd_bar": {
     "monitored": 4,
@@ -730,5 +1105,6 @@
       "name": "Sana Biotechnology, Inc.",
       "reason": "no pivotal trial matched this sponsor name in the registry"
     }
-  ]
+  ],
+  "as_of": "2026-07-21"
 }

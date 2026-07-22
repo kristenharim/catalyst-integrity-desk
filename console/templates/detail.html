@@ -8,6 +8,140 @@
 </p>
 
 {# ------------------------------------------------------------------
+   Thesis break: money and registered dates on one axis.
+   Every coordinate and every label string is precomputed in
+   make_snapshot.py as c.thesis_timeline.  Nothing here is arithmetic.
+
+   The whole conclusion is the distance between where the cash bar stops
+   and where the binding registered date sits.  Reading that distance off
+   two separate panels is what this replaces.
+   ------------------------------------------------------------------ #}
+{% if c.thesis_timeline %}
+{% set tl = c.thesis_timeline %}
+<h2>Thesis break &middot; cash against registered expectation</h2>
+<div style="overflow-x:auto; background:#161b22; border:1px solid #30363d;
+            border-radius:6px; padding:8px 0;">
+<svg width="1100" height="250" style="display:block;" role="img"
+     aria-label="Cash runway plotted against registered primary completion dates">
+
+  {# Baseline #}
+  <line x1="{{ tl.x0 }}" y1="150" x2="{{ tl.x1 }}" y2="150"
+        stroke="#30363d" stroke-width="1"/>
+
+  {# ---- Shortfall / surplus band: money gone to registered event ---- #}
+  {% if tl.shortfall %}
+  <rect x="{{ tl.shortfall.x_from }}" y="128"
+        width="{{ tl.shortfall.x_to - tl.shortfall.x_from }}" height="15"
+        fill="{% if tl.short %}#3d1414{% else %}#0f2e21{% endif %}"
+        stroke="{% if tl.short %}#f85149{% else %}#10b981{% endif %}"
+        stroke-width="1" stroke-dasharray="4,3" class="thesis-band"/>
+  <text x="{{ tl.shortfall.x_from }}" y="112" text-anchor="start"
+        font-family="ui-monospace,monospace" font-size="11" font-weight="bold"
+        fill="{% if tl.short %}#f85149{% else %}#10b981{% endif %}">
+    {% if tl.short %}
+      {{ tl.shortfall.months_1f }} months with no money before the registered event
+    {% else %}
+      {{ tl.shortfall.months_1f }} months of cash beyond the registered event
+    {% endif %}
+  </text>
+  {% endif %}
+
+  {# ---- Cash bar: filing date to the conservative exhaustion date ---- #}
+  <rect x="{{ tl.filing.x }}" y="128"
+        width="{{ tl.runway.x_lo - tl.filing.x }}" height="15"
+        fill="#10b981" fill-opacity="0.85" class="cash-bar"/>
+  {# Burn-band uncertainty: conservative end to optimistic end #}
+  <rect x="{{ tl.runway.x_lo }}" y="128"
+        width="{{ tl.runway.x_hi - tl.runway.x_lo }}" height="15"
+        fill="#10b981" fill-opacity="0.35"/>
+
+  {# ---- SEC filing marker ---- #}
+  <line x1="{{ tl.filing.x }}" y1="128" x2="{{ tl.filing.x }}" y2="163"
+        stroke="#8b949e" stroke-width="1"/>
+  <text x="{{ tl.filing.x }}" y="178" text-anchor="start"
+        font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+    SEC filing
+  </text>
+  <text x="{{ tl.filing.x }}" y="191" text-anchor="start"
+        font-family="ui-monospace,monospace" font-size="10" fill="#c9d1d9">
+    {{ tl.filing.date }}
+  </text>
+
+  {# ---- Runway exhaustion marker ---- #}
+  <line x1="{{ tl.runway.x_lo }}" y1="128" x2="{{ tl.runway.x_lo }}" y2="163"
+        stroke="#10b981" stroke-width="1.5"/>
+  <text x="{{ tl.runway.x_lo }}" y="178" text-anchor="middle"
+        font-family="ui-monospace,monospace" font-size="10" fill="#10b981">
+    cash exhausted
+  </text>
+  <text x="{{ tl.runway.x_lo }}" y="191" text-anchor="middle"
+        font-family="ui-monospace,monospace" font-size="10" fill="#c9d1d9">
+    {{ tl.runway.date_lo }}
+  </text>
+  <text x="{{ tl.runway.x_lo }}" y="204" text-anchor="middle"
+        font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+    {{ tl.runway.months_lo_1f }}&ndash;{{ tl.runway.months_hi_1f }} mo band
+  </text>
+
+  {# ---- Today: the pinned as_of, not the wall clock ---- #}
+  <line x1="{{ tl.today.x }}" y1="34" x2="{{ tl.today.x }}" y2="163"
+        stroke="#6e7681" stroke-width="1" stroke-dasharray="2,4"/>
+  <text x="{{ tl.today.x }}" y="28" text-anchor="middle"
+        font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+    as of {{ tl.today.date }}
+  </text>
+
+  {# ---- Lapsed registered expectation: where the thesis used to be anchored ---- #}
+  {% if tl.lapsed %}
+  <line x1="{{ tl.lapsed.x }}" y1="98" x2="{{ tl.lapsed.x }}" y2="150"
+        stroke="#f87171" stroke-width="1" stroke-dasharray="3,3"/>
+  <circle cx="{{ tl.lapsed.x }}" cy="92" r="6"
+          fill="#3d1414" stroke="#f87171" stroke-width="1.5" class="lapsed-marker"/>
+  <text x="{{ tl.lapsed.x }}" y="64" text-anchor="start"
+        font-family="ui-monospace,monospace" font-size="10" fill="#f87171">
+    {{ tl.lapsed.nct }} &middot; {{ tl.lapsed.date }} &middot; LAPSED
+  </text>
+  <text x="{{ tl.lapsed.x }}" y="77" text-anchor="start"
+        font-family="ui-monospace,monospace" font-size="10" fill="#6b7280"
+        text-decoration="line-through">
+    thesis read +{{ tl.lapsed.gap_1f }} months, funded
+  </text>
+  {% endif %}
+
+  {# ---- Binding registered expectation ---- #}
+  <line x1="{{ tl.catalyst.x }}" y1="98" x2="{{ tl.catalyst.x }}" y2="150"
+        stroke="{% if tl.short %}#f85149{% else %}#10b981{% endif %}" stroke-width="1.5"/>
+  <circle cx="{{ tl.catalyst.x }}" cy="92" r="7"
+          fill="{% if tl.short %}#f85149{% else %}#10b981{% endif %}"
+          stroke="#e6edf3" stroke-width="1" class="binding-marker"/>
+  <text x="{{ tl.catalyst.x }}" y="52" text-anchor="end"
+        font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+    binding registered primary completion
+  </text>
+  <text x="{{ tl.catalyst.x }}" y="65" text-anchor="end"
+        font-family="ui-monospace,monospace" font-size="10" fill="#e6edf3">
+    {{ tl.catalyst.nct }} &middot; {{ tl.catalyst.date }}
+  </text>
+  <text x="{{ tl.catalyst.x }}" y="79" text-anchor="end"
+        font-family="ui-monospace,monospace" font-size="12" font-weight="bold"
+        fill="{% if tl.short %}#f85149{% else %}#10b981{% endif %}">
+    {% if tl.short %}
+      {{ tl.catalyst.gap_1f }} months &middot; financing required
+    {% else %}
+      +{{ tl.catalyst.gap_1f }} months &middot; funded to catalyst
+    {% endif %}
+  </text>
+</svg>
+</div>
+
+{# The conclusion is auditable in one click: the derivation table is on this
+   same page, so this is a jump rather than a second copy of it. #}
+<p style="margin:10px 0 24px; font-size:12px;">
+  <a href="#derivation">Audit this figure: every step and the record it came from &darr;</a>
+</p>
+{% endif %}
+
+{# ------------------------------------------------------------------
    Binding trial revision timeline.
    SVG coordinates are precomputed in make_snapshot.py; no arithmetic here.
    ------------------------------------------------------------------ #}
@@ -160,86 +294,14 @@
    Gap calculation table: every input labeled by XBRL tag or registry version.
    All values come from the snapshot; nothing is recomputed here.
    ------------------------------------------------------------------ #}
-<h2>Funding gap calculation</h2>
-<table style="max-width:860px;">
-  <thead>
-    <tr>
-      <th>Component</th>
-      <th>Value</th>
-      <th>Source</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Cash</td>
-      <td>${{ c.runway.display.cash_m }}M</td>
-      <td><span class="tag">{{ c.runway.provenance.cash }}</span></td>
-    </tr>
-    <tr>
-      <td>Short-term securities</td>
-      <td>${{ c.runway.display.securities_m }}M</td>
-      <td>
-        {% if c.runway.provenance.securities != "none" %}
-          <span class="tag">{{ c.runway.provenance.securities }}</span>
-        {% else %}
-          <span style="color:#8b949e">none on cash date</span>
-        {% endif %}
-      </td>
-    </tr>
-    <tr>
-      <td>Liquidity total</td>
-      <td>${{ c.runway.display.liquidity_m }}M</td>
-      <td><span style="color:#8b949e">cash + securities</span></td>
-    </tr>
-    <tr>
-      <td>Burn (TTM annual)</td>
-      <td>${{ c.runway.display.burn_ttm_annual_m }}M/yr</td>
-      <td><span class="tag">{{ c.runway.provenance.burn }}</span></td>
-    </tr>
-    <tr>
-      <td>Burn (recent qtr ann.)</td>
-      <td>${{ c.runway.display.burn_recent_annual_m }}M/yr</td>
-      <td><span class="tag">{{ c.runway.provenance.burn }}</span></td>
-    </tr>
-    <tr>
-      <td>Runway band</td>
-      <td>
-        {% if c.runway.display.months_low_1f is not none %}
-          {{ c.runway.display.months_low_1f }}&ndash;{{ c.runway.display.months_high_1f }} months
-        {% else %}
-          n/a
-        {% endif %}
-      </td>
-      <td><span style="color:#8b949e">liquidity / burn band</span></td>
-    </tr>
-    <tr>
-      <td>Registered primary completion</td>
-      <td>{{ c.catalyst_date or "n/a" }}</td>
-      <td>
-        {% if c.history %}
-          <span class="tag">{{ c.history.nct }}</span>
-        {% else %}
-          <span class="tag">{{ c.trial.nct }}</span>
-        {% endif %}
-      </td>
-    </tr>
-    <tr>
-      <td><strong>Funding gap</strong></td>
-      <td>
-        {% if c.gap_months_1f is not none %}
-          {% if c.gap_months >= 0 %}
-            <strong class="verdict-ok">+{{ c.gap_months_1f }} months</strong>
-          {% else %}
-            <strong class="verdict-alert">{{ c.gap_months_1f }} months</strong>
-          {% endif %}
-        {% else %}
-          n/a
-        {% endif %}
-      </td>
-      <td><span class="tag">engine/gap.py</span></td>
-    </tr>
-  </tbody>
-</table>
+<h2 id="derivation">Funding gap calculation</h2>
+<p style="font-size:11px; color:#8b949e; margin-bottom:10px; max-width:940px;">
+  Each row names the record it came from: an XBRL tag on a dated filing, or a numbered
+  ClinicalTrials.gov version with the date the sponsor submitted it. A figure that cannot
+  name its record does not get a row.
+</p>
+{% set rows = c.derivation %}
+{% include "_derivation.html" with context %}
 
 {% if c.runway.notes %}
 <div style="margin-top:12px;">

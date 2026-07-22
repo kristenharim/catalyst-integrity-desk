@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}New belief &middot; Catalyst Integrity Desk{% endblock %}
+{% block content %}
+
+<h1>Write a belief</h1>
+<p style="font-size:12px; color:#8b949e; max-width:760px; margin-bottom:20px; line-height:1.7;">
+  Monitoring starts from something a human wrote down. This is that form. The desk does not
+  invent a thesis, it holds the one you state and tells you when a filing or a registry
+  revision contradicts it. Nothing is written to the ledger until you confirm it on the
+  next screen.
+</p>
+
+{% if errors %}
+<div style="background:#3d1414; border:1px solid #f85149; border-radius:6px;
+            padding:12px 16px; margin-bottom:18px; max-width:760px;">
+  {% for e in errors %}
+  <p style="color:#f85149; font-size:12px; margin:3px 0;">&#9888; {{ e }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ------------------------------------------------------------------
+   Stage 1: the form.
+   ------------------------------------------------------------------ #}
+{% if stage == "form" %}
+<form method="post" action="/belief/new" style="max-width:760px;">
+  <input type="hidden" name="stage" value="review">
+
+  <div style="margin-bottom:16px;">
+    <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                  letter-spacing:0.07em; margin-bottom:5px;">Company</label>
+    <select name="ticker" required
+            style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                   padding:6px 10px; border-radius:3px; font-family:inherit;
+                   font-size:12px; width:100%;">
+      {% for t, con in contracts.items() %}
+      <option value="{{ t }}" {% if form.ticker == t %}selected{% endif %}>
+        {{ t }} &middot; {{ con.runway.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                  letter-spacing:0.07em; margin-bottom:5px;">Trial the thesis rests on</label>
+    <input type="text" name="nct" list="ncts" required placeholder="NCT06092034"
+           value="{{ form.nct or '' }}"
+           style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                  padding:6px 10px; border-radius:3px; font-family:inherit;
+                  font-size:12px; width:100%;">
+    <datalist id="ncts">
+      {% for t, con in contracts.items() %}
+        <option value="{{ con.trial.nct }}">{{ t }} binding</option>
+        {% for lp in con.lapsed %}<option value="{{ lp.nct }}">{{ t }} lapsed</option>{% endfor %}
+      {% endfor %}
+    </datalist>
+    <p style="font-size:11px; color:#6e7681; margin-top:4px;">
+      The registered primary completion on this trial becomes the right-hand side of the gap.
+    </p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                  letter-spacing:0.07em; margin-bottom:5px;">Thesis, in your own words</label>
+    <textarea name="thesis" rows="4" required
+              placeholder="e.g. Rocket reaches the registered primary completion of this trial before its cash runs out, so it does not need to finance ahead of the readout."
+              style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                     padding:8px 10px; border-radius:3px; font-family:inherit;
+                     font-size:12px; width:100%; line-height:1.6;">{{ form.thesis or '' }}</textarea>
+    <p style="font-size:11px; color:#6e7681; margin-top:4px;">
+      Granite reads this text, not a threshold. Write the assumption you would be wrong about.
+    </p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                  letter-spacing:0.07em; margin-bottom:5px;">
+      Minimum acceptable funding gap, in months</label>
+    <input type="number" name="min_gap" step="0.1" required placeholder="0"
+           value="{{ form.min_gap_raw or '' }}"
+           style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                  padding:6px 10px; border-radius:3px; font-family:inherit;
+                  font-size:12px; width:160px;">
+    <p style="font-size:11px; color:#6e7681; margin-top:4px;">
+      A breach fires below this. Zero means the money must last exactly to the registered date.
+      There is no upper bound: being better funded than you assumed is not a breach.
+    </p>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                  letter-spacing:0.07em; margin-bottom:5px;">Invalidation conditions</label>
+    <textarea name="invalidation" rows="3"
+              placeholder="e.g. a registered completion date moving later by more than one quarter, or any quarter of burn above the trailing average."
+              style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                     padding:8px 10px; border-radius:3px; font-family:inherit;
+                     font-size:12px; width:100%; line-height:1.6;">{{ form.invalidation or '' }}</textarea>
+    <p style="font-size:11px; color:#6e7681; margin-top:4px;">
+      Stored with the thesis and read alongside it, because what you said would change your
+      mind is the thing a challenge has to be judged against.
+    </p>
+  </div>
+
+  <button type="submit"
+          style="background:#0d2033; color:#60a5fa; border:1px solid #60a5fa;
+                 padding:7px 20px; border-radius:4px; cursor:pointer;
+                 font-family:inherit; font-size:12px; font-weight:bold;">
+    Review this belief &rarr;
+  </button>
+</form>
+{% endif %}
+
+{# ------------------------------------------------------------------
+   Stage 2: review what the desk computes against the stated belief,
+   before anything is written down.
+   ------------------------------------------------------------------ #}
+{% if stage == "review" %}
+<div style="background:#161b22; border:1px solid #30363d; border-radius:6px;
+            padding:20px; max-width:940px; margin-bottom:18px;">
+  <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+              letter-spacing:0.07em; margin-bottom:12px;">Belief as it will be stored</div>
+  <table style="max-width:900px;">
+    <tbody>
+      <tr><td style="color:#8b949e; width:220px;">Card id</td>
+          <td><code>{{ card.card_id }}</code></td></tr>
+      <tr><td style="color:#8b949e;">Scope</td>
+          <td><span class="tag">{{ card.scope }}</span></td></tr>
+      <tr><td style="color:#8b949e;">Metric</td>
+          <td><span class="tag">{{ card.metric }}</span></td></tr>
+      <tr><td style="color:#8b949e;">Breach below</td>
+          <td>{{ form.min_gap_raw }} months
+              <span style="color:#6e7681;">(unbounded above)</span></td></tr>
+      <tr><td style="color:#8b949e;">Claim</td>
+          <td style="white-space:pre-wrap; font-style:italic;">{{ card.claim }}</td></tr>
+      <tr><td style="color:#8b949e;">Driver</td>
+          <td style="color:#8b949e; font-size:11px;">{{ card.driver }}</td></tr>
+      <tr><td style="color:#8b949e;">As of</td>
+          <td>{{ card.as_of }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div style="background:#161b22; border:1px solid #30363d; border-radius:6px;
+            padding:20px; max-width:940px; margin-bottom:18px;">
+  <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+              letter-spacing:0.07em; margin-bottom:6px;">
+    What the desk computes against it, right now</div>
+  <p style="font-size:11px; color:#6e7681; margin-bottom:12px;">
+    Against {{ c.trial.nct }}, the binding registered primary completion for
+    {{ form.ticker }} in this snapshot. If you named a different trial above, the belief is
+    stored against that trial and the figure below is the one the desk currently holds.
+  </p>
+  <div style="font-size:13px; margin-bottom:12px;">
+    Current funding gap:
+    {% if c.gap_months is not none and c.gap_months >= 0 %}
+      <strong class="verdict-ok">+{{ c.gap_months_1f }} months</strong>
+    {% else %}
+      <strong class="verdict-alert">{{ c.gap_months_1f }} months</strong>
+    {% endif %}
+    <span style="color:#8b949e;">&middot; {{ c.verdict }}</span>
+  </div>
+  {% set rows = c.derivation %}
+  <details>
+    <summary style="cursor:pointer; color:#58a6ff; font-size:12px;">
+      Where that number came from
+    </summary>
+    <div style="margin-top:8px; overflow-x:auto;">
+      {% include "_derivation.html" with context %}
+    </div>
+  </details>
+</div>
+
+<form method="post" action="/belief/new" style="max-width:940px;">
+  <input type="hidden" name="stage" value="commit">
+  <input type="hidden" name="ticker" value="{{ form.ticker }}">
+  <input type="hidden" name="nct" value="{{ form.nct }}">
+  <input type="hidden" name="thesis" value="{{ form.thesis }}">
+  <input type="hidden" name="invalidation" value="{{ form.invalidation }}">
+  <input type="hidden" name="min_gap" value="{{ form.min_gap_raw }}">
+  <p style="font-size:12px; color:#8b949e; margin-bottom:12px;">
+    Confirming appends a CREATE entry to the hash-chained ledger and re-records the anchor.
+    Nothing is written until you do.
+  </p>
+  <div style="display:flex; gap:12px; align-items:center;">
+    <button type="submit"
+            style="background:#1a4731; color:#10b981; border:1px solid #10b981;
+                   padding:7px 20px; border-radius:4px; cursor:pointer;
+                   font-family:inherit; font-size:12px; font-weight:bold;">
+      &#10003; Confirm and start monitoring
+    </button>
+    <a href="/belief/new" style="font-size:12px;">&larr; Change it</a>
+  </div>
+</form>
+{% endif %}
+
+{# ------------------------------------------------------------------
+   Stage 3: committed.
+   ------------------------------------------------------------------ #}
+{% if stage == "done" %}
+<div style="background:#0f2e21; border:1px solid #10b981; border-radius:6px;
+            padding:20px; max-width:940px; margin-bottom:18px;">
+  <div style="color:#10b981; font-weight:bold; font-size:13px; margin-bottom:12px;">
+    &#10003; Belief recorded. {{ form.ticker }} is now monitored against {{ form.nct }}.
+  </div>
+  <table style="max-width:900px;">
+    <tbody>
+      <tr><td style="color:#8b949e; width:180px;">Card id</td>
+          <td><code>{{ card.card_id }}</code></td></tr>
+      <tr><td style="color:#8b949e;">Author</td><td>{{ entry.author }}</td></tr>
+      <tr><td style="color:#8b949e;">Event</td><td>{{ entry.event }}</td></tr>
+      <tr><td style="color:#8b949e;">Previous hash</td>
+          <td style="word-break:break-all; color:#8b949e; font-size:11px;">{{ entry.prev_hash }}</td></tr>
+      <tr><td style="color:#8b949e;">Entry hash</td>
+          <td style="word-break:break-all; font-size:11px;">{{ entry.entry_hash }}</td></tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-size:12px;">
+  <a href="/contract/{{ form.ticker }}">View {{ form.ticker }} &rarr;</a>
+  &nbsp;&middot;&nbsp;
+  <a href="/belief/new">Write another</a>
+</p>
+{% endif %}
+
+{% endblock %}

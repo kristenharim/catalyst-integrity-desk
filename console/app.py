@@ -107,7 +107,122 @@ def contract_detail(ticker):
 
 @app.get("/redline")
 def redline_view():
-    return render_template("redline.html", redline=SNAPSHOT["redline"])
+    redline = SNAPSHOT["redline"]
+    # The contract the redline is about, so its derivation can be shown behind
+    # the headline figure without keeping a second copy of it in the snapshot.
+    contract = SNAPSHOT["contracts"].get(redline.get("ticker"))
+    return render_template("redline.html", redline=redline, c=contract)
+
+
+# ---------------------------------------------------------------------------
+# Analyst belief entry: write a contract, review what the desk computed against
+# it, then commit it to the ledger.  Monitoring starts from a human's written
+# belief, so there has to be a way for a human to write one.
+# ---------------------------------------------------------------------------
+
+# BeliefCard needs a numeric band and the analyst states a floor only ("the gap
+# must not fall below X").  There is no upper bound on being well funded.
+# ponytail: a sentinel, not math.  It is never displayed; the UI says
+# "unbounded above".  Swap for a nullable expected_high if the ledger schema
+# ever grows one.
+_UNBOUNDED_ABOVE = 1.0e9
+
+
+def _form_errors(form) -> tuple[list[str], dict]:
+    """Validate the analyst form.  Returns (errors, cleaned fields).
+
+    A trust boundary: everything here is user input and none of it is trusted
+    to be well formed, present, or numeric.
+    """
+    errors: list[str] = []
+    ticker = (form.get("ticker") or "").strip().upper()
+    nct = (form.get("nct") or "").strip().upper()
+    thesis = (form.get("thesis") or "").strip()
+    invalidation = (form.get("invalidation") or "").strip()
+    min_gap_raw = (form.get("min_gap") or "").strip()
+
+    if ticker not in SNAPSHOT["contracts"]:
+        errors.append(f"Ticker {ticker or '(blank)'} is not monitored in this snapshot.")
+    if not nct.startswith("NCT") or not nct[3:].isdigit():
+        errors.append("Trial identifier must look like NCT06092034.")
+    if len(thesis) < 20:
+        errors.append("Write the thesis out. Granite reads this text; a stub is not a belief.")
+    try:
+        min_gap = float(min_gap_raw)
+    except ValueError:
+        errors.append("Minimum acceptable funding gap must be a number, in months.")
+        min_gap = 0.0
+
+    return errors, {
+        "ticker": ticker, "nct": nct, "thesis": thesis,
+        "invalidation": invalidation, "min_gap_raw": min_gap_raw, "min_gap": min_gap,
+    }
+
+
+def _card_from_form(f: dict) -> BeliefCard:
+    """Build the BeliefCard the ledger will store.
+
+    The invalidation conditions ride inside `claim` on purpose: `claim` is the
+    text Granite is given as the analyst's rationale, and the conditions under
+    which the analyst would abandon the thesis are exactly what a challenge has
+    to be judged against.
+    """
+    c = SNAPSHOT["contracts"][f["ticker"]]
+    claim = f["thesis"]
+    if f["invalidation"]:
+        claim = f"{claim}\n\nInvalidation conditions: {f['invalidation']}"
+    return BeliefCard(
+        card_id=f"{f['ticker'].lower()}:{f['nct'].lower()}",
+        scope=f["nct"],
+        claim=claim,
+        metric="gap_months",
+        expected_low=f["min_gap"],
+        expected_high=_UNBOUNDED_ABOVE,
+        driver=(f"SEC XBRL liquidity (filing as of {c['runway']['as_of']}) vs "
+                f"ClinicalTrials.gov registered primary completion for {f['nct']}"),
+        confidence=3,
+        source="console.analyst_form",
+        as_of=c["runway"]["as_of"],
+    )
+
+
+@app.get("/belief/new")
+def belief_new():
+    return render_template("belief_new.html", stage="form",
+                           contracts=SNAPSHOT["contracts"], form={}, errors=[])
+
+
+@app.post("/belief/new")
+def belief_submit():
+    stage = request.form.get("stage", "review")
+    errors, f = _form_errors(request.form)
+    if errors:
+        return render_template("belief_new.html", stage="form",
+                               contracts=SNAPSHOT["contracts"], form=f,
+                               errors=errors), 400
+
+    card = _card_from_form(f)
+    contract = SNAPSHOT["contracts"][f["ticker"]]
+
+    if stage != "commit":
+        # Review: show the analyst what the desk computes against the belief
+        # they just wrote, before anything is written down.
+        return render_template("belief_new.html", stage="review",
+                               contracts=SNAPSHOT["contracts"], form=f,
+                               errors=[], card=card, c=contract)
+
+    ledger = BeliefLedger(DECISIONS_PATH)
+    try:
+        entry = ledger.create(card, author="human:analyst")
+    except ValueError:
+        return render_template(
+            "belief_new.html", stage="form", contracts=SNAPSHOT["contracts"],
+            form=f, errors=[f"A belief for {f['ticker']} on {f['nct']} already exists "
+                            "in the ledger. Retire it before writing a new one."]), 409
+    anchor_record(ledger, anchor_path=ANCHOR_PATH)
+    return render_template("belief_new.html", stage="done",
+                           contracts=SNAPSHOT["contracts"], form=f, errors=[],
+                           card=card, c=contract, entry=entry)
 
 
 @app.post("/redline/decide")

@@ -26,14 +26,15 @@ import os
 import sys
 import time
 from dataclasses import asdict
-from datetime import date
+from datetime import date, timedelta
 
 # Repo root is one level up from this file.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from engine.ctgov_history import _parse_date
 from engine.gap import build, find_trials, CatalystContract
 from engine.ledger import BeliefCard
-from engine.runway import compute_runway, ticker_to_cik
+from engine.runway import DAYS_PER_MONTH, compute_runway, ticker_to_cik
 from orchestrator.granite import GraniteClassifier
 from orchestrator.redline import ContractDelta, run_redline
 
@@ -41,6 +42,11 @@ TICKERS = ["SANA", "PRME", "RCKT", "BEAM", "SRPT"]
 SNAPSHOT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "snapshot.json")
 SVG_WIDTH = 1100
 SVG_PAD = 60  # pixels each side; usable span = SVG_WIDTH - 2*SVG_PAD = 980
+
+# Thesis-break timeline geometry.  Wider padding than the revision timeline
+# because the end markers carry two lines of label each.
+TL_WIDTH = 1100
+TL_PAD = 90
 
 
 # ---------------------------------------------------------------------------
@@ -156,22 +162,216 @@ def _unresolved_row(ticker: str, cik_map) -> dict:
     return {"ticker": ticker, "name": r.name, "reason": reason}
 
 
+# ---------------------------------------------------------------------------
+# Thesis-break timeline
+# ---------------------------------------------------------------------------
+# One picture carrying the whole conclusion: money on one axis, registered dates
+# on the same axis, and the shortfall as the distance between them.  Reading the
+# runway panel and the registry panel and joining them in your head is what this
+# replaces.
+#
+# Every coordinate and every label string is computed here, so the template does
+# no arithmetic and every number it prints is a substring of the snapshot.
+
+
+def _months_after(iso_day: str, months: float) -> date:
+    """Same month->days convention the engine uses, so the exhaustion date drawn
+    here is the exhaustion date the engine computed and not a near miss."""
+    return date.fromisoformat(iso_day) + timedelta(days=months * DAYS_PER_MONTH)
+
+
+def _gap_months_between(exhaustion: date, catalyst: date) -> float:
+    """Runway months left at a registered completion date.  Negative = short.
+    Mirrors CatalystContract.gap_months exactly."""
+    return (exhaustion - catalyst).days / DAYS_PER_MONTH
+
+
+def _thesis_timeline(c: dict, today_iso: str) -> dict | None:
+    """Precompute the thesis-break timeline for one contract.
+
+    Returns None when there is nothing to draw: no bound catalyst, or a runway
+    that could not be banded.  A contract with no lapsed trial still gets a
+    timeline; the lapsed marker is simply absent.
+
+    `today_iso` is the snapshot's pinned as_of, never the wall clock, so the
+    picture a committed snapshot draws does not change tomorrow.
+    """
+    r = c["runway"]
+    catalyst = _parse_date(c.get("catalyst_date"))
+    if catalyst is None or r.get("months_low") is None:
+        return None
+
+    filing = date.fromisoformat(r["as_of"])
+    # months_low is the conservative end (bigger burn), so it is the date the
+    # money runs out first, and the one the gap is computed against.
+    exh_lo = _months_after(r["as_of"], r["months_low"])
+    exh_hi = _months_after(r["as_of"], r["months_high"])
+    today = date.fromisoformat(today_iso)
+
+    lapsed_trials = c.get("lapsed") or []
+    lapsed_date = _parse_date(lapsed_trials[0]["pcd"]) if lapsed_trials else None
+
+    marks = [filing, exh_lo, exh_hi, today, catalyst]
+    if lapsed_date is not None:
+        marks.append(lapsed_date)
+    t0, t1 = min(marks), max(marks)
+    span = (t1 - t0).days or 1
+    # 6% breathing room each side so end markers are not flush with the frame.
+    margin = timedelta(days=round(span * 0.06))
+    t0, t1 = t0 - margin, t1 + margin
+    span = (t1 - t0).days or 1
+    usable = TL_WIDTH - 2 * TL_PAD
+
+    def x(d: date) -> float:
+        return round(TL_PAD + (d - t0).days / span * usable, 1)
+
+    gap = c.get("gap_months")
+    tl = {
+        "x0": TL_PAD,
+        "x1": TL_PAD + usable,
+        "filing": {"x": x(filing), "date": r["as_of"]},
+        "runway": {
+            "x_lo": x(exh_lo),
+            "x_hi": x(exh_hi),
+            "date_lo": exh_lo.isoformat(),
+            "date_hi": exh_hi.isoformat(),
+            "months_lo_1f": _fmt_1f(r["months_low"]),
+            "months_hi_1f": _fmt_1f(r["months_high"]),
+        },
+        "today": {"x": x(today), "date": today_iso},
+        "catalyst": {
+            "x": x(catalyst),
+            "date": c.get("catalyst_date"),
+            "nct": (c.get("trial") or {}).get("nct", ""),
+            "gap_1f": _fmt_1f(gap),
+        },
+        "lapsed": None,
+        "shortfall": None,
+        "short": bool(gap is not None and gap < 0),
+    }
+
+    if lapsed_date is not None:
+        tl["lapsed"] = {
+            "x": x(lapsed_date),
+            "date": lapsed_trials[0]["pcd"],
+            "nct": lapsed_trials[0]["nct"],
+            # The gap the thesis showed while this date was still binding.
+            "gap_1f": _fmt_1f(_gap_months_between(exh_lo, lapsed_date)),
+        }
+
+    # The shortfall band runs from the day the money is gone to the day the
+    # registered event is expected.  Drawn only when it is a shortfall; a
+    # positive gap is a surplus and gets the same band in the other direction.
+    if gap is not None:
+        lo, hi = sorted([exh_lo, catalyst])
+        tl["shortfall"] = {
+            "x_from": x(lo),
+            "x_to": x(hi),
+            "months_1f": _fmt_1f(abs(gap)),
+        }
+    return tl
+
+
+# ---------------------------------------------------------------------------
+# Derivation: every displayed figure bound to the record and field it came from
+# ---------------------------------------------------------------------------
+
+
+def _derivation(c: dict, tl: dict | None) -> list[dict]:
+    """One row per step from filed data to the funding gap.
+
+    The point is not the arithmetic, which is a division and a subtraction. It is
+    that each row names the exact record: an XBRL tag on a dated filing, or a
+    numbered ClinicalTrials.gov version with the date it was submitted. A figure
+    that cannot name its record does not get a row.
+    """
+    r = c["runway"]
+    p = r.get("provenance") or {}
+    d = r["display"]
+    rows = [
+        {"step": "Cash", "value": f"${d['cash_m']}M",
+         "source": p.get("cash", "unknown"), "kind": "tag",
+         "record": f"SEC XBRL company facts, CIK {r['cik']}, as of {r['as_of']}"},
+    ]
+    if p.get("securities") and p["securities"] != "none":
+        rows.append({"step": "Short-term securities", "value": f"${d['securities_m']}M",
+                     "source": p["securities"], "kind": "tag",
+                     "record": f"SEC XBRL company facts, CIK {r['cik']}, as of {r['as_of']}"})
+    else:
+        rows.append({"step": "Short-term securities", "value": f"${d['securities_m']}M",
+                     "source": "no short-term investment tag on the cash date",
+                     "kind": "note", "record": ""})
+    rows.append({"step": "Liquidity", "value": f"${d['liquidity_m']}M",
+                 "source": "cash + short-term securities", "kind": "calc", "record": ""})
+
+    # The conservative end of the burn band is whichever window burns faster;
+    # naming it rather than assuming keeps the row honest when they swap.
+    ttm, recent = r["burn_ttm_annual"], r["burn_recent_annual"]
+    if recent >= ttm:
+        burn_v, burn_label = d["burn_recent_annual_m"], "most recent quarter, annualised"
+    else:
+        burn_v, burn_label = d["burn_ttm_annual_m"], "trailing twelve months"
+    rows.append({"step": "Burn, conservative end of band", "value": f"${burn_v}M/yr",
+                 "source": p.get("burn", "unknown"), "kind": "tag",
+                 "record": burn_label})
+
+    if tl is None:
+        return rows
+
+    rows.append({"step": "Runway, conservative end",
+                 "value": f"{tl['runway']['months_lo_1f']} months",
+                 "source": "liquidity / burn", "kind": "calc", "record": ""})
+    rows.append({"step": "Runway exhaustion date", "value": tl["runway"]["date_lo"],
+                 "source": f"filing date {r['as_of']} + {tl['runway']['months_lo_1f']} months",
+                 "kind": "calc", "record": ""})
+
+    hist = c.get("history") or {}
+    revs = hist.get("revisions") or []
+    if revs:
+        last = revs[-1]
+        record = (f"ClinicalTrials.gov version {last['version']}, "
+                  f"submitted {last['submitted']}")
+    else:
+        record = "ClinicalTrials.gov, current version"
+    rows.append({"step": "Registered primary completion", "value": tl["catalyst"]["date"],
+                 "source": tl["catalyst"]["nct"], "kind": "tag", "record": record})
+
+    if tl["catalyst"]["gap_1f"] is not None:
+        rows.append({"step": "Funding gap", "value": f"{tl['catalyst']['gap_1f']} months",
+                     "source": "exhaustion date - registered completion date",
+                     "kind": "result", "record": ""})
+    return rows
+
+
 def apply_displays(snapshot: dict) -> dict:
     """Add or refresh all display sub-dicts in a loaded snapshot dict.
 
     Idempotent: calling twice produces the same result.  No network access,
     no credentials needed.  Returns the mutated snapshot for convenience.
     """
+    # Pin the classification date once, then never read the clock again.
+    # Lapsed-versus-future, and everything the timeline draws from it, is a
+    # statement about the day the snapshot was built.  Leaving it on
+    # date.today() meant a committed snapshot silently redrew itself tomorrow.
+    today_iso = snapshot.setdefault("as_of", date.today().isoformat())
+
     for c in snapshot.get("contracts", {}).values():
         c["runway"]["display"] = _runway_display(c["runway"])
         if c.get("gap_months") is not None:
             c["gap_months_1f"] = _fmt_1f(c["gap_months"])
+        c["thesis_timeline"] = _thesis_timeline(c, today_iso)
+        c["derivation"] = _derivation(c, c["thesis_timeline"])
 
     redline = snapshot.get("redline")
     if redline and redline.get("breach"):
         redline["breach"]["display"] = _redline_display(redline["breach"])
     if redline and redline.get("prior_gap_months") is not None:
         redline["lapse_display"] = _lapse_display(redline)
+    if redline and redline.get("card_id"):
+        # The card_id carries the ticker ("rckt:funded_to_catalyst"), so the
+        # redline view can reach that contract's derivation without a second
+        # copy of it living in the redline block.
+        redline["ticker"] = redline["card_id"].split(":")[0].upper()
 
     # Refresh command-bar counts from the (now display-enriched) contracts block.
     snapshot["cmd_bar"] = _cmd_bar(snapshot.get("contracts", {}))

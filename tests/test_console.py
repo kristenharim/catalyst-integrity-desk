@@ -589,6 +589,12 @@ def test_display_strings_match_their_sources(snapshot_raw):
         assert c.get("gap_months_1f") == recomputed["contracts"][ticker].get("gap_months_1f"), (
             f"{ticker} gap_months_1f does not match gap_months"
         )
+        assert c.get("thesis_timeline") == recomputed["contracts"][ticker].get("thesis_timeline"), (
+            f"{ticker} thesis_timeline does not match the runway and dates it draws"
+        )
+        assert c.get("derivation") == recomputed["contracts"][ticker].get("derivation"), (
+            f"{ticker} derivation rows do not match the values they claim to derive"
+        )
 
     r_committed, r_recomputed = committed.get("redline"), recomputed.get("redline")
     if r_committed:
@@ -634,3 +640,244 @@ def test_every_monitored_ticker_appears_on_contracts(client):
     body = client.get("/contracts").data.decode()
     missing = [t for t in TICKERS if t not in body]
     assert not missing, f"tickers requested but absent from /contracts: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# Thesis-break timeline
+# ---------------------------------------------------------------------------
+# The timeline is the one picture a viewer is expected to read the conclusion
+# off, so it needs its own binding to the engine's numbers.  Verified by
+# mutation before it was trusted: setting the timeline's catalyst gap_1f to
+# "-99.9" in the committed snapshot failed test_timeline_agrees_with_contract,
+# and deleting the lapsed marker failed test_rckt_timeline_shows_the_flip.
+
+
+def test_timeline_agrees_with_contract():
+    """Every timeline figure must equal the contract figure it draws.
+
+    The timeline recomputes the exhaustion date and the lapsed-anchor gap from
+    raw fields rather than copying the contract's own strings.  That is
+    deliberate -- an independent recomputation that disagrees is a real defect,
+    not a formatting difference -- so it has to be asserted rather than assumed.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+
+    drawn = 0
+    for ticker, c in snap["contracts"].items():
+        tl = c.get("thesis_timeline")
+        if tl is None:
+            continue
+        drawn += 1
+        assert tl["catalyst"]["gap_1f"] == c["gap_months_1f"], (
+            f"{ticker} timeline draws gap {tl['catalyst']['gap_1f']} but the "
+            f"contract computes {c['gap_months_1f']}"
+        )
+        assert tl["catalyst"]["date"] == c["catalyst_date"], (
+            f"{ticker} timeline binds to a different date than the contract"
+        )
+        assert tl["catalyst"]["nct"] == c["trial"]["nct"]
+        # A negative gap must be drawn as short, and a positive one must not be.
+        assert tl["short"] == (c["gap_months"] < 0), (
+            f"{ticker} timeline's shortfall styling disagrees with the sign of the gap"
+        )
+        # Markers must land inside the frame the axis defines.
+        for name, x in (("filing", tl["filing"]["x"]), ("today", tl["today"]["x"]),
+                        ("catalyst", tl["catalyst"]["x"]),
+                        ("exhaustion", tl["runway"]["x_lo"])):
+            assert tl["x0"] <= x <= tl["x1"], f"{ticker} {name} marker at {x} is off the axis"
+    assert drawn, "no contract produced a thesis timeline"
+
+
+def test_rckt_timeline_shows_the_flip():
+    """RCKT's timeline must carry both sides of the conclusion: the lapsed
+    anchor the thesis used to read positive against, and the binding date it
+    reads negative against.  Showing only one of them loses the point.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    tl = snap["contracts"]["RCKT"]["thesis_timeline"]
+    assert tl["lapsed"] is not None, "RCKT timeline must show the lapsed anchor"
+    assert tl["lapsed"]["gap_1f"] == snap["redline"]["lapse_display"]["prior_gap_1f"], (
+        "the timeline's lapsed-anchor gap must equal the redline's prior gap"
+    )
+    assert tl["catalyst"]["gap_1f"] == snap["redline"]["lapse_display"]["current_gap_1f"]
+    assert tl["short"] is True
+
+
+def test_rckt_detail_renders_timeline(client):
+    """The markers must reach the page, not just the snapshot."""
+    r = client.get("/contract/RCKT")
+    assert b"binding-marker" in r.data
+    assert b"lapsed-marker" in r.data
+
+
+# ---------------------------------------------------------------------------
+# Derivation: every displayed figure bound to a named record
+# ---------------------------------------------------------------------------
+
+def test_derivation_names_a_record_for_every_sourced_row():
+    """Rows that claim a filing or a registry version must name it.
+
+    'presence in the snapshot' is not provenance.  A row whose kind is 'tag' is
+    asserting the figure came from a specific field of a specific record, so it
+    has to carry that record.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    for ticker, c in snap["contracts"].items():
+        rows = c.get("derivation") or []
+        assert rows, f"{ticker} has no derivation"
+        for row in rows:
+            assert row["source"], f"{ticker} derivation row {row['step']!r} names no source"
+            if row["kind"] == "tag":
+                assert row["record"], (
+                    f"{ticker} row {row['step']!r} claims a tag but names no record"
+                )
+
+
+def test_derivation_gap_row_matches_the_contract():
+    """The derivation's final row must state the contract's own gap."""
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    for ticker, c in snap["contracts"].items():
+        result = [r for r in (c.get("derivation") or []) if r["kind"] == "result"]
+        if not result:
+            continue
+        assert result[-1]["value"] == f"{c['gap_months_1f']} months", (
+            f"{ticker} derivation result row disagrees with gap_months_1f"
+        )
+
+
+def test_redline_exposes_the_derivation(client):
+    """The headline figure on /redline must open onto its derivation."""
+    r = client.get("/redline")
+    text = r.data.decode()
+    assert "Where this number came from" in text
+    assert "CashAndCashEquivalentsAtCarryingValue" in text, (
+        "/redline drawer must name the XBRL tag the cash figure resolved through"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Analyst belief entry
+# ---------------------------------------------------------------------------
+
+_GOOD_FORM = {
+    "ticker": "RCKT",
+    "nct": "NCT06092034",
+    "thesis": ("Rocket reaches the registered primary completion of this trial "
+               "before its cash runs out and does not need to finance first."),
+    "invalidation": "any registered completion date moving later by a quarter or more",
+    "min_gap": "0",
+}
+
+
+def test_belief_form_renders(client):
+    r = client.get("/belief/new")
+    assert r.status_code == 200
+    assert b"Minimum acceptable funding gap" in r.data
+
+
+def test_belief_review_writes_nothing(tmp_path, monkeypatch):
+    """The review stage must not touch the ledger.  A form that commits on the
+    way to showing you what it will commit is not a confirmation step.
+    """
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    monkeypatch.setattr("console.app.DECISIONS_PATH", decisions_file)
+    monkeypatch.setattr("console.app.ANCHOR_PATH", str(tmp_path / "ledger.anchor"))
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        r = c.post("/belief/new", data={**_GOOD_FORM, "stage": "review"})
+        assert r.status_code == 200
+        assert b"Confirm and start monitoring" in r.data
+    assert not os.path.exists(decisions_file), "review stage must write no ledger entry"
+
+
+def test_belief_commit_appends_to_ledger(tmp_path, monkeypatch):
+    """Confirming writes one CREATE entry carrying the analyst's own words."""
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    monkeypatch.setattr("console.app.DECISIONS_PATH", decisions_file)
+    monkeypatch.setattr("console.app.ANCHOR_PATH", str(tmp_path / "ledger.anchor"))
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        r = c.post("/belief/new", data={**_GOOD_FORM, "stage": "commit"})
+        assert r.status_code == 200
+        assert b"Belief recorded" in r.data
+
+    with open(decisions_file) as f:
+        entries = [json.loads(line) for line in f if line.strip()]
+    assert len(entries) == 1
+    card = entries[0]["card"]
+    assert entries[0]["event"] == "CREATE"
+    assert entries[0]["author"] == "human:analyst"
+    assert card["card_id"] == "rckt:nct06092034"
+    assert card["scope"] == "NCT06092034"
+    assert card["expected_low"] == 0.0
+    # The invalidation conditions must travel with the claim: that text is what
+    # a challenge gets judged against.
+    assert "Invalidation conditions:" in card["claim"]
+    assert "moving later by a quarter" in card["claim"]
+
+    # The chain the entry joined must still verify.
+    from engine.ledger import BeliefLedger
+    assert BeliefLedger(decisions_file).verify() is True
+
+
+@pytest.mark.parametrize("bad,expect", [
+    ({"ticker": "ZZZZ"}, b"not monitored"),
+    ({"nct": "not-a-trial"}, b"NCT06092034"),
+    ({"thesis": "short"}, b"Write the thesis out"),
+    ({"min_gap": "soon"}, b"must be a number"),
+])
+def test_belief_form_rejects_bad_input(tmp_path, monkeypatch, bad, expect):
+    """Every field is a trust boundary.  Bad input is refused, not stored."""
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    monkeypatch.setattr("console.app.DECISIONS_PATH", decisions_file)
+    monkeypatch.setattr("console.app.ANCHOR_PATH", str(tmp_path / "ledger.anchor"))
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        r = c.post("/belief/new", data={**_GOOD_FORM, **bad, "stage": "commit"})
+        assert r.status_code == 400
+        assert expect in r.data
+    assert not os.path.exists(decisions_file), "rejected input must write no ledger entry"
+
+
+def test_belief_duplicate_is_refused(tmp_path, monkeypatch):
+    """A second belief on the same ticker and trial is a conflict, not an
+    overwrite.  Silently replacing a recorded belief would defeat the ledger.
+    """
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    monkeypatch.setattr("console.app.DECISIONS_PATH", decisions_file)
+    monkeypatch.setattr("console.app.ANCHOR_PATH", str(tmp_path / "ledger.anchor"))
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        assert c.post("/belief/new", data={**_GOOD_FORM, "stage": "commit"}).status_code == 200
+        r = c.post("/belief/new", data={**_GOOD_FORM, "stage": "commit"})
+        assert r.status_code == 409
+        assert b"already exists" in r.data
+
+    with open(decisions_file) as f:
+        assert len([l for l in f if l.strip()]) == 1, "the duplicate must not be appended"
+
+
+# ---------------------------------------------------------------------------
+# The pinned as_of
+# ---------------------------------------------------------------------------
+
+def test_snapshot_pins_its_own_as_of():
+    """Classification and everything drawn from it must be a statement about a
+    recorded date, not about whatever day the file is read on.
+    """
+    import datetime as _dt
+
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    assert "as_of" in snap, "snapshot must pin the date it was built"
+    _dt.date.fromisoformat(snap["as_of"])   # raises if it is not a real date
+    for ticker, c in snap["contracts"].items():
+        tl = c.get("thesis_timeline")
+        if tl:
+            assert tl["today"]["date"] == snap["as_of"], (
+                f"{ticker} timeline reads a different 'today' than the snapshot pins"
+            )
