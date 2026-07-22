@@ -26,20 +26,26 @@
         {% endif %}
       </div>
     </div>
-    {# Ledger integrity badge -- calls verify() at render time #}
+    {# Ledger integrity badge -- calls anchor.check() at render time.
+       Three states: intact, tampered (hash fails), truncated (anchor mismatch). #}
     <div>
       <span style="font-size:11px; color:#8b949e; text-transform:uppercase;
                    letter-spacing:0.07em;">Ledger integrity</span>
       <div style="margin-top:4px;">
-        {% if intact %}
+        {% if integrity_status == "intact" %}
           <span style="background:#1a4731; color:#10b981; border:1px solid #10b981;
                        font-size:12px; padding:4px 14px; border-radius:3px; font-weight:bold;">
             &#10003; intact
           </span>
-        {% else %}
+        {% elif integrity_status == "tampered" %}
           <span style="background:#3d1414; color:#f85149; border:1px solid #f85149;
                        font-size:12px; padding:4px 14px; border-radius:3px; font-weight:bold;">
             &#10007; tampered
+          </span>
+        {% else %}
+          <span style="background:#2d1a00; color:#f59e0b; border:1px solid #f59e0b;
+                       font-size:12px; padding:4px 14px; border-radius:3px; font-weight:bold;">
+            &#9888; truncated or replaced
           </span>
         {% endif %}
       </div>
@@ -105,12 +111,15 @@
       <span style="background:#0d1117; border:1px solid #30363d; border-radius:3px;
                    padding:4px 10px; color:#c9d1d9;">human decision</span>
       <span style="color:#30363d;">&#8594;</span>
-      {% if intact %}
+      {% if integrity_status == "intact" %}
         <span style="background:#1a4731; border:1px solid #10b981; border-radius:3px;
                      padding:4px 10px; color:#10b981; font-weight:bold;">hash verified</span>
-      {% else %}
+      {% elif integrity_status == "tampered" %}
         <span style="background:#3d1414; border:1px solid #f85149; border-radius:3px;
                      padding:4px 10px; color:#f85149; font-weight:bold;">hash FAILED</span>
+      {% else %}
+        <span style="background:#2d1a00; border:1px solid #f59e0b; border-radius:3px;
+                     padding:4px 10px; color:#f59e0b; font-weight:bold;">chain replaced</span>
       {% endif %}
     </div>
 
@@ -136,8 +145,10 @@
 <blockquote style="border-left:3px solid #30363d; padding-left:12px;
                    color:#8b949e; font-size:11px; line-height:1.6;
                    max-width:720px; margin-bottom:16px;">
-  Tamper demo: edit one byte of <code>data/decisions.jsonl</code>, then reload
-  this page to see <code>verify()</code> return false and the hash chain break.
+  Tamper demo: edit one byte of <code>data/decisions.jsonl</code> and reload to see
+  <strong>tampered</strong>. Delete the last entry and reload to see
+  <strong>truncated or replaced</strong>. The anchor detects these given that
+  <code>data/ledger.anchor</code> was not also rewritten.
 </blockquote>
 
 <p style="font-size:12px;">

@@ -176,9 +176,14 @@ def test_badge_flips_on_tampered_ledger(tmp_path, monkeypatch):
         assert "verdict=approve" in resp.headers["Location"]
 
         # Confirm page should show intact before tamper.
+        # &#10007; is the cross (✗) shown only in the tampered badge span.
+        # &#9888; is the warning (⚠) shown only in the truncated badge span.
+        # Cannot assert "tampered" is absent from the page because the tamper demo
+        # blockquote now contains that word as instructional text.
         resp = c.get("/redline/confirm?verdict=approve")
         assert b"intact" in resp.data
-        assert b"tampered" not in resp.data
+        assert b"&#10007;" not in resp.data, "intact state must not show cross (tampered) badge"
+        assert b"&#9888;" not in resp.data, "intact state must not show warning (truncated) badge"
 
         # Tamper: change a character inside the card payload of the first ledger entry.
         # The verdict word is in review_log.jsonl, not here, so we must edit the card.
@@ -324,3 +329,162 @@ def test_snapshot_no_lapsed_catalyst():
             f"(today is {today}).  The snapshot was built against a lapsed date "
             f"and must be regenerated."
         )
+
+# ---------------------------------------------------------------------------
+# Anchor tests (Prompt 3, the anchor: make deletion detectable)
+# ---------------------------------------------------------------------------
+# All three tests were written before record() was wired into the decision
+# path.  Each failed as documented below; the fix was added afterward.
+#
+# test_badge_truncated_on_deleted_entry:
+#   FAILED -- badge showed 'intact' after deleting the newest entry.
+#   The confirm handler only called verify(), which returned True because
+#   the shortened chain is internally valid.
+#
+# test_badge_truncated_on_replaced_chain:
+#   FAILED -- badge showed 'intact' after replacing the whole file with a
+#   fresh, internally valid chain (different head hash, same count).
+#
+# test_badge_tampered_not_truncated_on_byte_edit:
+#   FAILED -- badge showed 'intact' rather than 'tampered'.
+#   (Same root cause as test_badge_flips_on_tampered_ledger above; both
+#   tests independently anchor the tampered path.)
+#
+# After wiring record() into redline_decide and switching the confirm handler
+# to check(), all three pass.
+
+def _post_approve(c, decisions_file, review_log_file, monkeypatch):
+    """Helper: POST an approve decision and return the confirm-page location."""
+    monkeypatch.setattr("console.app.DECISIONS_PATH", decisions_file)
+    monkeypatch.setattr("console.app.REVIEW_LOG_PATH", review_log_file)
+    resp = c.post("/redline/decide", data={"verdict": "approve", "reason": "test"})
+    assert resp.status_code == 302
+    return resp.headers["Location"]
+
+
+def test_badge_truncated_on_deleted_entry(tmp_path, monkeypatch):
+    """Delete the newest ledger entry; badge must report 'truncated or replaced',
+    not 'intact'.  Deletion leaves a valid (shorter) chain so verify() returns
+    True -- only the anchor catches it.
+    """
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    review_log_file = str(tmp_path / "review_log.jsonl")
+    anchor_file = str(tmp_path / "ledger.anchor")
+    monkeypatch.setattr("console.app.ANCHOR_PATH", anchor_file)
+
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        _post_approve(c, decisions_file, review_log_file, monkeypatch)
+
+        # Confirm intact before deletion.
+        resp = c.get("/redline/confirm?verdict=approve")
+        assert b"intact" in resp.data
+
+        # Delete the newest (and only) entry from the ledger file.
+        with open(decisions_file) as f:
+            lines = f.readlines()
+        assert len(lines) >= 2, "ledger should have at least 2 entries (seed + update)"
+        with open(decisions_file, "w") as f:
+            f.writelines(lines[:-1])   # drop the last entry
+
+        # Reload confirm -- badge must say 'truncated or replaced'.
+        resp = c.get("/redline/confirm?verdict=approve")
+        assert b"truncated" in resp.data, (
+            "badge must report 'truncated or replaced' after the newest entry is deleted"
+        )
+        assert b"intact" not in resp.data
+
+
+def test_badge_truncated_on_replaced_chain(tmp_path, monkeypatch):
+    """Replace the entire ledger file with a freshly built, internally valid
+    chain; badge must report 'truncated or replaced', not 'intact'.
+
+    This is the sharpest attack: a valid chain whose claim reads anything the
+    attacker wants.  verify() accepts it; only the anchor catches it.
+    """
+    import time
+    from engine.ledger import BeliefLedger, BeliefCard, GENESIS_HASH
+
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    review_log_file = str(tmp_path / "review_log.jsonl")
+    anchor_file = str(tmp_path / "ledger.anchor")
+    monkeypatch.setattr("console.app.ANCHOR_PATH", anchor_file)
+
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        _post_approve(c, decisions_file, review_log_file, monkeypatch)
+
+        # Confirm intact before replacement.
+        resp = c.get("/redline/confirm?verdict=approve")
+        assert b"intact" in resp.data
+
+        # Build a fresh valid chain in a separate file, then overwrite.
+        fresh_file = str(tmp_path / "fresh.jsonl")
+        fresh_ledger = BeliefLedger(fresh_file)
+        fake_card = BeliefCard(
+            card_id="RCKT-gap_months",
+            scope="trial:NCT06092034",
+            claim="Rocket is comfortably funded and no financing is required",
+            metric="gap_months",
+            expected_low=0.0,
+            expected_high=20.0,
+            driver="test",
+            confidence=5,
+            source="test",
+            as_of="2026-01-01",
+        )
+        fresh_ledger.create(fake_card, author="attacker", ts=time.time())
+        with open(fresh_file) as f:
+            fresh_lines = f.readlines()
+        with open(decisions_file, "w") as f:
+            f.writelines(fresh_lines)
+
+        # Reload confirm -- badge must say 'truncated or replaced'.
+        resp = c.get("/redline/confirm?verdict=approve")
+        assert b"truncated" in resp.data, (
+            "badge must report 'truncated or replaced' after wholesale chain replacement"
+        )
+        assert b"intact" not in resp.data
+
+
+def test_badge_tampered_not_truncated_on_byte_edit(tmp_path, monkeypatch):
+    """Edit a byte inside a hashed payload; badge must report 'tampered' (not
+    'truncated or replaced').  The two failure modes are distinct accusations
+    and must be reported distinctly.
+
+    The tamper demo blockquote contains the word 'truncated' as instructional
+    text, so we check the badge span itself rather than the full page.
+    """
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    review_log_file = str(tmp_path / "review_log.jsonl")
+    anchor_file = str(tmp_path / "ledger.anchor")
+    monkeypatch.setattr("console.app.ANCHOR_PATH", anchor_file)
+
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        _post_approve(c, decisions_file, review_log_file, monkeypatch)
+
+        # Tamper a byte in the card payload.
+        with open(decisions_file) as f:
+            lines = f.readlines()
+        tampered = lines[0].replace('"version": 1', '"version": 9', 1)
+        assert tampered != lines[0]
+        with open(decisions_file, "w") as f:
+            f.write(tampered)
+            f.writelines(lines[1:])
+
+        resp = c.get("/redline/confirm?verdict=approve")
+        assert b"tampered" in resp.data, (
+            "badge must report 'tampered' when a hashed byte is edited"
+        )
+        # The badge must show 'tampered', not 'truncated or replaced'.
+        # The blockquote also contains 'truncated' as instructional text, so
+        # we confirm the badge span colour belongs to the tampered style
+        # (red border #f85149) rather than the truncated style (amber #f59e0b).
+        assert b"f85149" in resp.data, (
+            "tampered badge must use red styling, not amber"
+        )
+        assert b"f59e0b" not in resp.data, (
+            "badge must not show amber 'truncated or replaced' styling on a byte-edit tamper"
+        )
+

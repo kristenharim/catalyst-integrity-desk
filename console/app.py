@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from flask import Flask, redirect, render_template, request, url_for
 
 from engine.ledger import BeliefCard, BeliefLedger, Breach
+from orchestrator.anchor import check as anchor_check, record as anchor_record
 from orchestrator.challenge import (
     ChallengeCard, Decision, ReviewLog, apply_decision, build_challenge,
 )
@@ -39,6 +40,7 @@ _REPO = os.path.join(_HERE, "..")
 SNAPSHOT_PATH = os.path.join(_REPO, "data", "snapshot.json")
 DECISIONS_PATH = os.path.join(_REPO, "data", "decisions.jsonl")
 REVIEW_LOG_PATH = os.path.join(_REPO, "data", "review_log.jsonl")
+ANCHOR_PATH = os.path.join(_REPO, "data", "ledger.anchor")
 
 # ---------------------------------------------------------------------------
 # Load snapshot at startup
@@ -171,6 +173,10 @@ def redline_decide():
 
     entry = apply_decision(ledger, review_log, challenge_card, decision)
 
+    # Record the anchor after every successful approve so deletion is detectable.
+    if verdict == "approve":
+        anchor_record(ledger, anchor_path=ANCHOR_PATH)
+
     # Build receipt for the confirm page from the ledger entry.
     # For reject, apply_decision returns a review-log record, not a ledger entry.
     # The receipt is only available for approve (which returns a ledger entry with hashes).
@@ -218,12 +224,12 @@ def redline_confirm():
         except (ValueError, TypeError):
             receipt = None
 
-    # Read the ledger fresh at render time so a tampered file shows "tampered"
-    # even after a reload.  The query-string intact param is dropped: it was set
-    # once at decision time and could not detect a post-decision tamper.
+    # Check the ledger fresh at render time via the anchor so all three states
+    # are detectable: intact, tampered (hash fails), truncated (anchor mismatch).
     ledger = BeliefLedger(DECISIONS_PATH)
-    intact = ledger.verify()
-    return render_template("confirm.html", verdict=verdict, intact=intact, receipt=receipt)
+    integrity_status = anchor_check(ledger, anchor_path=ANCHOR_PATH)
+    return render_template("confirm.html", verdict=verdict,
+                           integrity_status=integrity_status, receipt=receipt)
 
 
 if __name__ == "__main__":
