@@ -97,6 +97,12 @@ def contract_list():
                            unresolved=SNAPSHOT.get("unresolved", []))
 
 
+@app.get("/queue")
+def queue_view():
+    """This morning's work: one row per reason to look, worst first."""
+    return render_template("queue.html", queue=SNAPSHOT.get("queue"))
+
+
 @app.get("/contract/<ticker>")
 def contract_detail(ticker):
     contracts = SNAPSHOT["contracts"]

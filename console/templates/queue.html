@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Queue &middot; Catalyst Integrity Desk{% endblock %}
+{% block content %}
+
+<h1>Which beliefs need attention</h1>
+<p class="note">
+  One row per reason to look, worst first. A contract appears more than once when more than
+  one thing is wrong with it, because collapsing that to a single worst state hides the
+  others: Rocket is both breached and carrying a registered expectation that lapsed and was
+  never amended, and those are two different pieces of work.
+</p>
+
+{# Counts are precomputed in make_snapshot.py.  No |length, no comparisons. #}
+<div style="display:flex; gap:28px; flex-wrap:wrap; margin:16px 0 22px;">
+  {% for c in queue.counts %}
+  <div class="cmd-bar-item">
+    <span class="cmd-bar-count {% if c.state == 'clear' %}count-ok{% elif c.state == 'unreliable' %}count-info{% else %}count-alert{% endif %}">{{ c.n }}</span>
+    <span class="cmd-bar-label">{{ c.label }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<table style="max-width:1120px;">
+  <thead>
+    <tr>
+      <th>State</th>
+      <th>Ticker</th>
+      <th>Company</th>
+      <th>Gap</th>
+      <th>Why it is here</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in queue.rows %}
+    <tr>
+      <td>
+        {% if row.state == "clear" %}
+          <span class="verdict-ok">{{ row.label }}</span>
+        {% elif row.state == "unreliable" %}
+          <span class="granite-accent">{{ row.label }}</span>
+        {% else %}
+          <span class="verdict-alert">{{ row.label }}</span>
+        {% endif %}
+      </td>
+      <td><a href="/contract/{{ row.ticker }}">{{ row.ticker }}</a></td>
+      <td>{{ row.name }}</td>
+      <td>
+        {% if row.gap_1f is not none %}{{ row.gap_1f }} mo{% else %}<span style="color:#8b949e">not rankable</span>{% endif %}
+      </td>
+      <td>{{ row.detail }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="note" style="margin-top:16px;">
+  Two states a monitoring queue should have are deliberately absent, because one snapshot
+  cannot compute them. A changed SEC tag path and a completion date that moved since the
+  last look both need a previous snapshot to diff against, and there is only ever one
+  committed. Showing them empty would imply they had been checked.
+  For the same reason the first state reads "breached" and not "newly breached": nothing
+  here knows what was true yesterday.
+</p>
+
+{% endblock %}

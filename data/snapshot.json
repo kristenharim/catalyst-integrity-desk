@@ -1106,5 +1106,93 @@
       "reason": "no pivotal trial matched this sponsor name in the registry"
     }
   ],
-  "as_of": "2026-07-21"
+  "as_of": "2026-07-21",
+  "queue": {
+    "rows": [
+      {
+        "state": "breached",
+        "detail": "funding gap -35.6 months against NCT06559176 (2030-01-01)",
+        "ticker": "PRME",
+        "name": "Prime Medicine, Inc.",
+        "gap_1f": "-35.6",
+        "label": "breached"
+      },
+      {
+        "state": "breached",
+        "detail": "funding gap -14.5 months against NCT06092034 (2028-04-01)",
+        "ticker": "RCKT",
+        "name": "ROCKET PHARMACEUTICALS, INC.",
+        "gap_1f": "-14.5",
+        "label": "breached"
+      },
+      {
+        "state": "lapsed",
+        "detail": "NCT04248439 registered primary completion 2026-05-05 has passed and was never amended",
+        "ticker": "RCKT",
+        "name": "ROCKET PHARMACEUTICALS, INC.",
+        "gap_1f": "-14.5",
+        "label": "registry expectation lapsed"
+      },
+      {
+        "state": "lapsed",
+        "detail": "NCT06246513 registered primary completion 2025-03-04 has passed and was never amended",
+        "ticker": "SRPT",
+        "name": "Sarepta Therapeutics, Inc.",
+        "gap_1f": null,
+        "label": "registry expectation lapsed"
+      },
+      {
+        "state": "lapsed",
+        "detail": "NCT06128564 registered primary completion 2026-03-04 has passed and was never amended",
+        "ticker": "SRPT",
+        "name": "Sarepta Therapeutics, Inc.",
+        "gap_1f": null,
+        "label": "registry expectation lapsed"
+      },
+      {
+        "state": "unreliable",
+        "detail": "cash-positive operating quarter(s) in TTM window: 2025-12-31, 2025-06-30 - likely a one-time inflow",
+        "ticker": "SRPT",
+        "name": "Sarepta Therapeutics, Inc.",
+        "gap_1f": null,
+        "label": "burn estimate unreliable"
+      },
+      {
+        "state": "clear",
+        "detail": "funding gap 20.2 months against NCT05885464 (2026-12-01)",
+        "ticker": "BEAM",
+        "name": "Beam Therapeutics Inc.",
+        "gap_1f": "20.2",
+        "label": "no action required"
+      }
+    ],
+    "counts": [
+      {
+        "state": "breached",
+        "label": "breached",
+        "n": 2
+      },
+      {
+        "state": "lapsed",
+        "label": "registry expectation lapsed",
+        "n": 3
+      },
+      {
+        "state": "approaching",
+        "label": "approaching breach",
+        "n": 0
+      },
+      {
+        "state": "unreliable",
+        "label": "burn estimate unreliable",
+        "n": 1
+      },
+      {
+        "state": "clear",
+        "label": "no action required",
+        "n": 1
+      }
+    ],
+    "needs_attention": 6
+  }
 }

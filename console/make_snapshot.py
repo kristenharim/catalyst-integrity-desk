@@ -343,6 +343,115 @@ def _derivation(c: dict, tl: dict | None) -> list[dict]:
     return rows
 
 
+# ---------------------------------------------------------------------------
+# The monitoring queue
+# ---------------------------------------------------------------------------
+# The question this product answers is not "rank these companies", which a
+# commercial screener already does. It is "which of my beliefs need me this
+# morning". So the queue is a list of reasons to look, not a list of companies:
+# one row per contract per reason, worst first, and a row saying nothing is
+# wrong when nothing is.
+#
+# Every state here is computed from the snapshot. States that cannot be computed
+# from one snapshot are not shown rather than shown empty: a changed SEC tag path
+# needs a previous snapshot to diff against, and there is only ever one.
+
+# Months of gap below which a contract is close enough to breaching to be worth
+# a look. One quarter is too tight to act on and a year is not news, so a half
+# year is the compromise, and it is a judgement rather than a finding.
+APPROACHING_MONTHS = 6.0
+
+# Worst first. The order is the order an analyst should read them in, so it is
+# ranked by how much of the thesis is already gone, not by how alarming it looks.
+QUEUE_STATES = [
+    ("breached", "breached"),
+    ("lapsed", "registry expectation lapsed"),
+    ("approaching", "approaching breach"),
+    ("unreliable", "burn estimate unreliable"),
+    ("clear", "no action required"),
+]
+_QUEUE_RANK = {k: i for i, (k, _) in enumerate(QUEUE_STATES)}
+
+
+def _queue_rows(ticker: str, c: dict) -> list[dict]:
+    """Every reason this contract is worth looking at today.
+
+    A contract can be in more than one state at once, and collapsing that to a
+    single worst state hides the others. Rocket is both breached and carrying a
+    lapsed registered expectation, and those are two different things to do.
+    """
+    r = c["runway"]
+    gap = c.get("gap_months")
+    rows = []
+
+    if not r.get("reliable"):
+        rows.append({
+            "state": "unreliable",
+            "detail": "; ".join(r.get("notes") or []) or "burn estimate is not usable",
+        })
+    elif gap is not None and gap < 0:
+        rows.append({
+            "state": "breached",
+            "detail": (f"funding gap {_fmt_1f(gap)} months against "
+                       f"{c['trial']['nct']} ({c.get('catalyst_date')})"),
+        })
+    elif gap is not None and gap < APPROACHING_MONTHS:
+        rows.append({
+            "state": "approaching",
+            "detail": (f"funding gap {_fmt_1f(gap)} months against "
+                       f"{c['trial']['nct']} ({c.get('catalyst_date')})"),
+        })
+
+    for lapsed in c.get("lapsed") or []:
+        rows.append({
+            "state": "lapsed",
+            "detail": (f"{lapsed['nct']} registered primary completion "
+                       f"{lapsed['pcd']} has passed and was never amended"),
+        })
+
+    if not rows:
+        rows.append({
+            "state": "clear",
+            "detail": (f"funding gap {_fmt_1f(gap)} months against "
+                       f"{c['trial']['nct']} ({c.get('catalyst_date')})"),
+        })
+
+    for row in rows:
+        row["ticker"] = ticker
+        row["name"] = r["name"]
+        # An unreliable burn makes the gap unusable, and the project's rule is
+        # that such a row is shown and never ranked.  Printing 2.6 months beside
+        # "burn estimate unreliable" ranks it in the reader's head, which is the
+        # same flattery by another route.
+        row["gap_1f"] = c.get("gap_months_1f") if r.get("reliable") else None
+        row["label"] = dict(QUEUE_STATES)[row["state"]]
+    return rows
+
+
+def _queue(contracts: dict) -> dict:
+    """The whole queue, sorted worst first, with per-state counts.
+
+    Counts are precomputed because the template must not use `|length` or a
+    comparison; that rule is what keeps every number on screen traceable.
+    """
+    rows = []
+    for ticker, c in contracts.items():
+        rows.extend(_queue_rows(ticker, c))
+    rows.sort(key=lambda row: (_QUEUE_RANK[row["state"]], row["ticker"]))
+
+    counts = [
+        {"state": state, "label": label,
+         "n": sum(1 for row in rows if row["state"] == state)}
+        for state, label in QUEUE_STATES
+    ]
+    return {
+        "rows": rows,
+        "counts": counts,
+        # Rows that are not "no action required": the size of this morning's work.
+        "needs_attention": sum(1 for row in rows if row["state"] != "clear"),
+    }
+
+
 def apply_displays(snapshot: dict) -> dict:
     """Add or refresh all display sub-dicts in a loaded snapshot dict.
 
@@ -375,6 +484,8 @@ def apply_displays(snapshot: dict) -> dict:
 
     # Refresh command-bar counts from the (now display-enriched) contracts block.
     snapshot["cmd_bar"] = _cmd_bar(snapshot.get("contracts", {}))
+    # The queue reads gap_months_1f, so it is built after the display pass.
+    snapshot["queue"] = _queue(snapshot.get("contracts", {}))
 
     return snapshot
 

@@ -269,7 +269,7 @@ def test_srpt_has_no_rank_number(client):
         )
 
 
-@pytest.mark.parametrize("route", ["/contract/RCKT", "/contracts", "/redline"])
+@pytest.mark.parametrize("route", ["/contract/RCKT", "/contracts", "/redline", "/queue"])
 def test_number_provenance(client, snapshot_raw, route):
     """Every number visible in the rendered HTML must appear in snapshot.json.
 
@@ -891,17 +891,19 @@ def test_readme_test_count_matches_reality():
     reads, in a project whose entire claim is that its numbers are checkable.
     Counting is cheap, so the count is asserted rather than maintained by hand.
 
-    The README states the credential-free result: N passed, 1 skipped. The one
-    skip is the live Granite test.
+    The README states two figures, and the first version of this guard only
+    checked one of them. The credential-free result is "N passed, 1 skipped";
+    the with-credentials result is "N+1 passed", written three different ways
+    across two files. Checking only the first let the second go stale in the
+    same commit that fixed the first, which is the same bug wearing a hat.
+
+    Both files are checked, because `docs/SUBMISSION.md` is what gets pasted
+    into the project page and a judge reads that figure before running anything.
     """
     import re
     import subprocess
 
     repo = os.path.join(os.path.dirname(__file__), "..")
-    readme = open(os.path.join(repo, "README.md")).read()
-
-    claimed = re.findall(r"(\d+) passed, 1 skipped", readme)
-    assert claimed, "README no longer states a 'N passed, 1 skipped' figure"
 
     out = subprocess.run(
         [sys.executable, "-m", "pytest", "tests/", "--collect-only", "-q"],
@@ -909,8 +911,187 @@ def test_readme_test_count_matches_reality():
     ).stdout
     collected = int(re.search(r"(\d+) tests? collected", out).group(1))
 
-    for c in set(claimed):
-        assert int(c) == collected - 1, (
-            f"README says {c} passed, 1 skipped, but the suite collects "
-            f"{collected} tests, so it should say {collected - 1}"
+    checked = 0
+    for name in ("README.md", "docs/SUBMISSION.md"):
+        text = open(os.path.join(repo, name)).read()
+
+        # Credential-free: one test skips, so it is collected - 1.
+        for c in set(re.findall(r"(\d+) passed, 1 skipped", text)):
+            checked += 1
+            assert int(c) == collected - 1, (
+                f"{name} says {c} passed, 1 skipped, but the suite collects "
+                f"{collected} tests, so it should say {collected - 1}"
+            )
+
+        # With credentials: nothing skips, so it is the full collected count.
+        with_creds = re.findall(
+            r"(?:suite is\s+(\d+)\s*\n?\s*passed, no skips"
+            r"|suite is\s+(\d+)\s*\n?\s*passed;"
+            r"|\((\d+) passed with watsonx credentials\))",
+            text,
         )
+        for groups in with_creds:
+            c = next(g for g in groups if g)
+            checked += 1
+            assert int(c) == collected, (
+                f"{name} claims {c} passing with credentials, but the suite "
+                f"collects {collected} tests"
+            )
+
+    assert checked >= 4, (
+        f"only found {checked} stated test counts across the two files; the "
+        "patterns this guard matches have drifted and it is no longer guarding"
+    )
+
+
+# ---------------------------------------------------------------------------
+# The monitoring queue
+# ---------------------------------------------------------------------------
+# The queue is a second computation over the same contracts, which means it can
+# disagree with the first one. Two of the checks below exist purely to make that
+# disagreement fail loudly: the counts must equal the command bar's, and no
+# contract may be missing from the queue entirely.
+
+
+def test_queue_200(client):
+    r = client.get("/queue")
+    assert r.status_code == 200
+    assert "text/html" in r.content_type
+
+
+def _queue_of(snap):
+    return snap["queue"]
+
+
+def test_queue_counts_agree_with_the_command_bar():
+    """The queue and the command bar count the same events two different ways.
+
+    `_cmd_bar` counts breached contracts off `verdict`; `_queue` counts them off
+    the sign of `gap_months`. Those must land on the same number, and if they
+    ever stop doing so one of them is lying to the analyst.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    q = _queue_of(snap)
+    by_state = {c["state"]: c["n"] for c in q["counts"]}
+
+    assert by_state["breached"] == snap["cmd_bar"]["active_breaches"], (
+        "queue breach count disagrees with the command bar's"
+    )
+    assert by_state["lapsed"] == snap["cmd_bar"]["lapsed_expectations"], (
+        "queue lapsed count disagrees with the command bar's"
+    )
+
+
+def test_every_contract_appears_in_the_queue():
+    """No contract may be absent. A queue that quietly omits a row is the same
+    failure as a screen that hides its hard cases, one screen further on.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    listed = {row["ticker"] for row in _queue_of(snap)["rows"]}
+    assert listed == set(snap["contracts"]), (
+        f"queue lists {sorted(listed)} but the snapshot holds "
+        f"{sorted(snap['contracts'])}"
+    )
+
+
+def test_queue_counts_sum_to_its_rows():
+    """Counts are precomputed, so they can drift from the rows they count."""
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    q = _queue_of(snap)
+    assert sum(c["n"] for c in q["counts"]) == len(q["rows"])
+    assert q["needs_attention"] == sum(
+        1 for row in q["rows"] if row["state"] != "clear"
+    )
+
+
+def test_queue_states_match_the_contracts_they_describe():
+    """Each row's state must be recomputable from the contract it names.
+
+    Verified by mutation before it was trusted: flipping BEAM's queue row from
+    'clear' to 'breached' in the committed snapshot failed here, and so did
+    dropping SRPT's unreliable row.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+
+    for row in _queue_of(snap)["rows"]:
+        c = snap["contracts"][row["ticker"]]
+        gap, reliable = c["gap_months"], c["runway"]["reliable"]
+        if row["state"] == "breached":
+            assert reliable and gap < 0, f"{row['ticker']} is not breached"
+        elif row["state"] == "unreliable":
+            assert not reliable, f"{row['ticker']} has a usable burn estimate"
+        elif row["state"] == "lapsed":
+            assert c["lapsed"], f"{row['ticker']} has no lapsed expectation"
+        elif row["state"] == "clear":
+            assert reliable and gap >= 0 and not c["lapsed"], (
+                f"{row['ticker']} is listed clear but something is wrong with it"
+            )
+
+
+def test_queue_is_sorted_worst_first():
+    """An inbox that buries the breach under the clear rows is not an inbox."""
+    from console.make_snapshot import _QUEUE_RANK
+
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    ranks = [_QUEUE_RANK[row["state"]] for row in _queue_of(snap)["rows"]]
+    assert ranks == sorted(ranks), "queue rows are not ordered worst first"
+
+
+def test_queue_shows_rocket_twice(client):
+    """Rocket is breached AND carrying a lapsed expectation. Both must appear:
+    collapsing a contract to one worst state hides the other piece of work.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    states = {row["state"] for row in _queue_of(snap)["rows"]
+              if row["ticker"] == "RCKT"}
+    assert {"breached", "lapsed"} <= states, (
+        f"RCKT should be queued as both breached and lapsed, got {states}"
+    )
+    assert b"NCT04248439" in client.get("/queue").data
+
+
+def test_queue_never_ranks_an_unreliable_row():
+    """A contract with an unusable burn estimate must show no gap figure.
+
+    The project's rule is that unreliable rows are shown and never ranked. The
+    queue broke it in a way the rule's own test could not see: SRPT's rows
+    printed "2.6 mo" beside "burn estimate unreliable", which ranks it in the
+    reader's head even though no column called it a rank. Caught by looking at
+    the rendered page, not by a test, which is why this one exists now.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    for row in snap["queue"]["rows"]:
+        if not snap["contracts"][row["ticker"]]["runway"]["reliable"]:
+            assert row["gap_1f"] is None, (
+                f"{row['ticker']} has an unreliable burn estimate but the queue "
+                f"prints a gap of {row['gap_1f']}"
+            )
+
+
+def test_queue_claims_no_comparison_it_cannot_make(client):
+    """Nothing may say "newly", "since", or "moved" on this page.
+
+    There is one committed snapshot and no previous one, so no state here can
+    be a comparison against an earlier look. The first label said "newly
+    breached" and could not have known.
+    """
+    # Collapse whitespace: the sentence is wrapped across lines in the template.
+    text = " ".join(client.get("/queue").data.decode().lower().split())
+    labels = " ".join(
+        c["label"] for c in json.load(open(SNAPSHOT_PATH))["queue"]["counts"]
+    ).lower()
+    for word in ("newly", "since last", "moved since"):
+        assert word not in labels, (
+            f"queue state label claims {word!r}, a comparison with no previous "
+            "snapshot to make it against"
+        )
+    assert "nothing here knows what was true yesterday" in text, (
+        "the page must say why 'newly' is absent, or the absence reads as an oversight"
+    )

@@ -144,6 +144,35 @@ collide, and every test stays green. On RCKT the filing and lapsed markers sit 3
 and are readable only because they were given different label rows by hand. A contract
 whose dates cluster differently will draw badly and say nothing about it.
 
+## The queue is a second opinion, and shows only what one snapshot can say
+
+The monitoring queue is a second computation over the same contracts, so it can disagree
+with the first one. Two checks exist to make that disagreement loud rather than quiet: its
+breach and lapse counts must equal the command bar's, which reaches them by a different
+route (`verdict` versus the sign of `gap_months`), and every contract in the snapshot must
+appear in it. Both were watched failing.
+
+What it deliberately does not have:
+
+- **No "newly", and no "since last week".** Every such state is a comparison against a
+  previous look, and there is one committed snapshot with nothing to diff against. The
+  first version of the state list said "newly breached" and could not have known. A test
+  now rejects `newly`, `since last` and `moved since` in any state label, and the page
+  states the absence rather than leaving it to be noticed.
+- **No changed-SEC-tag-path state**, for the same reason. `Runway.provenance` records which
+  tag each figure resolved through, so the check becomes possible the moment a second
+  snapshot exists, and it does not exist yet.
+
+One defect it shipped with, found by looking at the page rather than by a test: rows whose
+burn estimate is unreliable printed a gap figure beside "burn estimate unreliable". No
+column called it a rank, and the existing no-rank test passes on it, because that test
+looks for a plain-integer rank cell on `/contracts`. Printing `2.6 mo` next to a row the
+system says is not rankable ranks it in the reader's head anyway. Fixed, and the fix has
+its own test.
+
+The threshold for "approaching breach" is six months. That is a judgement, not a finding:
+a quarter is too tight to act on and a year is not news. Nothing validates it.
+
 ## Untested, and known to be
 
 - ~~The decision receipt's two hashes.~~ Closed. The receipt used to travel in the query
