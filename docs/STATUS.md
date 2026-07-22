@@ -194,6 +194,30 @@ only because those digits happen to appear in the file. Dollars render to whole
 millions, so cash shows `$50M` against a 10-Q reading 49.61. `app.run(port=5000)`
 collides with macOS ControlCenter on this machine and will not bind on demo day.
 
+## The badge repair, verified 2026-07-21
+
+Bob's fix is right and its test is real. Reverting the handler to the query-string
+version fails the new test, and so does hardcoding `verify()` to `True`, so the
+check is anchored to the behaviour and not to the shape of the code. The four
+original console mutations still fail as they should, so nothing regressed.
+`--displays` is byte-identical across two runs and needed no credentials. The
+Granite redline block was not regenerated. All four engine gates pass. 13 tests.
+
+Confirmed end to end in a browser, which is the only version that matters here:
+accept the redline, edit one byte of `data/decisions.jsonl`, reload the same URL,
+and the badge goes from green `✓ intact` to red `✗ tampered`.
+
+Two things to know rather than fix:
+
+The provenance check matches by substring, so a format that truncates a
+full-precision number passes for free. `"%.3f"` of `-0.5913757700205339` renders
+`-0.591`, which is a literal prefix of the stored value. The check catches planted
+literals and computed values, which is what it exists for, but it is not proof that
+no template formats anything. Do not describe it as more than it is.
+
+The app now reads `PORT` and defaults to 8050, because 5000 is held by macOS
+ControlCenter. `python3 console/app.py` works again.
+
 ## Attribution, resolved 2026-07-21
 
 Bob built the console. One Bob session did sub-task 1 and sub-tasks 2 to 6 in a
@@ -216,9 +240,14 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## Still open
 
-- The badge repair, Prompt 3 repair in `docs/BOB_PROMPTS.md`. Bob, exported. It
-  calls no live API, so it cannot repeat the rate-limit episode.
-- Export the two console Bob sessions and fill in the two `pending export` rows
+- Export the repair session to `docs/bob-sessions/phase3-console-repair.json` and
+  fill in its `pending export` row. Scan it first.
+- **Publish the repo on GitHub.** Submission requires a public repository with a
+  README, and there is currently no remote at all. History is clean of
+  credentials, checked across every commit, so no rewrite is needed first.
+- The SkillsBuild certificate. One of two named activities, uploaded with the
+  submission.
+- The Project Page on the platform, all sections marked complete.
 - The contract list has only two rows: SANA has no live pivotal trial. Thin for a
   view about ranking, but the list is not the demo beat. Revisit only if cheap.
 - The README, written from `docs/BOB_LOG.md` rather than from memory
