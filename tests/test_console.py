@@ -199,6 +199,71 @@ def test_badge_flips_on_tampered_ledger(tmp_path, monkeypatch):
         )
 
 
+# ---------------------------------------------------------------------------
+# Flagged row — SRPT visible but unranked (Prompt 3 widening, item 3)
+# ---------------------------------------------------------------------------
+
+def test_contracts_flagged_section_contains_srpt(client):
+    """SRPT must appear in the flagged section of /contracts."""
+    r = client.get("/contracts")
+    assert r.status_code == 200
+    assert b"SRPT" in r.data, "/contracts must show SRPT in the flagged section"
+
+
+def test_srpt_has_no_rank_number(client):
+    """SRPT is unreliable and must not carry a rank number on /contracts.
+
+    The ranked table uses loop.index (1, 2, 3, ...) in the Rank column.
+    SRPT must appear in the flagged table, which has no Rank column.
+    We verify this by checking the HTML: SRPT's row must not be preceded
+    by a rank cell containing a digit within the same <tr>.
+
+    Implementation: parse the page, find every <tr> that contains 'SRPT',
+    and assert none of them also contains a lone digit that would be a rank.
+    """
+    from html.parser import HTMLParser as _HP
+
+    class _TableParser(_HP):
+        def __init__(self):
+            super().__init__()
+            self._in_tr = False
+            self._cells: list[str] = []
+            self._cur: list[str] = []
+            self.srpt_rows: list[list[str]] = []  # all <tr> cells containing SRPT
+
+        def handle_starttag(self, tag, attrs):
+            if tag == "tr":
+                self._in_tr = True
+                self._cells = []
+                self._cur = []
+
+        def handle_endtag(self, tag):
+            if tag == "td":
+                self._cells.append("".join(self._cur).strip())
+                self._cur = []
+            elif tag == "tr":
+                row_text = " ".join(self._cells)
+                if "SRPT" in row_text:
+                    self.srpt_rows.append(list(self._cells))
+                self._in_tr = False
+
+        def handle_data(self, data):
+            if self._in_tr:
+                self._cur.append(data)
+
+    r = client.get("/contracts")
+    p = _TableParser()
+    p.feed(r.data.decode())
+    assert p.srpt_rows, "SRPT must appear in at least one table row"
+    for row in p.srpt_rows:
+        # A rank cell is a cell whose stripped content is a plain integer.
+        rank_cells = [c for c in row if c.isdigit()]
+        assert not rank_cells, (
+            f"SRPT row contains a rank cell {rank_cells!r} — "
+            "unreliable rows must not be ranked"
+        )
+
+
 @pytest.mark.parametrize("route", ["/contract/RCKT", "/contracts", "/redline"])
 def test_number_provenance(client, snapshot_raw, route):
     """Every number visible in the rendered HTML must appear in snapshot.json.

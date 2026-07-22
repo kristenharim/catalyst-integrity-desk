@@ -112,9 +112,9 @@
         "n_late_moves": 0
       },
       "gap_months": -35.58110882956879,
+      "gap_months_1f": "-35.6",
       "catalyst_date": "2030-01-01",
-      "verdict": "financing required before catalyst",
-      "gap_months_1f": "-35.6"
+      "verdict": "financing required before catalyst"
     },
     "RCKT": {
       "runway": {
@@ -226,9 +226,205 @@
         "n_late_moves": 0
       },
       "gap_months": 8.37782340862423,
+      "gap_months_1f": "8.4",
       "catalyst_date": "2026-05-05",
-      "verdict": "funded to catalyst",
-      "gap_months_1f": "8.4"
+      "verdict": "funded to catalyst"
+    },
+    "BEAM": {
+      "runway": {
+        "ticker": "BEAM",
+        "cik": "0001745999",
+        "name": "Beam Therapeutics Inc.",
+        "as_of": "2026-03-31",
+        "cash": 288291000.0,
+        "securities": 923361000.0,
+        "liquidity": 1211652000.0,
+        "burn_ttm_annual": 369731000.0,
+        "burn_recent_annual": 514052000.0,
+        "months_low": 28.28473384015625,
+        "months_high": 39.325412259183025,
+        "reliable": true,
+        "burn_unstable": false,
+        "inflow_quarters": [],
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "MarketableSecuritiesCurrent",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": [],
+        "display": {
+          "cash_m": "288",
+          "securities_m": "923",
+          "liquidity_m": "1212",
+          "burn_ttm_annual_m": "370",
+          "burn_recent_annual_m": "514",
+          "months_low_1f": "28.3",
+          "months_high_1f": "39.3"
+        }
+      },
+      "trial": {
+        "nct": "NCT05885464",
+        "title": "A Study Evaluating the Safety and Efficacy of BEAM-201 in Relapsed/Refractory T-Cell Acute Lymphoblastic Leukemia (T-ALL) or T-Cell Lymphoblastic Lymphoma (T-LL)",
+        "status": "ACTIVE_NOT_RECRUITING",
+        "pcd": "2026-12",
+        "pcd_type": "ESTIMATED",
+        "phases": [
+          "PHASE1",
+          "PHASE2"
+        ],
+        "sponsor": "Beam Therapeutics Inc."
+      },
+      "history": {
+        "nct": "NCT05885464",
+        "sponsor": "Beam Therapeutics Inc.",
+        "phases": [
+          "PHASE1",
+          "PHASE2"
+        ],
+        "n_versions": 12,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2023-06-01",
+            "pcd": "2031-12",
+            "pcd_type": "ESTIMATED",
+            "status": "NOT_YET_RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 10,
+            "submitted": "2025-01-06",
+            "pcd": "2026-12",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": -1826,
+            "held_days": 2520,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2031-12",
+        "last_pcd": "2026-12",
+        "total_slip_days": -1826,
+        "n_late_moves": 0
+      },
+      "gap_months": 20.205338809034906,
+      "gap_months_1f": "20.2",
+      "catalyst_date": "2026-12-01",
+      "verdict": "funded to catalyst"
+    },
+    "SRPT": {
+      "runway": {
+        "ticker": "SRPT",
+        "cik": "0000873303",
+        "name": "Sarepta Therapeutics, Inc.",
+        "as_of": "2026-03-31",
+        "cash": 464450000.0,
+        "securities": 188739000.0,
+        "liquidity": 653189000.0,
+        "burn_ttm_annual": -175275000.0,
+        "burn_recent_annual": 810732000.0,
+        "months_low": 9.66813694291085,
+        "months_high": 9.66813694291085,
+        "reliable": false,
+        "burn_unstable": false,
+        "inflow_quarters": [
+          "2025-12-31",
+          "2025-06-30"
+        ],
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "ShortTermInvestments",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": [
+          "cash-positive operating quarter(s) in TTM window: 2025-12-31, 2025-06-30 - likely a one-time inflow"
+        ],
+        "display": {
+          "cash_m": "464",
+          "securities_m": "189",
+          "liquidity_m": "653",
+          "burn_ttm_annual_m": "-175",
+          "burn_recent_annual_m": "811",
+          "months_low_1f": "9.7",
+          "months_high_1f": "9.7"
+        }
+      },
+      "trial": {
+        "nct": "NCT06246513",
+        "title": "A Trial to Learn More About an Experimental Gene Therapy Called Bidridistrogene Xeboparvovec (SRP-9003) as a Possible Treatment for Limb Girdle Muscular Dystrophy 2E/R4",
+        "status": "ACTIVE_NOT_RECRUITING",
+        "pcd": "2025-03-04",
+        "pcd_type": "ACTUAL",
+        "phases": [
+          "PHASE3"
+        ],
+        "sponsor": "Sarepta Therapeutics, Inc."
+      },
+      "history": {
+        "nct": "NCT06246513",
+        "sponsor": "Sarepta Therapeutics, Inc.",
+        "phases": [
+          "PHASE3"
+        ],
+        "n_versions": 8,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2024-01-30",
+            "pcd": "2025-01-31",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 3,
+            "submitted": "2025-02-28",
+            "pcd": "2025-03-31",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 59,
+            "held_days": -28,
+            "carried_expired": true,
+            "days_expired": 28,
+            "is_late_move": false,
+            "svg_x": 1035.1
+          },
+          {
+            "version": 4,
+            "submitted": "2025-03-02",
+            "pcd": "2025-03-04",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": -27,
+            "held_days": 29,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": true,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2025-01-31",
+        "last_pcd": "2025-03-04",
+        "total_slip_days": 32,
+        "n_late_moves": 1
+      },
+      "gap_months": 22.537987679671456,
+      "gap_months_1f": "22.5",
+      "catalyst_date": "2025-03-04",
+      "verdict": "not rankable (burn estimate unreliable)"
     }
   },
   "redline": {

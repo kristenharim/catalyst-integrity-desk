@@ -33,7 +33,7 @@ from engine.runway import ticker_to_cik
 from orchestrator.granite import GraniteClassifier
 from orchestrator.redline import ContractDelta, run_redline
 
-TICKERS = ["SANA", "PRME", "RCKT"]
+TICKERS = ["SANA", "PRME", "RCKT", "BEAM", "SRPT"]
 SNAPSHOT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "snapshot.json")
 SVG_WIDTH = 1100
 SVG_PAD = 60  # pixels each side; usable span = SVG_WIDTH - 2*SVG_PAD = 980
