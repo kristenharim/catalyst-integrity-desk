@@ -366,6 +366,49 @@ approved side reads +8.4 and the current side -14.5, no figure is computed in a 
 
 ---
 
+### Prompt 3, the anchor: make deletion detectable
+
+A three-model adversarial review found the sharpest hole in the system, and it was
+verified by running it. `verify()` proves the **presented** chain is self-consistent. It
+does not prove it is the **original** chain.
+
+Confirmed by experiment: deleting the newest ledger entry leaves `verify()` returning
+`True` and the badge green. Replacing the whole file with a freshly built, internally
+valid chain whose claim read "Rocket is comfortably funded and no financing is required"
+also returned `True`. Nothing in the repo records an expected head hash or entry count.
+
+This matters because the demo invites the question. A judge who asks "what if I just
+delete the entry" currently gets "nothing happens".
+
+Note `engine/ledger.py` is outside your edit boundary and must stay that way. Build the
+anchor beside it, not inside it.
+
+> Add `orchestrator/anchor.py`: a small module that records the ledger's head hash and
+> entry count to `data/ledger.anchor` after each successful append, and a `check(ledger)`
+> that compares the live chain's head and count against that file. Deletion, truncation
+> and wholesale replacement all change the head or the count, so all three become
+> detectable.
+>
+> Wire it into the decision path in `console/app.py` and into the confirm page, so the
+> badge reports three states rather than two: intact, tampered (the chain itself fails),
+> and **truncated or replaced** (the chain verifies but disagrees with the anchor). Style
+> the third distinctly. It is a different accusation from the second.
+>
+> Write the tests before the fix and watch each fail: delete the newest entry and assert
+> the badge reports truncation; rebuild a valid chain from scratch and assert the same;
+> edit a byte and assert it still reports tampering rather than truncation.
+>
+> Be precise in the UI wording. With the anchor this detects deletion **given that the
+> anchor file itself was not also rewritten**. That is a real improvement and not a
+> guarantee, so do not write "immutable" or "append-only" anywhere. `docs/LIMITS.md` has
+> the exact language.
+
+**Accept when:** the three tests each fail before the fix, the badge distinguishes
+tampering from truncation, `pytest tests/` is green with `.env` sourced, and no wording in
+the UI overstates what the anchor proves.
+
+---
+
 ### Prompt 4, reduced: the panel the demo actually needs
 
 `docs/SPEC.md` Phase 4 specifies a 60 to 100 company panel assembled from SEC DERA

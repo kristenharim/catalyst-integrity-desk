@@ -179,6 +179,11 @@ failing.
 - Each console check was re-broken afterwards: the marker class renamed, `stub` forced
   into the memo, `days_expired` changed from 677 to 123. All four failed as they should.
 
+`docs/LIMITS.md` states what every guard in this system does and does not prove, at the
+strength the evidence supports. It is worth reading before the code, because the honest
+version of each claim is narrower than the obvious one, and each limit there was found by
+breaking the thing rather than by reasoning about it.
+
 Stated precisely, because it is easy to oversell: the provenance check **detects
 unintended displayed literals**. It does not prove every rendered value is correctly
 formatted. It matches by substring, so a format that truncates a full-precision value
