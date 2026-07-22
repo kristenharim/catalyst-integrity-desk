@@ -1,4 +1,4 @@
-# A quarter of industry trial-date revisions replace an estimate that had already expired
+# The sponsors that stop filing are the ones carrying expired commitments
 
 **Every cohort figure in this document is a field of snapshot `cohort-8326c1c1e964`, frozen
 2026-07-22, with point prevalence computed as of that same date: 240 drawn trials, 60 in each
@@ -18,97 +18,45 @@ the audit that verifies this document is a person, and a person does not rerun o
 The draw is uniform over the first 3,000 trials in the registry's own ordering within each
 stratum, not over the whole stratum. "Randomly drawn" throughout means that and not more.
 
-## The finding, and why it is not the delay literature
+## The finding: reconciliation is indistinguishable from filing frequency
 
-That trials run late is documented. Shadbolt et al., JAMA Network Open 2023, find roughly one
-in five randomised trials complete on time, with a median delay of 12.2 months. Any measure
-of "the registered date passed" is therefore close to a restatement of something already
-known, and a study that stops there has measured lateness with extra steps.
+The sponsors who stop filing are the ones carrying expired commitments, and the measure that
+was going to be this study's headline cannot see them.
 
-The distinction that separates them is **when the sponsor revised the date**, and the registry
-records it exactly. Every revision carries how much time the old date still had when it was
-moved:
+A trial is **carrying an expired commitment** when its most recent registered primary
+completion date is in the past and still typed as an estimate. A past date typed ACTUAL is the
+reconciled case, a completed trial recording when it completed, and does not count. Measured as
+of 2026-07-22, against two denominators, beside how often each stratum files at all:
 
-- **Revised while the date was still in the future.** The registered date had not yet passed
-  when it was replaced. The trial may be very late and the record still never showed a date
-  that had expired.
-- **Revised only after the date had already passed.** For that whole interval the registry
-  showed a date that the sponsor's own later filing superseded.
+| Stratum | carrying an expired estimate | of trials whose commitment is still open | median registry versions |
+|---|---:|---:|---:|
+| NIH | 0 of 60 (0.0%) | 0 of 18 (**0.0%**) | 106.5 |
+| INDUSTRY | 5 of 60 (8.3%) | 5 of 15 (33.3%) | 9 |
+| OTHER | 19 of 60 (31.7%) | 19 of 28 (67.9%) | 4 |
+| OTHER_GOV | 27 of 60 (45.0%) | 27 of 29 (**93.1%**) | 2 |
 
-Lateness is the first. Non-reconciliation is the second, and it is the only one this project
-claims to measure. Neither describes what anyone knew or intended, which a registry diff
-cannot show.
-
-**A revision filed after a lapse is not automatically a failure to reconcile**, and this is
-where the first draft of this document was wrong. If the revision sets the date to ACTUAL,
-the sponsor is recording when the trial finished. For a trial that ran late that filing
-necessarily lands after the earlier estimate expired, and it is the update 42 CFR
-11.64(a)(1)(ii) requires within 30 days of actual completion. It is the reconciliation event,
-not its absence. Half of the industry after-lapse revisions are exactly that.
-
-The behaviour this project claims is narrower: **an expired estimate replaced by another
-estimate.** The sponsor let the date pass and then pushed it, with no completion recorded.
-
-| Stratum | dated revisions | filed after a lapse | of those, recorded ACTUAL | **estimate → estimate** | rate |
-|---|---:|---:|---:|---:|---:|
-| INDUSTRY | 126 | 66 | 33 | **33** | **26.2%** |
-| NIH | 181 | 57 | 20 | 37 | 20.4% |
-| OTHER_GOV | 48 | 32 | 14 | 18 | 37.5% |
-| OTHER | 91 | 49 | 14 | 35 | 38.5% |
-
-At the trial level, **24 of the 52 industry trials that revised a date at all (46.2%) did
-this at least once**. The comparable figures are 21 of 55 for NIH, 16 of 28 for OTHER_GOV and
-21 of 38 for OTHER.
-
-So the answer to "is this just delay?" is that a quarter of industry revisions are something
-delay does not account for. That is smaller than the 52.4% an earlier draft of this document
-claimed, and it is the part that survives the objection.
-
-**This measure is conditional on a revision existing, which is a real blind spot.** A trial
-that lets a date lapse and never files again produces no dated revision and appears in
-neither column. It is the same defect as the stretch measure below, one level up, and it is
-not small: 8 of 60 industry trials and **32 of 60 OTHER_GOV trials never revised a date at
-all**. Point prevalence is the measure that sees them, and the two have to be read together.
-
-A boundary note: a revision filed on the exact day the date came due counts as prospective.
-That happens twice in 446 dated revisions and moves nothing.
-
-## How many are carrying an expired date right now
-
-The primary frequency measure is point prevalence: a trial whose most recent registered
-primary completion date is in the past **and still typed as an estimate** rather than an
-actual. A past date typed ACTUAL is the reconciled case, a completed trial recording when it
-completed, and does not count.
-
-| Stratum | carrying an expired estimate, 2026-07-22 | of trials still carrying an estimate | invisible to the stretch measure | median registry versions |
-|---|---:|---:|---:|---:|
-| INDUSTRY | 5 of 60 (8.3%) | 5 of 15 (**33.3%**) | 4 | 9 |
-| NIH | 0 of 60 (0.0%) | 0 of 18 (0.0%) | 0 | 106.5 |
-| OTHER | 19 of 60 (31.7%) | 19 of 28 (67.9%) | 15 | 4 |
-| OTHER_GOV | 27 of 60 (45.0%) | 27 of 29 (**93.1%**) | 20 | 2 |
-
-The two denominators answer different questions and both are reported. Out of all 60 trials
-the rate is small, and it should be: most trials in this frame have finished and recorded an
-actual completion date, which is the system working. But 45 of the 60 industry trials are in
-that state and cannot be carrying an expired estimate by construction. Among the 15 whose
-commitment is still open, **one in three is already past its stated date**, and for OTHER_GOV
+Both denominators are reported because they answer different questions. Out of all 60 trials
+the rate is small and should be: most trials in this frame have finished and recorded an actual
+completion date, which is the system working. But 45 of the 60 industry trials are in that
+state and cannot be carrying an expired estimate by construction. Among those whose commitment
+is still open, one in three industry trials is already past its stated date, and for OTHER_GOV
 it is 27 of 29.
 
-Five trials is five events. No interval is computed anywhere in this document.
+NIH sponsors file a median of 106.5 registry versions per trial and have **no** trial currently
+carrying an expired estimate. OTHER_GOV sponsors file a median of 2 and nearly all of their
+open commitments are expired. The ordering is monotone in filing frequency across all four
+strata. That is an association across four points, not a tested mechanism, and nothing here
+separates filing frequency from any other property that varies alongside it.
 
-## The sponsors that lapse and go quiet
+### The measure that misses them, and why it inverts
 
-**The measure that was going to be the headline cannot see this population, which is why it
-is reported separately.**
+The stretch measure, reported in full further down, records a lapse only when a *later filing*
+arrives while an already-passed date is standing. A sponsor that lets a date expire and then
+files nothing produces no stretch at all and scores as never having carried one. The silence is
+exactly what makes it invisible: 20 of OTHER_GOV's 27 currently-expired trials and 15 of
+OTHER's 19 are invisible that way, and 32 of 60 OTHER_GOV trials never revised a date at all.
 
-The stretch measure below records a lapse only when a *later filing* arrives while an
-already-passed date is standing. A sponsor that lets a date expire and then files nothing
-produces no stretch at all and scores as never having carried one. The silence is exactly
-what makes it invisible.
-
-Twenty of OTHER_GOV's 27 currently-expired trials are invisible that way, and 15 of OTHER's
-19. The consequence is that the two measures rank the four strata in **exactly opposite
-order**:
+The two measures therefore rank the four strata in **exactly opposite order**:
 
 | Stratum | ever carried, and filed again | carrying one now | median versions |
 |---|---:|---:|---:|
@@ -117,14 +65,58 @@ order**:
 | OTHER | 61.7% | 31.7% | 4 |
 | OTHER_GOV | 53.3% | 45.0% | 2 |
 
-The two measures order the strata in the same order as median filing frequency: NIH at 106.5
-versions has none currently expired, OTHER_GOV at 2 has 27 of 60. That is an association
-across four strata, not a tested mechanism, and with four points nothing here separates it
-from any other property that varies alongside filing rate.
+Read alone, the stretch measure would have said government and academic sponsors lapse and file
+again least often. They are the most likely to be carrying an expired date now. A measure that
+needs its subject to keep talking cannot see the subject that stops, and every frequency
+statistic in this literature that is built from observed corrections has the same blind spot.
 
-Read alone, the stretch measure would have said government and academic sponsors lapse and
-file again least often. They are the most likely to be carrying an expired date now. A
-measure that needs its subject to keep talking cannot see the subject that stops.
+## The mechanism, among sponsors that are still filing
+
+That trials run late is documented. Shadbolt et al., JAMA Network Open 2023, find roughly one
+in five randomised trials complete on time, with a median delay of 12.2 months. Any measure of
+"the registered date passed" is close to a restatement of something already known, and a study
+that stops there has measured lateness with extra steps.
+
+The distinction that separates them is **when** the date was revised and **to what**. Every
+revision carries how much time the old date still had when it was moved:
+
+- **Revised while the date was still in the future.** The registered date had not yet passed
+  when it was replaced. The trial may be very late and the record still never showed a date
+  that had expired.
+- **Revised after the date had already passed, recording an ACTUAL completion.** For a trial
+  that ran late this necessarily lands after the earlier estimate expired, and it is the update
+  42 CFR 11.64(a)(1)(ii) requires within 30 days of actual completion. It is the reconciliation
+  event, not its absence.
+- **Revised after the date had already passed, with another ESTIMATE.** The sponsor let the
+  date pass and then pushed it, with no completion recorded. This is the behaviour this project
+  claims to measure.
+
+None of the three describes what anyone knew or intended, which a registry diff cannot show.
+
+| Stratum | dated revisions | after a lapse | of those, recorded ACTUAL | **estimate → estimate** | rate |
+|---|---:|---:|---:|---:|---:|
+| INDUSTRY | 126 | 66 | 33 | **33** | **26.2%** |
+| NIH | 181 | 57 | 20 | 37 | 20.4% |
+| OTHER_GOV | 48 | 32 | 14 | 18 | 37.5% |
+| OTHER | 91 | 49 | 14 | 35 | 38.5% |
+
+At the trial level, 24 of the 52 industry trials that revised a date at all (46.2%) did this at
+least once. The comparable figures are 21 of 55 for NIH, 16 of 28 for OTHER_GOV and 21 of 38
+for OTHER.
+
+So among sponsors that are still filing, a quarter of industry revisions are something delay
+does not account for. An earlier draft of this document reported 52.4% here, which counted the
+mandated update-to-actual filing as a failure to reconcile; that is retracted as Correction 8.
+
+**This measure is conditional on a revision existing**, which is the same blind spot as the
+stretch measure, one level up: a trial that lapses and never files again contributes to neither
+the numerator nor the denominator. It is not small, at 8 of 60 industry trials and 32 of 60
+OTHER_GOV trials, and it is why this section supports the finding above rather than standing on
+its own.
+
+A boundary convention: a revision filed on the exact day the date came due has zero days
+remaining and is counted as prospective rather than as a lapse. That is 2 of the 446 dated
+revisions across all four strata and it moves no published figure.
 
 ## What is being measured, and what is not
 
@@ -189,6 +181,13 @@ one number regardless of how often its sponsor happened to file afterwards.
 | OTHER | 37 | 439 | 998 | 1,929 |
 
 Days. NIH/industry ratio at the median: **1.5x**.
+
+**Every duration in this section is measured on completed spells**, meaning lapses that were
+eventually ended by a later filing. That is length-biased and it describes lapses that are
+over. The open cases, which are the ones a monitor would actually alert on, contribute no
+duration at all: this study counts them and does not say how long they run or where the
+replacement date lands. Recorded in `docs/PARKING.md` as the next measurement rather than
+estimated here.
 
 **Sensitivity, per stretch.** A stretch is emitted per consecutive version pair, so one lapse
 spanning many filings contributes many overlapping rows measuring the same expiry to
@@ -343,6 +342,22 @@ error was in the flattering direction, produced a dramatic result, and passed a 
 because a check that silently does not apply looks exactly like a check that passes. The rank
 inversion it was offered as evidence for turned out to be real and is reported above; the
 magnitudes were an order out. A test now asserts that a past ACTUAL date does not count.
+
+**Correction 8: half a published headline was the filing the regulation requires.** A draft
+reported that 52.4% of industry dated revisions were filed after the date had already passed
+and presented that as non-reconciliation. Half of them, 33 of 66, set the date to ACTUAL,
+which for a late trial necessarily lands after the earlier estimate expired and is exactly the
+update 42 CFR 11.64(a)(1)(ii) mandates. The draft therefore quoted a regulation to argue the
+behaviour was unlicensed while that regulation licensed half the numerator, and called the
+same filing "the system working" in one section and a failure in another. Every number was
+arithmetically correct; the sentence they supported was not, so no numeric check could have
+caught it. The surviving figure is 26.2%, and it is a supporting mechanism here rather than
+the headline. Found by an adversarial reviewer on its second pass over the same document.
+
+**A note on what the corrections have in common.** Six of the eight were found by breaking
+something or by an outside reader, and two of those (6 and 8) were found only on a second pass
+over material the same reviewer had already approved. One round of review would have shipped
+both.
 
 ## What this does not license
 

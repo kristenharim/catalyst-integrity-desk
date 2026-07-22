@@ -372,6 +372,18 @@ reported as a result rather than as a gap.
 
 **What does not survive.** Any statement ranking strata by how often they carry a dead date.
 
+## Every published duration is measured on completed spells
+
+Both duration measures, per-stretch and per-trial longest carry, are computed from lapses that
+a later filing ended. A lapse still open contributes no duration, so the distributions describe
+lapses that are over and are length-biased toward those that resolved. The trials a monitor
+would actually alert on, the ones carrying an expired estimate right now, are counted in the
+point-prevalence figures and appear in no duration figure anywhere.
+
+What that forecloses: any statement about how long an open lapse will run, or where the
+replacement date lands when it arrives. Neither is measured and neither can be estimated from
+this data. Recorded in `docs/PARKING.md` as the next measurement.
+
 ## A stretch is not an episode, and the 2.4x is largely a filing-frequency artifact
 
 **Found in the same review, confirmed, and open.**

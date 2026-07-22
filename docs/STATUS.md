@@ -340,19 +340,21 @@ What closing it required, in case any of it recurs:
   silently does not apply looks exactly like a check that passes, and this one was in the
   flattering direction.
 
-**Where the study now stands, after a second council round that blocked again.** The headline
-is the reconciliation split, which separates this from the documented delay literature:
-**26.2% of industry completion-date revisions replaced an estimate that had already expired**
-(33 of 126), and 24 of the 52 industry trials that revised a date at all did it at least once.
-A first draft published 52.4% for this, which conflated the mandated update-to-actual filing
-with the behaviour being claimed; half the after-lapse revisions record an actual completion
-date and are the reconciliation event rather than its absence.
+**Where the study now stands, after two council rounds that both blocked.** The headline is
+the registry-level result: **reconciliation is indistinguishable from filing frequency, and the
+sponsors who stop filing are the ones carrying expired commitments.** NIH files a median of
+106.5 versions per trial and carries zero expired commitments; OTHER_GOV files a median of 2
+and 27 of its 29 open commitments have expired. Monotone across all four strata.
 
-Primary frequency is point prevalence: 8.3% of industry trials carry an expired estimate as of
-2026-07-22, and 33.3% of those whose commitment is still open. OTHER_GOV is 45.0% and 93.1%.
-Primary duration is per-trial longest carry, NIH 590 days against industry 390, 1.5x. The
-stretch-based figures (80.0%, median 240, 2.4x) are a labelled secondary and sensitivity, and
-they cannot see a sponsor that lapses and stops filing.
+The supporting mechanism, among sponsors still filing, is that 26.2% of industry revisions
+replace an already-expired estimate (33 of 126). A draft published 52.4% for this, which
+counted the mandated update-to-actual filing as a failure to reconcile; retracted as
+Correction 8.
+
+Primary frequency is point prevalence, 8.3% of all industry trials and 33.3% of those still
+open. Primary duration is per-trial longest carry, NIH 590 days against industry 390, 1.5x, and
+every duration here is measured on completed spells only. The stretch-based figures (80.0%,
+median 240, 2.4x) are a labelled secondary and cannot see a sponsor that stops filing.
 
 **No all-strata average exists
 anywhere**, and the no-pooling rule now rests on three differences rather than one ratio.

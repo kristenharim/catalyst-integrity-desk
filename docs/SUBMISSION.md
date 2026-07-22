@@ -73,22 +73,22 @@ catalyst. The nearest registered completion still in the future puts the same co
 minus 14.5 months, financing required. Nobody filed an amendment. The date simply arrived,
 and passed.
 
-**Rocket is ordinary, and that is the actual finding.** In a random sample of industry
-phase 2/3 trials, **26.2% of registered completion-date revisions replaced an estimate that
-had already expired** (33 of 126), and 24 of the 52 industry trials that revised a date at all
-did it at least once. Running late is documented in the literature; this is narrower. A
-sponsor revising while the date is still in the future never shows an expired date, and one
-recording an actual completion afterwards is filing the update the regulation requires. What
-is left is an expired estimate replaced by another estimate. Rocket's 677 days is the 85th
-percentile of 188 such stretches.
+**Rocket is ordinary, and the actual finding is about the registry.** In a random sample of
+240 phase 2/3 trials, reconciliation tracks filing frequency: NIH sponsors file a median of
+106.5 registry versions per trial and have zero trials carrying an expired completion date,
+while government and academic sponsors file a median of 2 and **27 of their 29 still-open
+commitments have already expired**. Counting only lapses that a later filing corrected inverts
+that ranking, because a lapse becomes visible only when the sponsor files again. A measure that
+needs its subject to keep talking cannot see the subject that stops.
+
+Among sponsors still filing, **26.2% of industry completion-date revisions replace an estimate
+that had already expired** (33 of 126). Industry point prevalence is 8.3% of all trials and
+33.3% of those still carrying an open commitment. Rocket's 677 days is the 85th percentile of
+188 such stretches.
 
 Every cohort figure is a field of snapshot `cohort-8326c1c1e964`: 240 trials, 60 in each of
-four sponsor strata, all measured, point prevalence as of 2026-07-22. Two frequency measures
-are reported side by side because they disagree: 8.3% of industry trials carry an expired
-estimate now, 33.3% of those still carrying an open commitment, while 80.0% carried one at
-some point and subsequently filed again. The second cannot see a sponsor that lapses and then
-stops filing, which is why it is secondary and why the silent population is a result in its
-own right. `docs/COHORT.md` has the frame and the limits; `docs/WRITEUP.md` is the write-up.
+four sponsor strata, all measured, point prevalence as of 2026-07-22. `docs/COHORT.md` has the
+frame and the limits; `docs/WRITEUP.md` is the write-up.
 
 ## The architecture that makes the demo mean something
 

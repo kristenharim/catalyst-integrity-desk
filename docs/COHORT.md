@@ -108,7 +108,15 @@ every completed trial that had correctly recorded its actual completion date was
 carrying a lapsed one. It published 83.3% for industry and 96.7% for OTHER_GOV for one
 revision. The true figures are 8.3% and 45.0%. See `docs/LIMITS.md`.
 
-## The finding the study now leads on
+## The finding the study now leads on: reconciliation tracks filing frequency
+
+The registry-level result is that the sponsors who stop filing are the ones carrying expired
+commitments. NIH files a median of 106.5 versions per trial and carries zero expired
+commitments; OTHER_GOV files a median of 2 and 27 of its 29 open commitments have expired,
+monotone across all four strata. The revision-level split below is the supporting mechanism
+among sponsors that are still filing, not the headline.
+
+### The revision-level mechanism
 
 Registered dates are revised, and **when** and **to what** they are revised is the distinction:
 
