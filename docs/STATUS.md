@@ -8,12 +8,20 @@ Read `HANDOFF.md` for the idea, `AGENTS.md` for the rules, this for the state.
 IBM AI Builders Challenge, Wildcard track. **Deadline Jul 31, 11:59pm EST.** The
 Wildcard runs again with an Aug 31 cycle, so a second entry is possible.
 
-Required, from the rules rather than the plan:
+Required, taken from the official FAQ rather than the plan:
 
+- A published Project Page with all sections marked complete
 - A working prototype **using IBM Bob as the primary development tool**
-- A README covering problem, solution, AI approach, theme, and **how Bob was used**
-- A video, **maximum 3 minutes**
-- A SkillsBuild learning activity completed
+- A **public GitHub repository** with a README
+- A public demo video, **maximum 3 minutes**
+- A SkillsBuild completion certificate, uploaded. It must be one of exactly two
+  activities: "How IBM Bob and AI Tools Are Changing the Way Solutions Are Built"
+  or "Lab: Troubleshoot Your Code Using IBM Bob"
+
+Other AI tools are explicitly allowed. FAQ question 7: "You may use additional AI
+tools during development. However, IBM Bob must be your primary development tool."
+So the review passes in `BOB_LOG.md` are permitted and worth keeping honest, not a
+liability to be scrubbed.
 
 Judged on Technical Execution, Innovation, Feasibility, Challenge Fit, Real-World
 Impact.
@@ -42,15 +50,14 @@ it. Its governance layer is what `orchestrator/` here was copied from.
 | phase | state |
 |---|---|
 | 1 — engine (`runway`, `ctgov_history`, `gap`) | done, verified against live SEC and registry data, **do not rewrite** |
-| 2 — governance port + redline loop | done, both transcripts in `docs/bob-sessions/` |
-| 3 — console, sub-task 1 (snapshot generator) | **done and verified** |
-| 3 — console, sub-tasks 2 to 6 (views, tests) | **next** |
-| 3 — sub-task 7 (manual acceptance) | do by hand, costs nothing |
+| 2 — governance port + redline loop | done, both Bob transcripts filed |
+| 3 — console, all sub-tasks | done, Bob built it, transcript filed |
+| 3 — repair, the integrity badge | done, verified by mutation and in a browser |
 | 4 — the panel (Prompt 4) | **cut**, budget |
-| 5 — README (Prompt 5) | **cut from Bob**, Claude writes it from `BOB_LOG.md` |
+| 5 — README (Prompt 5) | **next**, Claude writes it from `BOB_LOG.md` |
 
-To continue: same or fresh Bob conversation, mode **Catalyst builder**,
-"Implement sub-tasks 2 through 6 of docs/plans/console.md."
+The code is finished. What is left is the submission: the README, a public GitHub
+repo, the Project Page, the video, and the SkillsBuild certificate.
 
 ## The rule that outranks the rest
 
@@ -60,21 +67,28 @@ before. It must be visible without scrolling and without a click, and marked
 distinctly from ordinary revisions. `/` redirects to `/contract/RCKT` for exactly
 this reason. If a layout decision would bury it, the layout loses.
 
-## Budget, which is now the binding constraint
+## Budget, and what happened to the first trial
 
-Bob is on a trial with a **$40 cap, roughly $10 left**. It is the mandatory tool,
-so running dry before the console is filmable is the worst available outcome.
+The first trial hit its 40 Bobcoin cap partway into the badge repair, after Bob had
+read the files and before it wrote anything. That spend bought nothing.
 
-What that means in practice:
+The sanctioned fix, from FAQ question 8 and confirmed by a BeMyApp moderator, is
+that IBM does not extend or reset trials: you create a new Bob trial account on a
+different email and sign out of the old one in the app. Done on 2026-07-21, and the
+repair was built on the new trial with 40 fresh Bobcoins and 30 days.
 
-- Sub-tasks 2 to 6 are the last real Bob spend. Protect it.
-- Reviews go to Claude, not Bob. Reviewing is not building.
-- Sub-task 7 is manual and free.
-- If it tightens: sub-tasks 2 to 5 are the demo, the tests in 6 are what to
-  protect next, and everything else is already cut.
-- Most of the last task's spend went on a rate limit episode, not on code. When
-  something external is failing, stop Bob and diagnose it in Claude. Every Bob
-  retry costs money; every Claude retry does not.
+What that cost us is the old account's task history, which does not follow you.
+That is survivable only because the transcripts were already exported into
+`docs/bob-sessions/` and committed. **Export a Bob task the moment it finishes, not
+later.** A trial can die between the work and the export, and the export is the
+evidence the submission rests on.
+
+Standing habits worth keeping:
+
+- Reviews go to Claude, not Bob. Reviewing is not building, and the FAQ allows it.
+- When something external is failing, stop Bob and diagnose it in Claude. Every Bob
+  retry costs money; every Claude retry does not. Most of one task's spend went on
+  a rate limit episode rather than on code.
 
 ## watsonx rate limits
 
