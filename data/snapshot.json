@@ -239,7 +239,12 @@
       "observed": -0.5913757700205339,
       "expected_low": 0.0,
       "expected_high": 10.37782340862423,
-      "direction": "under"
+      "direction": "under",
+      "display": {
+        "observed_1f": "-0.6",
+        "expected_low_1f": "0.0",
+        "expected_high_1f": "10.4"
+      }
     },
     "classification": {
       "label": "direct_contradiction",

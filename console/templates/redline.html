@@ -49,12 +49,12 @@
         <td><span class="tag">{{ redline.breach.metric }}</span></td>
         <td>
           {% if redline.breach.observed < 0 %}
-            <span style="color:#f85149">{{ "%.1f"|format(redline.breach.observed) }}</span>
+            <span style="color:#f85149">{{ redline.breach.display.observed_1f }}</span>
           {% else %}
-            {{ "%.1f"|format(redline.breach.observed) }}
+            {{ redline.breach.display.observed_1f }}
           {% endif %}
         </td>
-        <td>[{{ "%.1f"|format(redline.breach.expected_low) }}, {{ "%.1f"|format(redline.breach.expected_high) }}]</td>
+        <td>[{{ redline.breach.display.expected_low_1f }}, {{ redline.breach.display.expected_high_1f }}]</td>
         <td>{{ redline.breach.direction }}</td>
       </tr>
     </tbody>

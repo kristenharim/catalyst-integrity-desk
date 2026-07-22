@@ -9,6 +9,9 @@ Run:
 
 Verify an existing snapshot:
     python3 console/make_snapshot.py --verify
+
+Refresh display strings without a full rebuild (no credentials needed):
+    python3 console/make_snapshot.py --displays
 """
 from __future__ import annotations
 
@@ -59,6 +62,52 @@ def _fmt_1f(v: float | None) -> str | None:
     return f"{v:.1f}"
 
 
+def _runway_display(r: dict) -> dict:
+    """Compute the display sub-dict for a serialised runway dict.
+
+    Takes raw numeric fields from the dict so this can be called on a loaded
+    snapshot as well as on a live Runway object.
+    """
+    return {
+        "cash_m": _fmt_m(r["cash"]),
+        "securities_m": _fmt_m(r["securities"]),
+        "liquidity_m": _fmt_m(r["liquidity"]),
+        "burn_ttm_annual_m": _fmt_m(r["burn_ttm_annual"]),
+        "burn_recent_annual_m": _fmt_m(r["burn_recent_annual"]),
+        "months_low_1f": _fmt_1f(r["months_low"]),
+        "months_high_1f": _fmt_1f(r["months_high"]),
+    }
+
+
+def _redline_display(breach: dict) -> dict:
+    """Compute display strings for the redline breach so the template never
+    formats numbers itself.
+    """
+    return {
+        "observed_1f": _fmt_1f(breach["observed"]),
+        "expected_low_1f": _fmt_1f(breach["expected_low"]),
+        "expected_high_1f": _fmt_1f(breach["expected_high"]),
+    }
+
+
+def apply_displays(snapshot: dict) -> dict:
+    """Add or refresh all display sub-dicts in a loaded snapshot dict.
+
+    Idempotent: calling twice produces the same result.  No network access,
+    no credentials needed.  Returns the mutated snapshot for convenience.
+    """
+    for c in snapshot.get("contracts", {}).values():
+        c["runway"]["display"] = _runway_display(c["runway"])
+        if c.get("gap_months") is not None:
+            c["gap_months_1f"] = _fmt_1f(c["gap_months"])
+
+    redline = snapshot.get("redline")
+    if redline and redline.get("breach"):
+        redline["breach"]["display"] = _redline_display(redline["breach"])
+
+    return snapshot
+
+
 def _serialise_runway(r) -> dict:
     """Runway dataclass fields plus all properties the template needs.
 
@@ -66,7 +115,7 @@ def _serialise_runway(r) -> dict:
     so the provenance test can find them verbatim in the snapshot.  Rounding
     happens here, not in the template.
     """
-    return {
+    raw = {
         "ticker": r.ticker,
         "cik": r.cik,
         "name": r.name,
@@ -83,18 +132,11 @@ def _serialise_runway(r) -> dict:
         "inflow_quarters": r.inflow_quarters,
         "provenance": r.provenance,
         "notes": r.notes,
-        # Pre-formatted display strings: templates use these verbatim so every
-        # number in the HTML is a substring of the snapshot JSON.
-        "display": {
-            "cash_m": _fmt_m(r.cash),
-            "securities_m": _fmt_m(r.securities),
-            "liquidity_m": _fmt_m(r.liquidity),
-            "burn_ttm_annual_m": _fmt_m(r.burn_ttm_annual),
-            "burn_recent_annual_m": _fmt_m(r.burn_recent_annual),
-            "months_low_1f": _fmt_1f(r.months_low),
-            "months_high_1f": _fmt_1f(r.months_high),
-        },
     }
+    # Pre-formatted display strings: templates use these verbatim so every
+    # number in the HTML is a substring of the snapshot JSON.
+    raw["display"] = _runway_display(raw)
+    return raw
 
 
 def _iso(d: date | None) -> str | None:
@@ -344,6 +386,8 @@ def build_snapshot() -> dict:
         "contracts": contracts,
         "redline": redline_data,
     }
+    # Add display strings for the redline breach so the template needs none.
+    apply_displays(snapshot)
     return snapshot
 
 
@@ -368,14 +412,38 @@ def verify_snapshot() -> None:
     print("ok")
 
 
+def refresh_displays() -> None:
+    """Load data/snapshot.json, apply display strings, write it back.
+
+    No credentials needed.  Idempotent: running twice leaves the file
+    byte-identical.
+    """
+    if not os.path.exists(SNAPSHOT_PATH):
+        print(f"ERROR: {SNAPSHOT_PATH} does not exist. Run make_snapshot.py first.",
+              file=sys.stderr)
+        sys.exit(1)
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    apply_displays(snap)
+    with open(SNAPSHOT_PATH, "w") as f:
+        json.dump(snap, f, indent=2)
+    print(f"Display strings refreshed: {SNAPSHOT_PATH}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build or verify data/snapshot.json")
     parser.add_argument("--verify", action="store_true",
                         help="Load and verify an existing snapshot instead of rebuilding")
+    parser.add_argument("--displays", action="store_true",
+                        help="Refresh display strings in an existing snapshot (no credentials needed)")
     args = parser.parse_args()
 
     if args.verify:
         verify_snapshot()
+        return
+
+    if args.displays:
+        refresh_displays()
         return
 
     print("Building snapshot...")

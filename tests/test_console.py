@@ -12,6 +12,15 @@ Before finalising this suite, a literal "9999" was temporarily added to a
 
 The hardcoded value was then removed. A provenance check that has never been
 seen failing is not evidence of anything.
+
+Badge-tamper test (Prompt 3 repair, item 1)
+-------------------------------------------
+Before adding the fix to redline_confirm, this test was run and failed with:
+
+    AssertionError: badge should read 'tampered' after a hashed byte is edited
+
+That confirmed the confirm handler was reading intact from the query string
+rather than calling verify() itself.
 """
 from __future__ import annotations
 
@@ -19,6 +28,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 from html.parser import HTMLParser
 
 import pytest
@@ -26,7 +36,7 @@ import pytest
 # Ensure the repo root is importable.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from console.app import app as flask_app
+from console.app import app as flask_app, DECISIONS_PATH
 
 SNAPSHOT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "snapshot.json")
 
@@ -139,7 +149,57 @@ def _visible_numbers(html: bytes) -> list[str]:
     return _TOKEN_RE.findall(text)
 
 
-@pytest.mark.parametrize("route", ["/contract/RCKT", "/contracts"])
+# ---------------------------------------------------------------------------
+# Integrity badge — tamper detection (Prompt 3 repair, item 1)
+# ---------------------------------------------------------------------------
+
+def test_badge_flips_on_tampered_ledger(tmp_path, monkeypatch):
+    """POST a decision, tamper a byte inside the card payload (which the hash
+    covers), reload /redline/confirm, and assert the badge reads 'tampered'.
+
+    The verdict word lives in review_log.jsonl, not the ledger, so editing
+    'approve' there changes nothing hashed and verify() stays True.  The tamper
+    must touch something inside the 'card' payload of a ledger entry.
+    """
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    review_log_file = str(tmp_path / "review_log.jsonl")
+
+    # Point the app at the temp files for this test.
+    monkeypatch.setattr("console.app.DECISIONS_PATH", decisions_file)
+    monkeypatch.setattr("console.app.REVIEW_LOG_PATH", review_log_file)
+
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        # POST an approve decision to populate the ledger.
+        resp = c.post("/redline/decide", data={"verdict": "approve", "reason": "test"})
+        assert resp.status_code == 302
+        assert "verdict=approve" in resp.headers["Location"]
+
+        # Confirm page should show intact before tamper.
+        resp = c.get("/redline/confirm?verdict=approve")
+        assert b"intact" in resp.data
+        assert b"tampered" not in resp.data
+
+        # Tamper: change a character inside the card payload of the first ledger entry.
+        # The verdict word is in review_log.jsonl, not here, so we must edit the card.
+        with open(decisions_file) as f:
+            lines = f.readlines()
+        assert lines, "ledger should have at least one entry after approve"
+        # Replace a digit in the first entry's card payload so the hash check fails.
+        tampered = lines[0].replace('"version": 1', '"version": 2', 1)
+        assert tampered != lines[0], "tamper must change something"
+        with open(decisions_file, "w") as f:
+            f.write(tampered)
+            f.writelines(lines[1:])
+
+        # Reload confirm — the handler must call verify() fresh, not trust the URL param.
+        resp = c.get("/redline/confirm?verdict=approve")
+        assert b"tampered" in resp.data, (
+            "badge should read 'tampered' after a hashed byte is edited"
+        )
+
+
+@pytest.mark.parametrize("route", ["/contract/RCKT", "/contracts", "/redline"])
 def test_number_provenance(client, snapshot_raw, route):
     """Every number visible in the rendered HTML must appear in snapshot.json.
 

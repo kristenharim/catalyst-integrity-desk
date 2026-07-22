@@ -154,18 +154,21 @@ def redline_decide():
             ledger.create(original_card, author="snapshot:seed", ts=0.0)
 
     apply_decision(ledger, review_log, challenge_card, decision)
-    intact = ledger.verify()
 
-    # Store result in session via a simple redirect with query params.
-    return redirect(url_for("redline_confirm", verdict=verdict, intact="1" if intact else "0"))
+    return redirect(url_for("redline_confirm", verdict=verdict))
 
 
 @app.get("/redline/confirm")
 def redline_confirm():
     verdict = request.args.get("verdict", "")
-    intact = request.args.get("intact", "1") == "1"
+    # Read the ledger fresh at render time so a tampered file shows "tampered"
+    # even after a reload.  The query-string intact param is dropped: it was set
+    # once at decision time and could not detect a post-decision tamper.
+    ledger = BeliefLedger(DECISIONS_PATH)
+    intact = ledger.verify()
     return render_template("confirm.html", verdict=verdict, intact=intact)
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5000)
+    port = int(os.environ.get("PORT", 8050))
+    app.run(debug=False, port=port)
