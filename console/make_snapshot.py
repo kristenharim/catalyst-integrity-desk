@@ -1,7 +1,8 @@
 """Build data/snapshot.json for the console.
 
-Captures the full engine output for the demo tickers (SANA, PRME, RCKT) plus one
-scripted amendment for RCKT so the Flask app never touches a live API during rendering.
+Captures the full engine output for the demo tickers (SANA, PRME, RCKT, BEAM, SRPT)
+plus one scripted amendment for RCKT so the Flask app never touches a live API during
+rendering.
 
 Run:
     set -a; . ./.env; set +a
@@ -90,6 +91,30 @@ def _redline_display(breach: dict) -> dict:
     }
 
 
+def _cmd_bar(contracts: dict) -> dict:
+    """Precompute command-bar counts so the template never uses |length or comparisons.
+
+    counts:
+      monitored        - total contracts in the snapshot
+      active_breaches  - contracts whose verdict is not 'funded to catalyst'
+                         and whose runway is reliable (they are ranked and breached)
+      lapsed_expectations - total lapsed pivotal trials across all contracts
+    """
+    monitored = len(contracts)
+    active_breaches = sum(
+        1 for c in contracts.values()
+        if c["runway"]["reliable"] and c.get("verdict") not in ("funded to catalyst", None)
+    )
+    lapsed_expectations = sum(
+        len(c.get("lapsed", [])) for c in contracts.values()
+    )
+    return {
+        "monitored": monitored,
+        "active_breaches": active_breaches,
+        "lapsed_expectations": lapsed_expectations,
+    }
+
+
 def apply_displays(snapshot: dict) -> dict:
     """Add or refresh all display sub-dicts in a loaded snapshot dict.
 
@@ -104,6 +129,9 @@ def apply_displays(snapshot: dict) -> dict:
     redline = snapshot.get("redline")
     if redline and redline.get("breach"):
         redline["breach"]["display"] = _redline_display(redline["breach"])
+
+    # Refresh command-bar counts from the (now display-enriched) contracts block.
+    snapshot["cmd_bar"] = _cmd_bar(snapshot.get("contracts", {}))
 
     return snapshot
 
@@ -194,16 +222,26 @@ def _serialise_history(history) -> dict | None:
 
 
 def _serialise_contract(c: CatalystContract) -> dict:
+    # Lapsed pivotal trials: each is a date-integrity signal, never a catalyst.
+    # Serialise with the same svg_x treatment as the binding history so the
+    # template can draw their timelines identically.
+    lapsed_serialised = [
+        _serialise_history(h) for h in c.lapsed_history if h is not None
+    ]
     return {
         "runway": _serialise_runway(c.runway),
         "trial": c.trial,
         "history": _serialise_history(c.history),
         "gap_months": c.gap_months,
-        # Pre-formatted gap string: "+8.4" or "-0.6" — stored so the template
+        # Pre-formatted gap string: "+8.4" or "-14.5" — stored so the template
         # outputs it verbatim and the provenance test finds it in the snapshot.
         "gap_months_1f": _fmt_1f(c.gap_months),
         "catalyst_date": _iso(c.catalyst_date),
         "verdict": c.verdict,
+        # Lapsed: list of trial dicts whose registered completion has passed.
+        "lapsed": c.lapsed,
+        # Lapsed history: serialised TrialHistory objects for each lapsed trial.
+        "lapsed_history": lapsed_serialised,
     }
 
 
@@ -356,13 +394,21 @@ def build_snapshot() -> dict:
         print("ERROR: RCKT contract not built — cannot produce redline.", file=sys.stderr)
         sys.exit(1)
 
-    # The 677-day expired-date row is the demo centrepiece.  Assert it is present in the
-    # serialized snapshot before writing anything.  If this fires, the snapshot has no
-    # centrepiece and must not be written — better to fail here than to ship a silent gap.
-    rckt_revisions = contracts["RCKT"]["history"]["revisions"] if (
-        contracts.get("RCKT") and contracts["RCKT"].get("history")
-    ) else []
-    expired_rows = [r for r in rckt_revisions if r.get("carried_expired")]
+    # The 677-day expired-date row is the demo centrepiece.  Assert it survives in the
+    # serialized snapshot.  The binding trial (NCT06092034) and each lapsed trial are
+    # searched: NCT04248439 is now lapsed, so the 677-day row lives in lapsed_history[].
+    rckt_snap = contracts.get("RCKT", {})
+    all_histories = []
+    if rckt_snap.get("history"):
+        all_histories.append(rckt_snap["history"])
+    all_histories.extend(h for h in rckt_snap.get("lapsed_history", []) if h)
+
+    expired_rows = [
+        r
+        for h in all_histories
+        for r in h.get("revisions", [])
+        if r.get("carried_expired")
+    ]
     if not expired_rows:
         print(
             "ERROR: no RCKT revision has carried_expired=True in the serialized snapshot.\n"

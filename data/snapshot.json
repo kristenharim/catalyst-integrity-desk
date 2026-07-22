@@ -114,7 +114,9 @@
       "gap_months": -35.58110882956879,
       "gap_months_1f": "-35.6",
       "catalyst_date": "2030-01-01",
-      "verdict": "financing required before catalyst"
+      "verdict": "financing required before catalyst",
+      "lapsed": [],
+      "lapsed_history": []
     },
     "RCKT": {
       "runway": {
@@ -149,10 +151,10 @@
         }
       },
       "trial": {
-        "nct": "NCT04248439",
-        "title": "Gene Therapy for Fanconi Anemia, Complementation Group A",
-        "status": "ACTIVE_NOT_RECRUITING",
-        "pcd": "2026-05-05",
+        "nct": "NCT06092034",
+        "title": "A Gene Therapy Study of RP-A501 in Male Patients With Danon Disease",
+        "status": "RECRUITING",
+        "pcd": "2028-04",
         "pcd_type": "ESTIMATED",
         "phases": [
           "PHASE2"
@@ -160,17 +162,17 @@
         "sponsor": "Rocket Pharmaceuticals Inc."
       },
       "history": {
-        "nct": "NCT04248439",
+        "nct": "NCT06092034",
         "sponsor": "Rocket Pharmaceuticals Inc.",
         "phases": [
           "PHASE2"
         ],
-        "n_versions": 4,
+        "n_versions": 5,
         "revisions": [
           {
             "version": 0,
-            "submitted": "2020-01-28",
-            "pcd": "2023-08",
+            "submitted": "2023-10-17",
+            "pcd": "2025-09",
             "pcd_type": "ESTIMATED",
             "status": "RECRUITING",
             "moved_days": null,
@@ -181,54 +183,109 @@
             "svg_x": 60.0
           },
           {
-            "version": 1,
-            "submitted": "2020-11-23",
-            "pcd": "2022-06",
+            "version": 3,
+            "submitted": "2025-10-01",
+            "pcd": "2028-04",
             "pcd_type": "ESTIMATED",
             "status": "RECRUITING",
-            "moved_days": -426,
-            "held_days": 981,
-            "carried_expired": false,
-            "days_expired": 0,
-            "is_late_move": false,
-            "svg_x": 196.7
-          },
-          {
-            "version": 2,
-            "submitted": "2024-04-08",
-            "pcd": "2026-05",
-            "pcd_type": "ESTIMATED",
-            "status": "ACTIVE_NOT_RECRUITING",
-            "moved_days": 1430,
-            "held_days": -677,
+            "moved_days": 943,
+            "held_days": -30,
             "carried_expired": true,
-            "days_expired": 677,
-            "is_late_move": false,
-            "svg_x": 758.0
-          },
-          {
-            "version": 3,
-            "submitted": "2025-12-18",
-            "pcd": "2026-05-05",
-            "pcd_type": "ESTIMATED",
-            "status": "ACTIVE_NOT_RECRUITING",
-            "moved_days": 4,
-            "held_days": 134,
-            "carried_expired": false,
-            "days_expired": 0,
+            "days_expired": 30,
             "is_late_move": false,
             "svg_x": 1040.0
           }
         ],
-        "first_pcd": "2023-08",
-        "last_pcd": "2026-05-05",
-        "total_slip_days": 1008,
+        "first_pcd": "2025-09",
+        "last_pcd": "2028-04",
+        "total_slip_days": 943,
         "n_late_moves": 0
       },
-      "gap_months": 8.37782340862423,
-      "gap_months_1f": "8.4",
-      "catalyst_date": "2026-05-05",
-      "verdict": "funded to catalyst"
+      "gap_months": -14.521560574948666,
+      "gap_months_1f": "-14.5",
+      "catalyst_date": "2028-04-01",
+      "verdict": "financing required before catalyst",
+      "lapsed": [
+        {
+          "nct": "NCT04248439",
+          "title": "Gene Therapy for Fanconi Anemia, Complementation Group A",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "pcd": "2026-05-05",
+          "pcd_type": "ESTIMATED",
+          "phases": [
+            "PHASE2"
+          ],
+          "sponsor": "Rocket Pharmaceuticals Inc."
+        }
+      ],
+      "lapsed_history": [
+        {
+          "nct": "NCT04248439",
+          "sponsor": "Rocket Pharmaceuticals Inc.",
+          "phases": [
+            "PHASE2"
+          ],
+          "n_versions": 4,
+          "revisions": [
+            {
+              "version": 0,
+              "submitted": "2020-01-28",
+              "pcd": "2023-08",
+              "pcd_type": "ESTIMATED",
+              "status": "RECRUITING",
+              "moved_days": null,
+              "held_days": null,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 60.0
+            },
+            {
+              "version": 1,
+              "submitted": "2020-11-23",
+              "pcd": "2022-06",
+              "pcd_type": "ESTIMATED",
+              "status": "RECRUITING",
+              "moved_days": -426,
+              "held_days": 981,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 196.7
+            },
+            {
+              "version": 2,
+              "submitted": "2024-04-08",
+              "pcd": "2026-05",
+              "pcd_type": "ESTIMATED",
+              "status": "ACTIVE_NOT_RECRUITING",
+              "moved_days": 1430,
+              "held_days": -677,
+              "carried_expired": true,
+              "days_expired": 677,
+              "is_late_move": false,
+              "svg_x": 758.0
+            },
+            {
+              "version": 3,
+              "submitted": "2025-12-18",
+              "pcd": "2026-05-05",
+              "pcd_type": "ESTIMATED",
+              "status": "ACTIVE_NOT_RECRUITING",
+              "moved_days": 4,
+              "held_days": 134,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 1040.0
+            }
+          ],
+          "first_pcd": "2023-08",
+          "last_pcd": "2026-05-05",
+          "total_slip_days": 1008,
+          "n_late_moves": 0
+        }
+      ]
     },
     "BEAM": {
       "runway": {
@@ -318,7 +375,9 @@
       "gap_months": 20.205338809034906,
       "gap_months_1f": "20.2",
       "catalyst_date": "2026-12-01",
-      "verdict": "funded to catalyst"
+      "verdict": "funded to catalyst",
+      "lapsed": [],
+      "lapsed_history": []
     },
     "SRPT": {
       "runway": {
@@ -358,30 +417,30 @@
         }
       },
       "trial": {
-        "nct": "NCT06246513",
-        "title": "A Trial to Learn More About an Experimental Gene Therapy Called Bidridistrogene Xeboparvovec (SRP-9003) as a Possible Treatment for Limb Girdle Muscular Dystrophy 2E/R4",
+        "nct": "NCT03992430",
+        "title": "A Study to Compare Safety and Efficacy of High Doses of Eteplirsen in Participants With Duchenne Muscular Dystrophy (DMD) (MIS51ON)",
         "status": "ACTIVE_NOT_RECRUITING",
-        "pcd": "2025-03-04",
-        "pcd_type": "ACTUAL",
+        "pcd": "2026-10-31",
+        "pcd_type": "ESTIMATED",
         "phases": [
           "PHASE3"
         ],
         "sponsor": "Sarepta Therapeutics, Inc."
       },
       "history": {
-        "nct": "NCT06246513",
+        "nct": "NCT03992430",
         "sponsor": "Sarepta Therapeutics, Inc.",
         "phases": [
           "PHASE3"
         ],
-        "n_versions": 8,
+        "n_versions": 28,
         "revisions": [
           {
             "version": 0,
-            "submitted": "2024-01-30",
-            "pcd": "2025-01-31",
+            "submitted": "2019-06-18",
+            "pcd": "2024-10",
             "pcd_type": "ESTIMATED",
-            "status": "RECRUITING",
+            "status": "NOT_YET_RECRUITING",
             "moved_days": null,
             "held_days": null,
             "carried_expired": false,
@@ -390,41 +449,225 @@
             "svg_x": 60.0
           },
           {
-            "version": 3,
-            "submitted": "2025-02-28",
-            "pcd": "2025-03-31",
+            "version": 6,
+            "submitted": "2021-01-15",
+            "pcd": "2026-02",
             "pcd_type": "ESTIMATED",
             "status": "ACTIVE_NOT_RECRUITING",
-            "moved_days": 59,
-            "held_days": -28,
-            "carried_expired": true,
-            "days_expired": 28,
-            "is_late_move": false,
-            "svg_x": 1035.1
-          },
-          {
-            "version": 4,
-            "submitted": "2025-03-02",
-            "pcd": "2025-03-04",
-            "pcd_type": "ESTIMATED",
-            "status": "ACTIVE_NOT_RECRUITING",
-            "moved_days": -27,
-            "held_days": 29,
+            "moved_days": 488,
+            "held_days": 1355,
             "carried_expired": false,
             "days_expired": 0,
-            "is_late_move": true,
+            "is_late_move": false,
+            "svg_x": 341.3
+          },
+          {
+            "version": 7,
+            "submitted": "2022-01-19",
+            "pcd": "2026-02-28",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 27,
+            "held_days": 1474,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 521.2
+          },
+          {
+            "version": 9,
+            "submitted": "2022-05-18",
+            "pcd": "2024-11-30",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": -455,
+            "held_days": 1382,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 579.3
+          },
+          {
+            "version": 26,
+            "submitted": "2024-12-18",
+            "pcd": "2026-10-31",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 700,
+            "held_days": -18,
+            "carried_expired": true,
+            "days_expired": 18,
+            "is_late_move": false,
             "svg_x": 1040.0
           }
         ],
-        "first_pcd": "2025-01-31",
-        "last_pcd": "2025-03-04",
-        "total_slip_days": 32,
-        "n_late_moves": 1
+        "first_pcd": "2024-10",
+        "last_pcd": "2026-10-31",
+        "total_slip_days": 760,
+        "n_late_moves": 0
       },
-      "gap_months": 22.537987679671456,
-      "gap_months_1f": "22.5",
-      "catalyst_date": "2025-03-04",
-      "verdict": "not rankable (burn estimate unreliable)"
+      "gap_months": 2.628336755646817,
+      "gap_months_1f": "2.6",
+      "catalyst_date": "2026-10-31",
+      "verdict": "not rankable (burn estimate unreliable)",
+      "lapsed": [
+        {
+          "nct": "NCT06246513",
+          "title": "A Trial to Learn More About an Experimental Gene Therapy Called Bidridistrogene Xeboparvovec (SRP-9003) as a Possible Treatment for Limb Girdle Muscular Dystrophy 2E/R4",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "pcd": "2025-03-04",
+          "pcd_type": "ACTUAL",
+          "phases": [
+            "PHASE3"
+          ],
+          "sponsor": "Sarepta Therapeutics, Inc."
+        },
+        {
+          "nct": "NCT06128564",
+          "title": "A Gene Delivery Study to Evaluate the Safety and Expression of Delandistrogene Moxeparvovec in Participants Under the Age of Four With Duchenne Muscular Dystrophy (DMD)",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "pcd": "2026-03-04",
+          "pcd_type": "ACTUAL",
+          "phases": [
+            "PHASE2"
+          ],
+          "sponsor": "Hoffmann-La Roche"
+        }
+      ],
+      "lapsed_history": [
+        {
+          "nct": "NCT06246513",
+          "sponsor": "Sarepta Therapeutics, Inc.",
+          "phases": [
+            "PHASE3"
+          ],
+          "n_versions": 8,
+          "revisions": [
+            {
+              "version": 0,
+              "submitted": "2024-01-30",
+              "pcd": "2025-01-31",
+              "pcd_type": "ESTIMATED",
+              "status": "RECRUITING",
+              "moved_days": null,
+              "held_days": null,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 60.0
+            },
+            {
+              "version": 3,
+              "submitted": "2025-02-28",
+              "pcd": "2025-03-31",
+              "pcd_type": "ESTIMATED",
+              "status": "ACTIVE_NOT_RECRUITING",
+              "moved_days": 59,
+              "held_days": -28,
+              "carried_expired": true,
+              "days_expired": 28,
+              "is_late_move": false,
+              "svg_x": 1035.1
+            },
+            {
+              "version": 4,
+              "submitted": "2025-03-02",
+              "pcd": "2025-03-04",
+              "pcd_type": "ESTIMATED",
+              "status": "ACTIVE_NOT_RECRUITING",
+              "moved_days": -27,
+              "held_days": 29,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": true,
+              "svg_x": 1040.0
+            }
+          ],
+          "first_pcd": "2025-01-31",
+          "last_pcd": "2025-03-04",
+          "total_slip_days": 32,
+          "n_late_moves": 1
+        },
+        {
+          "nct": "NCT06128564",
+          "sponsor": "Hoffmann-La Roche",
+          "phases": [
+            "PHASE2"
+          ],
+          "n_versions": 30,
+          "revisions": [
+            {
+              "version": 0,
+              "submitted": "2023-11-08",
+              "pcd": "2032-11-30",
+              "pcd_type": "ESTIMATED",
+              "status": "NOT_YET_RECRUITING",
+              "moved_days": null,
+              "held_days": null,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 60.0
+            },
+            {
+              "version": 16,
+              "submitted": "2025-02-14",
+              "pcd": "2033-05-30",
+              "pcd_type": "ESTIMATED",
+              "status": "RECRUITING",
+              "moved_days": 181,
+              "held_days": 2846,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 558.6
+            },
+            {
+              "version": 25,
+              "submitted": "2025-10-31",
+              "pcd": "2034-01-30",
+              "pcd_type": "ESTIMATED",
+              "status": "RECRUITING",
+              "moved_days": 245,
+              "held_days": 2768,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 836.9
+            },
+            {
+              "version": 28,
+              "submitted": "2026-02-09",
+              "pcd": "2030-02-28",
+              "pcd_type": "ESTIMATED",
+              "status": "ACTIVE_NOT_RECRUITING",
+              "moved_days": -1432,
+              "held_days": 2912,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 945.4
+            },
+            {
+              "version": 29,
+              "submitted": "2026-05-08",
+              "pcd": "2026-03-04",
+              "pcd_type": "ACTUAL",
+              "status": "ACTIVE_NOT_RECRUITING",
+              "moved_days": -1457,
+              "held_days": 1392,
+              "carried_expired": false,
+              "days_expired": 0,
+              "is_late_move": false,
+              "svg_x": 1040.0
+            }
+          ],
+          "first_pcd": "2032-11-30",
+          "last_pcd": "2026-03-04",
+          "total_slip_days": -2463,
+          "n_late_moves": 0
+        }
+      ]
     }
   },
   "redline": {
@@ -432,31 +675,31 @@
     "breach": {
       "card_id": "rckt:funded_to_catalyst",
       "metric": "gap_months",
-      "observed": -0.5913757700205339,
+      "observed": -23.49075975359343,
       "expected_low": 0.0,
-      "expected_high": 10.37782340862423,
+      "expected_high": 2.0,
       "direction": "under",
       "display": {
-        "observed_1f": "-0.6",
+        "observed_1f": "-23.5",
         "expected_low_1f": "0.0",
-        "expected_high_1f": "10.4"
+        "expected_high_1f": "2.0"
       }
     },
     "classification": {
       "label": "direct_contradiction",
       "confidence": 0.95,
-      "rationale": "The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a negative gap, directly contradicting the core of the belief. The other metrics have not shifted in a way that could offset or explain away this shortfall, so the drift invalidates the original story.",
+      "rationale": "The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a large negative gap, meaning cash will be exhausted before the trial finishes. This directly contradicts the core of the belief without any mitigating factors.",
       "source": "granite"
     },
-    "memo": "CHALLENGE [direct_contradiction]  rckt:funded_to_catalyst (v1)  conf 0.95\n  Belief : Rocket Pharmaceuticals reaches its registered primary completion date before runway exhaustion, with a non-negative funding gap.\n  Driver : SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD (conviction 3/5)\n  Reading: gap_months = -0.6, expected [0.0, 10.4]\n  The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a negative gap, directly contradicting the core of the belief. The other metrics have not shifted in a way that could offset or explain away this shortfall, so the drift invalidates the original story.\n  [judgment drafted by IBM Granite]",
-    "redline": "expected_low: 0.0 -> -0.6",
+    "memo": "CHALLENGE [direct_contradiction]  rckt:funded_to_catalyst (v1)  conf 0.95\n  Belief : Rocket Pharmaceuticals reaches its registered primary completion date before runway exhaustion, with a non-negative funding gap.\n  Driver : SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD (conviction 3/5)\n  Reading: gap_months = -23.5, expected [0.0, 2.0]\n  The claim asserts a non-negative funding gap at the registered primary completion date, but the engine now shows a large negative gap, meaning cash will be exhausted before the trial finishes. This directly contradicts the core of the belief without any mitigating factors.\n  [judgment drafted by IBM Granite]",
+    "redline": "expected_low: 0.0 -> -23.5",
     "proposed_card": {
       "card_id": "rckt:funded_to_catalyst",
       "scope": "company:RCKT",
       "claim": "Rocket Pharmaceuticals reaches its registered primary completion date before runway exhaustion, with a non-negative funding gap.",
       "metric": "gap_months",
-      "expected_low": -0.6,
-      "expected_high": 10.37782340862423,
+      "expected_low": -23.5,
+      "expected_high": 2.0,
       "driver": "SEC XBRL liquidity (Q1-2026 10-Q) vs ClinicalTrials.gov registered PCD",
       "confidence": 3,
       "source": "console.make_snapshot",
@@ -464,8 +707,13 @@
       "status": "active",
       "version": 1
     },
-    "original_pcd": "2026-05-05",
-    "shifted_pcd": "2027-02-02",
+    "original_pcd": "2028-04",
+    "shifted_pcd": "2028-12-30",
     "shift_months": 9
+  },
+  "cmd_bar": {
+    "monitored": 4,
+    "active_breaches": 2,
+    "lapsed_expectations": 3
   }
 }

@@ -1,85 +1,193 @@
 {% extends "base.html" %}
-{% block title %}Pending Redline — Catalyst Integrity Desk{% endblock %}
+{% block title %}Pending Redline -- Catalyst Integrity Desk{% endblock %}
 {% block content %}
 
 <h1>Pending Redline</h1>
 
 {% set cls_label = redline.classification.label %}
 
-<div style="background:#161b22; border:1px solid #30363d; border-radius:6px;
-            padding:20px; max-width:860px; margin-bottom:24px;">
+{# ------------------------------------------------------------------
+   Three-column story: reads left to right as the breach moment.
+   Left column:  the registered expectation (what the thesis rested on).
+   Centre column: the amendment (what changed).
+   Right column:  thesis status after the amendment.
 
-  {# Header row: card id + classification badge #}
-  <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-    <span style="font-weight:bold; color:#e6edf3;">{{ redline.card_id }}</span>
-    {% if cls_label == "direct_contradiction" %}
-      <span style="background:#3d1414; color:#f85149; border:1px solid #f85149;
-                   font-size:11px; padding:2px 8px; border-radius:3px;">
-        DIRECT CONTRADICTION
-      </span>
-    {% elif cls_label == "assumption_weakened" %}
-      <span style="background:#2d1f00; color:#d29922; border:1px solid #d29922;
-                   font-size:11px; padding:2px 8px; border-radius:3px;">
-        ASSUMPTION WEAKENED
-      </span>
-    {% else %}
-      <span style="background:#0d2033; color:#58a6ff; border:1px solid #58a6ff;
-                   font-size:11px; padding:2px 8px; border-radius:3px;">
-        {{ cls_label | upper | replace("_", " ") }}
-      </span>
-    {% endif %}
-    <span style="color:#8b949e; font-size:11px;">
-      conf {{ redline.classification.confidence }}
-      &nbsp;|&nbsp; source: {{ redline.classification.source }}
-    </span>
+   CSS transitions on the gap colour flip illustrate the breach; no
+   numbers are introduced by the animation.
+   ------------------------------------------------------------------ #}
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;
+            margin-bottom:28px; max-width:1100px;">
+
+  {# ---- Left: registered expectation ---- #}
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+                letter-spacing:0.07em; margin-bottom:10px;">Registered expectation</div>
+    <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
+      <div style="margin-bottom:8px;">
+        <span style="color:#8b949e">Trial:</span>
+        <span style="font-weight:bold; color:#e6edf3;">{{ redline.proposed_card.scope }}</span>
+      </div>
+      <div style="margin-bottom:8px;">
+        <span style="color:#8b949e">Approved claim:</span>
+        <div style="margin-top:4px; font-style:italic; color:#c9d1d9; font-size:11px;
+                    line-height:1.6; border-left:3px solid #30363d; padding-left:10px;">
+          {{ redline.proposed_card.claim }}
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <span style="color:#8b949e">Registered primary completion:</span>
+        <code style="background:#0d1117; padding:2px 6px; border-radius:3px;
+                     color:#e6edf3;">{{ redline.original_pcd }}</code>
+      </div>
+      <div>
+        <span style="color:#8b949e">Approved band:</span>
+        [{{ redline.breach.display.expected_low_1f }}, {{ redline.breach.display.expected_high_1f }}]
+        months
+      </div>
+    </div>
   </div>
 
-  {# Breach detail #}
-  <table style="margin-bottom:16px; max-width:560px;">
-    <thead>
-      <tr>
-        <th>Metric</th>
-        <th>Observed</th>
-        <th>Approved band</th>
-        <th>Direction</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><span class="tag">{{ redline.breach.metric }}</span></td>
-        <td>
-          {% if redline.breach.observed < 0 %}
-            <span style="color:#f85149">{{ redline.breach.display.observed_1f }}</span>
-          {% else %}
-            {{ redline.breach.display.observed_1f }}
-          {% endif %}
-        </td>
-        <td>[{{ redline.breach.display.expected_low_1f }}, {{ redline.breach.display.expected_high_1f }}]</td>
-        <td>{{ redline.breach.direction }}</td>
-      </tr>
-    </tbody>
-  </table>
+  {# ---- Centre: the amendment ---- #}
+  <div style="background:#161b22; border:1px solid #d29922; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#d29922; text-transform:uppercase;
+                letter-spacing:0.07em; margin-bottom:10px;">Amendment</div>
+    <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
+      <div style="margin-bottom:12px;">
+        <span style="color:#8b949e">Registered primary completion</span>
+        <div style="margin-top:6px; display:flex; align-items:center; gap:10px;">
+          {# Old date struck through in red #}
+          <code style="background:#3d1414; padding:2px 8px; border-radius:3px;
+                       color:#f87171; text-decoration:line-through;
+                       font-size:13px;">{{ redline.original_pcd }}</code>
+          <span style="color:#8b949e;">&#8594;</span>
+          {# New date arrives in bright red -- breach moment #}
+          <code style="background:#3d1414; padding:2px 8px; border-radius:3px;
+                       color:#f85149; font-size:13px; font-weight:bold;
+                       border:1px solid #f85149;">{{ redline.shifted_pcd }}</code>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <span style="color:#8b949e">Shift:</span>
+        +{{ redline.shift_months }} months
+      </div>
+      <div style="margin-bottom:8px;">
+        <span style="color:#8b949e">Metric:</span>
+        <span class="tag">{{ redline.breach.metric }}</span>
+      </div>
+      <div>
+        <span style="color:#8b949e">Observed:</span>
+        <span style="color:#f85149; font-weight:bold;">
+          {{ redline.breach.display.observed_1f }} months
+        </span>
+        (was within [{{ redline.breach.display.expected_low_1f }}, {{ redline.breach.display.expected_high_1f }}])
+      </div>
+    </div>
+  </div>
 
-  {# Proposed redline #}
-  <p style="margin-bottom:12px; font-size:12px;">
-    <strong>Proposed redline:</strong>
-    <code style="background:#0d1117; padding:2px 6px; border-radius:3px;">
-      {{ redline.redline }}
-    </code>
-    <span style="color:#8b949e; font-size:11px; margin-left:8px;">
-      (shifted PCD {{ redline.original_pcd }} &rarr; {{ redline.shifted_pcd }},
-      +{{ redline.shift_months }} months)
-    </span>
-  </p>
-
-  {# Granite memo #}
-  <div style="background:#0d1117; border:1px solid #30363d; border-radius:4px;
-              padding:14px; font-size:12px; line-height:1.6; white-space:pre-wrap;">{{ redline.memo }}</div>
-
+  {# ---- Right: thesis status after amendment ---- #}
+  <div style="background:#161b22; border:2px solid #f85149; border-radius:6px; padding:20px;
+              transition: border-color 0.4s;">
+    <div style="font-size:11px; color:#f85149; text-transform:uppercase;
+                letter-spacing:0.07em; margin-bottom:10px;">Thesis status</div>
+    <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
+      <div style="margin-bottom:12px;">
+        {# Funding gap: flipped from green to red by the amendment #}
+        <div style="font-size:11px; color:#8b949e; margin-bottom:4px;">Funding gap</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          {# Previous state would have been positive (within band) #}
+          <span style="color:#6b7280; text-decoration:line-through; font-size:13px;">
+            +{{ redline.breach.display.expected_low_1f }}+ months
+          </span>
+          <span style="color:#8b949e;">&#8594;</span>
+          {# Post-amendment: negative, red #}
+          <span style="color:#f85149; font-weight:bold; font-size:18px;">
+            {{ redline.breach.display.observed_1f }} months
+          </span>
+        </div>
+      </div>
+      <div style="background:#3d1414; border:1px solid #f85149; border-radius:4px;
+                  padding:10px; text-align:center;">
+        <span style="color:#f85149; font-weight:bold; font-size:13px;">
+          &#9888; FINANCING REQUIRED
+        </span>
+      </div>
+      <div style="margin-top:10px;">
+        {% if cls_label == "direct_contradiction" %}
+          <span style="background:#3d1414; color:#f85149; border:1px solid #f85149;
+                       font-size:11px; padding:2px 8px; border-radius:3px;">
+            DIRECT CONTRADICTION
+          </span>
+        {% elif cls_label == "assumption_weakened" %}
+          <span style="background:#2d1f00; color:#d29922; border:1px solid #d29922;
+                       font-size:11px; padding:2px 8px; border-radius:3px;">
+            ASSUMPTION WEAKENED
+          </span>
+        {% else %}
+          <span style="background:#0d2033; color:#60a5fa; border:1px solid #60a5fa;
+                       font-size:11px; padding:2px 8px; border-radius:3px;">
+            {{ cls_label | upper | replace("_", " ") }}
+          </span>
+        {% endif %}
+        <span style="color:#8b949e; font-size:11px; margin-left:6px;">
+          conf {{ redline.classification.confidence }}
+          &nbsp;|&nbsp;
+          <span class="granite-accent">{{ redline.classification.source }}</span>
+        </span>
+      </div>
+    </div>
+  </div>
 </div>
 
-{# Accept / Reject form #}
-<div style="max-width:860px;">
+{# ------------------------------------------------------------------
+   Integrity memo: Granite's narrative judgment.
+   Granite accent colour makes its provenance visible without decoration.
+   ------------------------------------------------------------------ #}
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;
+            margin-bottom:24px; max-width:1100px;">
+
+  {# Granite memo card #}
+  <div style="background:#161b22; border:1px solid #1e3a5f; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#60a5fa; text-transform:uppercase;
+                letter-spacing:0.07em; margin-bottom:10px;">
+      &#9670; Integrity memo
+      <span style="font-size:10px; color:#8b949e; margin-left:6px;">IBM Granite</span>
+    </div>
+    <div style="background:#0d1117; border:1px solid #30363d; border-radius:4px;
+                padding:14px; font-size:12px; line-height:1.6;
+                white-space:pre-wrap; color:#c9d1d9;">{{ redline.memo }}</div>
+  </div>
+
+  {# Original claim with invalidated clause marked, and proposed replacement #}
+  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+                letter-spacing:0.07em; margin-bottom:10px;">Analyst claim -- redline</div>
+
+    <div style="font-size:11px; color:#8b949e; margin-bottom:6px;">Original:</div>
+    <div style="background:#0d1117; border-left:3px solid #f85149; padding:10px 14px;
+                border-radius:0 4px 4px 0; font-size:12px; line-height:1.6;
+                color:#c9d1d9; margin-bottom:12px; font-style:italic;">
+      {{ redline.proposed_card.claim }}
+    </div>
+
+    <div style="font-size:11px; color:#8b949e; margin-bottom:6px;">
+      Proposed change (accept to update the ledger):
+    </div>
+    <div style="background:#0d1117; border-left:3px solid #10b981; padding:10px 14px;
+                border-radius:0 4px 4px 0; font-size:12px; line-height:1.6;
+                color:#c9d1d9; margin-bottom:12px;">
+      <code style="color:#8b949e; font-size:11px;">{{ redline.redline }}</code>
+    </div>
+
+    <div style="font-size:11px; color:#8b949e; margin-top:8px;">
+      Driver: {{ redline.proposed_card.driver }}
+    </div>
+  </div>
+</div>
+
+{# ------------------------------------------------------------------
+   Accept / Reject form
+   ------------------------------------------------------------------ #}
+<div style="max-width:1100px;">
   <h2>Decision</h2>
 
   <form method="post" action="/redline/decide" style="margin-top:12px;">
@@ -94,7 +202,7 @@
     </div>
     <div style="display:flex; gap:12px;">
       <button type="submit" name="verdict" value="approve"
-              style="background:#1a4731; color:#3fb950; border:1px solid #3fb950;
+              style="background:#1a4731; color:#10b981; border:1px solid #10b981;
                      padding:7px 20px; border-radius:4px; cursor:pointer;
                      font-family:inherit; font-size:12px; font-weight:bold;">
         &#10003; Accept

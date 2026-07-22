@@ -13,9 +13,14 @@ render_template(). All arithmetic happened in make_snapshot.py.
 """
 from __future__ import annotations
 
+import datetime
 import json
 import os
+import sys
 import time
+
+# Ensure repo root is importable when this file is run directly.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from flask import Flask, redirect, render_template, request, url_for
 
@@ -56,7 +61,18 @@ app = Flask(__name__, template_folder="templates")
 
 
 # ---------------------------------------------------------------------------
-# Routes — no arithmetic, only slicing
+# Context processor: inject snapshot_cmd_bar into every template.
+# The command bar counts are precomputed in make_snapshot.py; the processor
+# makes them available without passing them to every render_template call.
+# ---------------------------------------------------------------------------
+
+@app.context_processor
+def inject_cmd_bar():
+    return {"snapshot_cmd_bar": SNAPSHOT.get("cmd_bar")}
+
+
+# ---------------------------------------------------------------------------
+# Routes -- no arithmetic, only slicing
 # ---------------------------------------------------------------------------
 
 @app.get("/")
@@ -153,20 +169,61 @@ def redline_decide():
             )
             ledger.create(original_card, author="snapshot:seed", ts=0.0)
 
-    apply_decision(ledger, review_log, challenge_card, decision)
+    entry = apply_decision(ledger, review_log, challenge_card, decision)
 
-    return redirect(url_for("redline_confirm", verdict=verdict))
+    # Build receipt for the confirm page from the ledger entry.
+    # For reject, apply_decision returns a review-log record, not a ledger entry.
+    # The receipt is only available for approve (which returns a ledger entry with hashes).
+    receipt = None
+    if verdict == "approve" and entry and "entry_hash" in entry:
+        proposed = challenge_card.proposed_card
+        what_changed = challenge_card.breach.metric + ": " + challenge_card.classification.label
+        # thesis_state: derive from the proposed card's expected_low after the accept
+        thesis_state = (
+            "funded to catalyst" if proposed.expected_low >= 0
+            else "financing required before catalyst"
+        )
+        ts_display = datetime.datetime.fromtimestamp(entry["ts"]).strftime("%Y-%m-%d %H:%M:%S UTC")
+        receipt = {
+            "author": entry["author"],
+            "ts_display": ts_display,
+            "card_id": entry["card"]["card_id"],
+            "what_changed": what_changed,
+            "thesis_state": thesis_state,
+            "prev_hash": entry["prev_hash"],
+            "entry_hash": entry["entry_hash"],
+        }
+
+    # Store receipt in the session via the URL. The confirm handler loads the
+    # ledger fresh for verify(); it reads the receipt from the query string
+    # only for display, not for security decisions.
+    # Receipt is JSON-encoded and passed as URL param so no session dependency.
+    receipt_param = json.dumps(receipt) if receipt else ""
+
+    return redirect(url_for(
+        "redline_confirm",
+        verdict=verdict,
+        receipt=receipt_param,
+    ))
 
 
 @app.get("/redline/confirm")
 def redline_confirm():
     verdict = request.args.get("verdict", "")
+    receipt_raw = request.args.get("receipt", "")
+    receipt = None
+    if receipt_raw:
+        try:
+            receipt = json.loads(receipt_raw)
+        except (ValueError, TypeError):
+            receipt = None
+
     # Read the ledger fresh at render time so a tampered file shows "tampered"
     # even after a reload.  The query-string intact param is dropped: it was set
     # once at decision time and could not detect a post-decision tamper.
     ledger = BeliefLedger(DECISIONS_PATH)
     intact = ledger.verify()
-    return render_template("confirm.html", verdict=verdict, intact=intact)
+    return render_template("confirm.html", verdict=verdict, intact=intact, receipt=receipt)
 
 
 if __name__ == "__main__":

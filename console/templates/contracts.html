@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Contracts — Catalyst Integrity Desk{% endblock %}
+{% block title %}Contracts -- Catalyst Integrity Desk{% endblock %}
 {% block content %}
 <h1>Catalyst Contracts</h1>
 
@@ -11,7 +11,7 @@
       <th>Company</th>
       <th>Gap (months)</th>
       <th>Runway band</th>
-      <th>Catalyst date</th>
+      <th>Registered primary completion</th>
       <th>Revisions</th>
     </tr>
   </thead>
@@ -24,9 +24,9 @@
       <td>
         {% if c.gap_months_1f is not none %}
           {% if c.gap_months >= 0 %}
-            <span style="color:#3fb950">+{{ c.gap_months_1f }} mo</span>
+            <span class="verdict-ok">+{{ c.gap_months_1f }} mo</span>
           {% else %}
-            <span style="color:#f85149">{{ c.gap_months_1f }} mo</span>
+            <span class="verdict-alert">{{ c.gap_months_1f }} mo</span>
           {% endif %}
         {% else %}
           n/a
@@ -34,14 +34,14 @@
       </td>
       <td>
         {% if c.runway.display.months_low_1f is not none %}
-          {{ c.runway.display.months_low_1f }}–{{ c.runway.display.months_high_1f }} mo
+          {{ c.runway.display.months_low_1f }}&ndash;{{ c.runway.display.months_high_1f }} mo
         {% else %}
           n/a
         {% endif %}
       </td>
-      <td>{{ c.catalyst_date or "—" }}</td>
+      <td>{{ c.catalyst_date or "n/a" }}</td>
       <td>
-        {% if c.history %}{{ c.history.revisions|length }}{% else %}—{% endif %}
+        {% if c.history %}{{ c.history.revisions|length }}{% else %}--{% endif %}
       </td>
     </tr>
     {% endfor %}
@@ -50,14 +50,14 @@
 
 {% if unreliable %}
 <hr>
-<h2>Flagged — not ranked</h2>
+<h2>Flagged -- not ranked</h2>
 <table>
   <thead>
     <tr>
       <th>Ticker</th>
       <th>Company</th>
       <th>Flag reason</th>
-      <th>Catalyst date</th>
+      <th>Registered primary completion</th>
     </tr>
   </thead>
   <tbody>
@@ -66,7 +66,7 @@
       <td><a href="/contract/{{ ticker }}">{{ ticker }}</a></td>
       <td>{{ c.runway.name }}</td>
       <td>{{ c.runway.notes | join("; ") }}</td>
-      <td>{{ c.catalyst_date or "—" }}</td>
+      <td>{{ c.catalyst_date or "n/a" }}</td>
     </tr>
     {% endfor %}
   </tbody>

@@ -287,3 +287,40 @@ def test_number_provenance(client, snapshot_raw, route):
             f"number token {token!r} from GET {route} not found in snapshot.json\n"
             f"(This means a number was computed or hardcoded in the view layer.)"
         )
+
+
+# ---------------------------------------------------------------------------
+# Snapshot staleness guard (Prompt 3, the breach moment, item 1)
+# ---------------------------------------------------------------------------
+
+def test_snapshot_no_lapsed_catalyst():
+    """No contract in the snapshot may bind to a catalyst date in the past.
+
+    The stale snapshot passed every existing test while reporting RCKT as
+    'funded to catalyst' against NCT04248439 (registered primary completion
+    2026-05-05, a date already in the past).  This check is the one that
+    would have caught it.
+
+    The engine's build() now enforces the same rule: it binds to the nearest
+    registered primary completion still in the future and puts lapsed trials
+    on contract.lapsed.  The snapshot must reflect that rule.
+
+    Failure verification: this test was written before the snapshot was
+    rebuilt.  With the stale snapshot it failed on RCKT with catalyst_date
+    2026-05-05, which is in the past.
+    """
+    import datetime as _dt
+
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+
+    today = _dt.date.today().isoformat()
+    for ticker, c in snap["contracts"].items():
+        cat = c.get("catalyst_date")
+        if cat is None:
+            continue  # no catalyst is fine; no catalyst != past catalyst
+        assert cat >= today, (
+            f"{ticker} binds to catalyst_date {cat!r} which is in the past "
+            f"(today is {today}).  The snapshot was built against a lapsed date "
+            f"and must be regenerated."
+        )

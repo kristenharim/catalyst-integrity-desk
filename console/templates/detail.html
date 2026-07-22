@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}{{ ticker }} — Catalyst Integrity Desk{% endblock %}
+{% block title %}{{ ticker }} -- {{ c.runway.name }}{% endblock %}
 {% block content %}
 
-<h1>{{ ticker }} &mdash; {{ c.runway.name }}</h1>
+<h1>{{ ticker }} -- {{ c.runway.name }}</h1>
 <p style="margin-bottom:20px">
   <a href="/contracts">&larr; Back to contract list</a>
 </p>
 
 {# ------------------------------------------------------------------
-   Revision timeline SVG — appears first, above the fold.
-   Coordinates are precomputed in make_snapshot.py; no arithmetic here.
+   Binding trial revision timeline.
+   SVG coordinates are precomputed in make_snapshot.py; no arithmetic here.
    ------------------------------------------------------------------ #}
 {% if c.history and c.history.revisions %}
-<h2>{{ c.history.nct }} &mdash; Primary completion date revisions</h2>
+<h2>{{ c.history.nct }} -- Registered primary completion date revisions</h2>
 <div style="overflow-x:auto; background:#161b22; border:1px solid #30363d;
             border-radius:6px; padding:12px 0 8px;">
 <svg width="1220" height="180" style="display:block;">
@@ -29,7 +29,7 @@
       <text x="{{ r.svg_x }}" y="50" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10"
             font-weight="bold" fill="#f87171">
-        carried expired &mdash; {{ r.days_expired }} days
+        carried expired -- {{ r.days_expired }} days
       </text>
       {# Connector from node to axis #}
       <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
@@ -69,7 +69,95 @@
 {% endif %}
 
 {# ------------------------------------------------------------------
-   Gap calculation table — every input labeled by XBRL tag or version.
+   Lapsed registered expectations: date-integrity signals, not catalysts.
+   Each lapsed trial gets its own timeline, identical treatment to binding.
+   ------------------------------------------------------------------ #}
+{% if c.lapsed_history %}
+{% for lh in c.lapsed_history %}
+{% if lh and lh.revisions %}
+<h2 style="color:#f87171;">{{ lh.nct }} -- LAPSED registered completion ({{ c.lapsed[loop.index0].pcd }}) -- date-integrity signal</h2>
+<p style="font-size:12px; color:#f87171; margin-bottom:8px;">
+  This trial's registered primary completion has already passed. It is not treated as
+  a catalyst date. The revision history below is shown because a sponsor that carries
+  an expired date is the integrity signal this project was built to surface.
+</p>
+<div style="overflow-x:auto; background:#1a0c0c; border:1px solid #7f1d1d;
+            border-radius:6px; padding:12px 0 8px;">
+<svg width="1220" height="180" style="display:block;">
+  <line x1="40" y1="110" x2="1180" y2="110"
+        stroke="#7f1d1d" stroke-width="1"/>
+
+  {% for r in lh.revisions %}
+    {% if r.carried_expired %}
+      <circle cx="{{ r.svg_x }}" cy="72" r="11"
+              fill="#dc2626" stroke="#f87171" stroke-width="1.5"
+              class="revision-node carried-expired"/>
+      <text x="{{ r.svg_x }}" y="50" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10"
+            font-weight="bold" fill="#f87171">
+        carried expired -- {{ r.days_expired }} days
+      </text>
+      <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
+            stroke="#dc2626" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="{{ r.svg_x }}" y="126" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+        {{ r.submitted }}
+      </text>
+      <text x="{{ r.svg_x }}" y="140" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#f87171">
+        &#8594; {{ r.pcd }}
+      </text>
+    {% else %}
+      <circle cx="{{ r.svg_x }}" cy="110" r="8"
+              fill="#6b7280" stroke="#9ca3af" stroke-width="1"
+              class="revision-node"/>
+      <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+        {{ r.submitted }}
+      </text>
+      <text x="{{ r.svg_x }}" y="144" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#6b7280">
+        &#8594; {{ r.pcd }}
+      </text>
+    {% endif %}
+  {% endfor %}
+</svg>
+</div>
+
+<p style="font-size:11px; color:#8b949e; margin:6px 0 20px;">
+  {{ lh.revisions|length }} revisions across {{ lh.n_versions }} versions
+  &nbsp;|&nbsp; net slip {{ lh.total_slip_days }} days
+  &nbsp;|&nbsp; {{ lh.n_late_moves }} moved with &lt;90 days notice
+</p>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{# ------------------------------------------------------------------
+   Consequence sentence: built from snapshot fields, not hardcoded.
+   Rendered only when both lapsed and current data are present.
+   ------------------------------------------------------------------ #}
+{% if c.lapsed and c.gap_months_1f is not none %}
+{% set lapsed_trial = c.lapsed[0] %}
+<div style="background:#1a0c0c; border:1px solid #7f1d1d; border-radius:6px;
+            padding:14px 18px; margin-bottom:20px; max-width:860px;">
+  <p style="font-size:13px; line-height:1.6; color:#fca5a5;">
+    <strong>What this means:</strong>
+    A thesis anchored to {{ lapsed_trial.nct }} (registered primary completion
+    {{ lapsed_trial.pcd }}) would have shown {{ c.runway.name }} funded to its catalyst,
+    because that date had not yet passed when the analysis was run.
+    The nearest registered primary completion still in the future is
+    {{ c.trial.nct }} ({{ c.catalyst_date }}), against which the same runway gives a
+    funding gap of <strong>{{ c.gap_months_1f }} months</strong> --
+    <strong>financing is required before the catalyst.</strong>
+    The difference is not a new fact about the company; it is which registered date
+    is treated as binding.
+  </p>
+</div>
+{% endif %}
+
+{# ------------------------------------------------------------------
+   Gap calculation table: every input labeled by XBRL tag or registry version.
    All values come from the snapshot; nothing is recomputed here.
    ------------------------------------------------------------------ #}
 <h2>Funding gap calculation</h2>
@@ -117,7 +205,7 @@
       <td>Runway band</td>
       <td>
         {% if c.runway.display.months_low_1f is not none %}
-          {{ c.runway.display.months_low_1f }}–{{ c.runway.display.months_high_1f }} months
+          {{ c.runway.display.months_low_1f }}&ndash;{{ c.runway.display.months_high_1f }} months
         {% else %}
           n/a
         {% endif %}
@@ -125,8 +213,8 @@
       <td><span style="color:#8b949e">liquidity / burn band</span></td>
     </tr>
     <tr>
-      <td>Registered primary completion (catalyst date)</td>
-      <td>{{ c.catalyst_date or "—" }}</td>
+      <td>Registered primary completion</td>
+      <td>{{ c.catalyst_date or "n/a" }}</td>
       <td>
         {% if c.history %}
           <span class="tag">{{ c.history.nct }}</span>
@@ -140,9 +228,9 @@
       <td>
         {% if c.gap_months_1f is not none %}
           {% if c.gap_months >= 0 %}
-            <strong style="color:#3fb950">+{{ c.gap_months_1f }} months</strong>
+            <strong class="verdict-ok">+{{ c.gap_months_1f }} months</strong>
           {% else %}
-            <strong style="color:#f85149">{{ c.gap_months_1f }} months</strong>
+            <strong class="verdict-alert">{{ c.gap_months_1f }} months</strong>
           {% endif %}
         {% else %}
           n/a
