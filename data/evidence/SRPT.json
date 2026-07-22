@@ -1,0 +1,324 @@
+{
+  "subject": "SRPT",
+  "as_of": "2026-07-21",
+  "origin": "frozen",
+  "records": [
+    {
+      "source": "sec.xbrl",
+      "locator": "CIK 0000873303 companyfacts",
+      "published_at": "2026-03-31",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "ticker": "SRPT",
+        "cik": "0000873303",
+        "name": "Sarepta Therapeutics, Inc.",
+        "as_of": "2026-03-31",
+        "cash": 464450000.0,
+        "securities": 188739000.0,
+        "burn_ttm_annual": -175275000.0,
+        "burn_recent_annual": 810732000.0,
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "ShortTermInvestments",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": [
+          "cash-positive operating quarter(s) in TTM window: 2025-12-31, 2025-06-30 - likely a one-time inflow"
+        ],
+        "inflow_quarters": [
+          "2025-12-31",
+          "2025-06-30"
+        ]
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.v2",
+      "locator": "query.spons=Sarepta Therapeutics, Inc.",
+      "published_at": null,
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "trials": [
+          {
+            "nct": "NCT03992430",
+            "title": "A Study to Compare Safety and Efficacy of High Doses of Eteplirsen in Participants With Duchenne Muscular Dystrophy (DMD) (MIS51ON)",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "pcd": "2026-10-31",
+            "pcd_type": "ESTIMATED",
+            "phases": [
+              "PHASE3"
+            ],
+            "sponsor": "Sarepta Therapeutics, Inc."
+          },
+          {
+            "nct": "NCT06246513",
+            "title": "A Trial to Learn More About an Experimental Gene Therapy Called Bidridistrogene Xeboparvovec (SRP-9003) as a Possible Treatment for Limb Girdle Muscular Dystrophy 2E/R4",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "pcd": "2025-03-04",
+            "pcd_type": "ACTUAL",
+            "phases": [
+              "PHASE3"
+            ],
+            "sponsor": "Sarepta Therapeutics, Inc."
+          },
+          {
+            "nct": "NCT06128564",
+            "title": "A Gene Delivery Study to Evaluate the Safety and Expression of Delandistrogene Moxeparvovec in Participants Under the Age of Four With Duchenne Muscular Dystrophy (DMD)",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "pcd": "2026-03-04",
+            "pcd_type": "ACTUAL",
+            "phases": [
+              "PHASE2"
+            ],
+            "sponsor": "Hoffmann-La Roche"
+          }
+        ]
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.versions",
+      "locator": "NCT03992430",
+      "published_at": "2024-12-18",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "nct": "NCT03992430",
+        "sponsor": "Sarepta Therapeutics, Inc.",
+        "phases": [
+          "PHASE3"
+        ],
+        "n_versions": 28,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2019-06-18",
+            "pcd": "2024-10",
+            "pcd_type": "ESTIMATED",
+            "status": "NOT_YET_RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 6,
+            "submitted": "2021-01-15",
+            "pcd": "2026-02",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 488,
+            "held_days": 1355,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 341.3
+          },
+          {
+            "version": 7,
+            "submitted": "2022-01-19",
+            "pcd": "2026-02-28",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 27,
+            "held_days": 1474,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 521.2
+          },
+          {
+            "version": 9,
+            "submitted": "2022-05-18",
+            "pcd": "2024-11-30",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": -455,
+            "held_days": 1382,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 579.3
+          },
+          {
+            "version": 26,
+            "submitted": "2024-12-18",
+            "pcd": "2026-10-31",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 700,
+            "held_days": -18,
+            "carried_expired": true,
+            "days_expired": 18,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2024-10",
+        "last_pcd": "2026-10-31",
+        "total_slip_days": 760,
+        "n_late_moves": 0
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.versions",
+      "locator": "NCT06246513",
+      "published_at": "2025-03-02",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "nct": "NCT06246513",
+        "sponsor": "Sarepta Therapeutics, Inc.",
+        "phases": [
+          "PHASE3"
+        ],
+        "n_versions": 8,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2024-01-30",
+            "pcd": "2025-01-31",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 3,
+            "submitted": "2025-02-28",
+            "pcd": "2025-03-31",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 59,
+            "held_days": -28,
+            "carried_expired": true,
+            "days_expired": 28,
+            "is_late_move": false,
+            "svg_x": 1035.1
+          },
+          {
+            "version": 4,
+            "submitted": "2025-03-02",
+            "pcd": "2025-03-04",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": -27,
+            "held_days": 29,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": true,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2025-01-31",
+        "last_pcd": "2025-03-04",
+        "total_slip_days": 32,
+        "n_late_moves": 1
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.versions",
+      "locator": "NCT06128564",
+      "published_at": "2026-05-08",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "nct": "NCT06128564",
+        "sponsor": "Hoffmann-La Roche",
+        "phases": [
+          "PHASE2"
+        ],
+        "n_versions": 30,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2023-11-08",
+            "pcd": "2032-11-30",
+            "pcd_type": "ESTIMATED",
+            "status": "NOT_YET_RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 16,
+            "submitted": "2025-02-14",
+            "pcd": "2033-05-30",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 181,
+            "held_days": 2846,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 558.6
+          },
+          {
+            "version": 25,
+            "submitted": "2025-10-31",
+            "pcd": "2034-01-30",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 245,
+            "held_days": 2768,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 836.9
+          },
+          {
+            "version": 28,
+            "submitted": "2026-02-09",
+            "pcd": "2030-02-28",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": -1432,
+            "held_days": 2912,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 945.4
+          },
+          {
+            "version": 29,
+            "submitted": "2026-05-08",
+            "pcd": "2026-03-04",
+            "pcd_type": "ACTUAL",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": -1457,
+            "held_days": 1392,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2032-11-30",
+        "last_pcd": "2026-03-04",
+        "total_slip_days": -2463,
+        "n_late_moves": 0
+      },
+      "parser_version": 1
+    }
+  ],
+  "negatives": [],
+  "entity": {
+    "ticker": "SRPT",
+    "cik": "0000873303",
+    "sec_legal_name": "Sarepta Therapeutics, Inc.",
+    "registry_query": "Sarepta Therapeutics, Inc.",
+    "state": "exact",
+    "method": "the registry sponsor string equals the SEC legal name"
+  },
+  "missing": [],
+  "schema_version": 1,
+  "digest": "4f44dea27a3729281711e48d97f461d62b1d792327b2c13ef5797239921e2a02"
+}

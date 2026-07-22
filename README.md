@@ -36,7 +36,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 99 passed, 1 skipped
+python3 -m pytest tests/ -q       # 105 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -46,7 +46,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 100 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 106 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -175,8 +175,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 100
-  passed; without them that one test skips and you see 99 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. With credentials the suite is 106
+  passed; without them that one test skips and you see 105 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.
@@ -200,15 +200,26 @@ the snapshot.
 ## What it found
 
 **Rocket Pharmaceuticals.** A completion date revised in April 2024 that had already been
-expired for 677 days, on `NCT04248439`. Four revisions, 1,008 days of net slip. That date
-has since passed too, so the binding catalyst is now `NCT06092034` at 2028-04, against
-which the same runway gives **-14.5 months, financing required**. Anchored to the old date
-the thesis read +8.4 months, funded. No amendment was filed. The date simply arrived, and
-passed. The successor trial had already carried an expired date of its own, for 30 days,
-after a 943 day move.
+expired for 677 days, on `NCT04248439`. That date has since passed too, so the binding
+catalyst is now `NCT06092034` at 2028-04, against which the same runway gives **-14.5
+months, financing required**. Anchored to the old date the thesis read +8.4 months, funded.
+No amendment was filed. The date simply arrived, and passed.
 
-**Mirati, `NCT04613596`:** 95 protocol versions, 6 of which moved the completion date,
-2,193 days of net slip, including a +1,317 day move reversed two months later.
+**And a correction this project found in its own numbers.** Earlier versions of this
+section reported "1,008 days of net slip" on that trial and "a 943 day move" on its
+successor. Those figures summed every date movement without checking that the dates
+described the same commitment, and they do not. Of the 1,008 days, a single +1,430-day
+revision coincided with the primary endpoint changing from phenotypic correction of bone
+marrow colony forming units to Mitomycin-C resistance of bone marrow colony-forming cells.
+Different endpoint, different promise, not a delay. The supported figure is **-422 days
+across the two revisions where the commitment held its shape**, with one revision not
+comparable. `engine/promise.py` now refuses to state a movement it cannot establish, five
+of seven trials in the snapshot turn out to have been reporting unsupported totals, and
+`docs/LIMITS.md` has the table.
+
+The 677-day result is untouched by this: it is one version carrying an already-passed
+date, not a comparison across two commitments. So is the funding gap, which compares the
+current registered date to the runway.
 
 Across 12 clinical-stage, pre-revenue companies, all 12 produced rankable runway bands.
 

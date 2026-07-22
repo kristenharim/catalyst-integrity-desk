@@ -64,7 +64,12 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 60.0
+            "svg_x": 60.0,
+            "phase": "PHASE1/PHASE2",
+            "primary_outcome": "Percentage of participants with sustained reconstitution of NADPH oxidase activity in neutrophils | Safety of administration of PM359, as quantified by frequency of adverse events (AEs) after drug product infusion",
+            "enrollment": "12",
+            "dimensions_established": true,
+            "transition": null
           },
           {
             "version": 3,
@@ -77,7 +82,15 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 362.0
+            "svg_x": 362.0,
+            "phase": "PHASE1/PHASE2",
+            "primary_outcome": "Percentage of participants with sustained reconstitution of NADPH oxidase activity in neutrophils | Safety of administration of PM359, as quantified by frequency of adverse events (AEs) after drug product infusion",
+            "enrollment": "12",
+            "dimensions_established": true,
+            "transition": "date_only",
+            "transition_reason": "same commitment; the committed date moved +30 days",
+            "transition_changed": [],
+            "slip_days": 30
           },
           {
             "version": 4,
@@ -90,7 +103,15 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 392.8
+            "svg_x": 392.8,
+            "phase": "PHASE1/PHASE2",
+            "primary_outcome": "Percentage of participants with sustained reconstitution of NADPH oxidase activity in neutrophils | Safety of administration of PM359, as quantified by frequency of adverse events (AEs) after drug product infusion",
+            "enrollment": "12",
+            "dimensions_established": true,
+            "transition": "date_only",
+            "transition_reason": "same commitment; the committed date moved +31 days",
+            "transition_changed": [],
+            "slip_days": 31
           },
           {
             "version": 6,
@@ -103,13 +124,26 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 1040.0
+            "svg_x": 1040.0,
+            "phase": "PHASE1/PHASE2",
+            "primary_outcome": "Percentage of participants with sustained reconstitution of NADPH oxidase activity in neutrophils | Safety of administration of PM359, as quantified by frequency of adverse events (AEs) after drug product infusion",
+            "enrollment": "12",
+            "dimensions_established": true,
+            "transition": "date_only",
+            "transition_reason": "same commitment; the committed date moved +61 days",
+            "transition_changed": [],
+            "slip_days": 61
           }
         ],
         "first_pcd": "2029-09",
         "last_pcd": "2030-01",
         "total_slip_days": 122,
-        "n_late_moves": 0
+        "n_late_moves": 0,
+        "dimensions_established": true,
+        "slip_established_days": 122,
+        "slip_refused_revisions": 0,
+        "slip_reported_days": 122,
+        "slip_fully_established": true
       },
       "gap_months": -35.58110882956879,
       "gap_months_1f": "-35.6",
@@ -271,7 +305,12 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 60.0
+            "svg_x": 60.0,
+            "phase": "PHASE2",
+            "primary_outcome": "Co-Primary endpoint including myocardial tissue expression of LAMP2 protein and decrease in left ventricular mass index (LVMI).",
+            "enrollment": "12",
+            "dimensions_established": true,
+            "transition": null
           },
           {
             "version": 3,
@@ -284,13 +323,29 @@
             "carried_expired": true,
             "days_expired": 30,
             "is_late_move": false,
-            "svg_x": 1040.0
+            "svg_x": 1040.0,
+            "phase": "PHASE2",
+            "primary_outcome": "Evaluation of efficacy via primary endpoint comprised of LAMP2 myocardial tissue expression and left ventricular mass index",
+            "enrollment": "14",
+            "dimensions_established": true,
+            "transition": "scope_revision",
+            "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+            "transition_changed": [
+              "endpoint",
+              "population"
+            ],
+            "slip_days": null
           }
         ],
         "first_pcd": "2025-09",
         "last_pcd": "2028-04",
         "total_slip_days": 943,
-        "n_late_moves": 0
+        "n_late_moves": 0,
+        "dimensions_established": true,
+        "slip_established_days": 0,
+        "slip_refused_revisions": 1,
+        "slip_reported_days": 943,
+        "slip_fully_established": false
       },
       "gap_months": -14.521560574948666,
       "gap_months_1f": "-14.5",
@@ -329,7 +384,12 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 60.0
+              "svg_x": 60.0,
+              "phase": "PHASE2",
+              "primary_outcome": "Phenotypic correction of bone marrow colony forming units after infusion of RP-L102",
+              "enrollment": "5",
+              "dimensions_established": true,
+              "transition": null
             },
             {
               "version": 1,
@@ -342,7 +402,15 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 196.7
+              "svg_x": 196.7,
+              "phase": "PHASE2",
+              "primary_outcome": "Phenotypic correction of bone marrow colony forming units after infusion of RP-L102",
+              "enrollment": "5",
+              "dimensions_established": true,
+              "transition": "date_only",
+              "transition_reason": "same commitment; the committed date moved -426 days",
+              "transition_changed": [],
+              "slip_days": -426
             },
             {
               "version": 2,
@@ -355,7 +423,17 @@
               "carried_expired": true,
               "days_expired": 677,
               "is_late_move": false,
-              "svg_x": 758.0
+              "svg_x": 758.0,
+              "phase": "PHASE2",
+              "primary_outcome": "Bone Marrow (BM) Colony-Forming Cell (CFC) Mitomycin-C (MMC) resistance",
+              "enrollment": "5",
+              "dimensions_established": true,
+              "transition": "scope_revision",
+              "transition_reason": "the commitment changed shape: endpoint. A date difference across a changed scope is not slip.",
+              "transition_changed": [
+                "endpoint"
+              ],
+              "slip_days": null
             },
             {
               "version": 3,
@@ -368,13 +446,26 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 1040.0
+              "svg_x": 1040.0,
+              "phase": "PHASE2",
+              "primary_outcome": "Bone Marrow (BM) Colony-Forming Cell (CFC) Mitomycin-C (MMC) resistance",
+              "enrollment": "5",
+              "dimensions_established": true,
+              "transition": "date_only",
+              "transition_reason": "same commitment; the committed date moved +4 days",
+              "transition_changed": [],
+              "slip_days": 4
             }
           ],
           "first_pcd": "2023-08",
           "last_pcd": "2026-05-05",
           "total_slip_days": 1008,
-          "n_late_moves": 0
+          "n_late_moves": 0,
+          "dimensions_established": true,
+          "slip_established_days": -422,
+          "slip_refused_revisions": 1,
+          "slip_reported_days": 1008,
+          "slip_fully_established": false
         }
       ],
       "thesis_timeline": {
@@ -538,7 +629,12 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 60.0
+            "svg_x": 60.0,
+            "phase": "PHASE1/PHASE2",
+            "primary_outcome": "Incidence and severity of treatment-emergent adverse events (TEAEs) and treatment-related adverse events, including serious adverse events (SAEs) and dose-limiting toxicities (DLTs; in Phase 1 only) | Overall response rate as defined as proportion of T-ALL patients achieving complete response (CR) or complete response with incomplete hematologic recovery (CRi) or T-LL patients achieving CR or PR at any point after BEAM-201 infusion",
+            "enrollment": "102",
+            "dimensions_established": true,
+            "transition": null
           },
           {
             "version": 10,
@@ -551,13 +647,26 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 1040.0
+            "svg_x": 1040.0,
+            "phase": "PHASE1/PHASE2",
+            "primary_outcome": "Incidence and severity of treatment-emergent adverse events (TEAEs) and treatment-related adverse events, including serious adverse events (SAEs) and dose-limiting toxicities (DLTs; in Phase 1 only) | Overall response rate as defined as proportion of T-ALL patients achieving complete response (CR) or complete response with incomplete hematologic recovery (CRi) or T-LL patients achieving CR or PR at any point after BEAM-201 infusion",
+            "enrollment": "102",
+            "dimensions_established": true,
+            "transition": "date_only",
+            "transition_reason": "same commitment; the committed date moved -1826 days",
+            "transition_changed": [],
+            "slip_days": -1826
           }
         ],
         "first_pcd": "2031-12",
         "last_pcd": "2026-12",
         "total_slip_days": -1826,
-        "n_late_moves": 0
+        "n_late_moves": 0,
+        "dimensions_established": true,
+        "slip_established_days": -1826,
+        "slip_refused_revisions": 0,
+        "slip_reported_days": -1826,
+        "slip_fully_established": true
       },
       "gap_months": 20.205338809034906,
       "gap_months_1f": "20.2",
@@ -724,7 +833,12 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 60.0
+            "svg_x": 60.0,
+            "phase": "PHASE3",
+            "primary_outcome": "Part 1 and Part 2 (Dose Finding): Incidences of Adverse Events (AEs) | Part 2 (Dose Comparison): Change From Baseline in the North Star Ambulatory Assessment (NSAA) Total Score | Part 2 (Dose Finding): Dystrophin Expression in Biopsied Muscle Tissue | Part 2 (Dose Finding): Pharmacokinetic (PK) Plasma Concentration of Eteplirsen | Part 2 (Dose Finding): Tissue Concentration of Eteplirsen From Biopsied Muscle Tissue",
+            "enrollment": "152",
+            "dimensions_established": true,
+            "transition": null
           },
           {
             "version": 6,
@@ -737,7 +851,15 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 341.3
+            "svg_x": 341.3,
+            "phase": "PHASE3",
+            "primary_outcome": "Part 1 and Part 2 (Dose Finding): Incidences of Adverse Events (AEs) | Part 2 (Dose Comparison): Change From Baseline in the North Star Ambulatory Assessment (NSAA) Total Score | Part 2 (Dose Finding): Dystrophin Expression in Biopsied Muscle Tissue | Part 2 (Dose Finding): Pharmacokinetic (PK) Plasma Concentration of Eteplirsen | Part 2 (Dose Finding): Tissue Concentration of Eteplirsen From Biopsied Muscle Tissue",
+            "enrollment": "152",
+            "dimensions_established": true,
+            "transition": "date_only",
+            "transition_reason": "same commitment; the committed date moved +488 days",
+            "transition_changed": [],
+            "slip_days": 488
           },
           {
             "version": 7,
@@ -750,7 +872,18 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 521.2
+            "svg_x": 521.2,
+            "phase": "PHASE3",
+            "primary_outcome": "Part 1: Incidence of Adverse Events (AEs) | Part 2: Change From Baseline in the NSAA Total Score at Week 144",
+            "enrollment": "154",
+            "dimensions_established": true,
+            "transition": "scope_revision",
+            "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+            "transition_changed": [
+              "endpoint",
+              "population"
+            ],
+            "slip_days": null
           },
           {
             "version": 9,
@@ -763,7 +896,15 @@
             "carried_expired": false,
             "days_expired": 0,
             "is_late_move": false,
-            "svg_x": 579.3
+            "svg_x": 579.3,
+            "phase": "PHASE3",
+            "primary_outcome": "Part 1: Incidence of Adverse Events (AEs) | Part 2: Change From Baseline in the NSAA Total Score at Week 144",
+            "enrollment": "154",
+            "dimensions_established": true,
+            "transition": "date_only",
+            "transition_reason": "same commitment; the committed date moved -455 days",
+            "transition_changed": [],
+            "slip_days": -455
           },
           {
             "version": 26,
@@ -776,13 +917,29 @@
             "carried_expired": true,
             "days_expired": 18,
             "is_late_move": false,
-            "svg_x": 1040.0
+            "svg_x": 1040.0,
+            "phase": "PHASE3",
+            "primary_outcome": "Part 1: Incidence of Adverse Events (AEs) | Part 2: Change From Baseline at Week 144 in the NSAA Total Score (for Final Analysis) | Part 2: Change from Baseline at Week 72 or Week 96 in NSAA Total Score (for Conditional Efficacy Interim Analysis)",
+            "enrollment": "160",
+            "dimensions_established": true,
+            "transition": "scope_revision",
+            "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+            "transition_changed": [
+              "endpoint",
+              "population"
+            ],
+            "slip_days": null
           }
         ],
         "first_pcd": "2024-10",
         "last_pcd": "2026-10-31",
         "total_slip_days": 760,
-        "n_late_moves": 0
+        "n_late_moves": 0,
+        "dimensions_established": true,
+        "slip_established_days": 33,
+        "slip_refused_revisions": 2,
+        "slip_reported_days": 760,
+        "slip_fully_established": false
       },
       "gap_months": 2.628336755646817,
       "gap_months_1f": "2.6",
@@ -832,7 +989,12 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 60.0
+              "svg_x": 60.0,
+              "phase": "PHASE3",
+              "primary_outcome": "Change from Baseline in \u03b2-SG Expression at Day 60 Post-dose as Measured by Immunofluorescence (IF) Percent \u03b2-SG Positive Fibers",
+              "enrollment": "15",
+              "dimensions_established": true,
+              "transition": null
             },
             {
               "version": 3,
@@ -845,7 +1007,18 @@
               "carried_expired": true,
               "days_expired": 28,
               "is_late_move": false,
-              "svg_x": 1035.1
+              "svg_x": 1035.1,
+              "phase": "PHASE3",
+              "primary_outcome": "Cohort 1: Change from Baseline in \u03b2-SG Expression at Day 60 Post-dose as Measured by Immunofluorescence (IF) Percent \u03b2-SG Positive Fibers",
+              "enrollment": "17",
+              "dimensions_established": true,
+              "transition": "scope_revision",
+              "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+              "transition_changed": [
+                "endpoint",
+                "population"
+              ],
+              "slip_days": null
             },
             {
               "version": 4,
@@ -858,13 +1031,26 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": true,
-              "svg_x": 1040.0
+              "svg_x": 1040.0,
+              "phase": "PHASE3",
+              "primary_outcome": "Cohort 1: Change from Baseline in \u03b2-SG Expression at Day 60 Post-dose as Measured by Immunofluorescence (IF) Percent \u03b2-SG Positive Fibers",
+              "enrollment": "17",
+              "dimensions_established": true,
+              "transition": "date_only",
+              "transition_reason": "same commitment; the committed date moved -27 days",
+              "transition_changed": [],
+              "slip_days": -27
             }
           ],
           "first_pcd": "2025-01-31",
           "last_pcd": "2025-03-04",
           "total_slip_days": 32,
-          "n_late_moves": 1
+          "n_late_moves": 1,
+          "dimensions_established": true,
+          "slip_established_days": -27,
+          "slip_refused_revisions": 1,
+          "slip_reported_days": 32,
+          "slip_fully_established": false
         },
         {
           "nct": "NCT06128564",
@@ -885,7 +1071,12 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 60.0
+              "svg_x": 60.0,
+              "phase": "PHASE2",
+              "primary_outcome": "Percentage of Participants with a Treatment-emergent Adverse Event (TEAE), Serious Adverse Event (SAE), and Adverse Event of Special Interest (AESI)",
+              "enrollment": "21",
+              "dimensions_established": true,
+              "transition": null
             },
             {
               "version": 16,
@@ -898,7 +1089,15 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 558.6
+              "svg_x": 558.6,
+              "phase": "PHASE2",
+              "primary_outcome": "Percentage of Participants with a Treatment-emergent Adverse Event (TEAE), Serious Adverse Event (SAE), and Adverse Event of Special Interest (AESI)",
+              "enrollment": "21",
+              "dimensions_established": true,
+              "transition": "date_only",
+              "transition_reason": "same commitment; the committed date moved +181 days",
+              "transition_changed": [],
+              "slip_days": 181
             },
             {
               "version": 25,
@@ -911,7 +1110,15 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 836.9
+              "svg_x": 836.9,
+              "phase": "PHASE2",
+              "primary_outcome": "Percentage of Participants with a Treatment-emergent Adverse Event (TEAE), Serious Adverse Event (SAE), and Adverse Event of Special Interest (AESI)",
+              "enrollment": "21",
+              "dimensions_established": true,
+              "transition": "date_only",
+              "transition_reason": "same commitment; the committed date moved +245 days",
+              "transition_changed": [],
+              "slip_days": 245
             },
             {
               "version": 28,
@@ -924,7 +1131,17 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 945.4
+              "svg_x": 945.4,
+              "phase": "PHASE2",
+              "primary_outcome": "Percentage of Participants with a Treatment-emergent Adverse Event (TEAE), Serious Adverse Event (SAE), and Adverse Event of Special Interest (AESI)",
+              "enrollment": "13",
+              "dimensions_established": true,
+              "transition": "scope_revision",
+              "transition_reason": "the commitment changed shape: population. A date difference across a changed scope is not slip.",
+              "transition_changed": [
+                "population"
+              ],
+              "slip_days": null
             },
             {
               "version": 29,
@@ -937,13 +1154,26 @@
               "carried_expired": false,
               "days_expired": 0,
               "is_late_move": false,
-              "svg_x": 1040.0
+              "svg_x": 1040.0,
+              "phase": "PHASE2",
+              "primary_outcome": "Percentage of Participants with a Treatment-emergent Adverse Event (TEAE), Serious Adverse Event (SAE), and Adverse Event of Special Interest (AESI)",
+              "enrollment": "13",
+              "dimensions_established": true,
+              "transition": "date_only",
+              "transition_reason": "same commitment; the committed date moved -1457 days",
+              "transition_changed": [],
+              "slip_days": -1457
             }
           ],
           "first_pcd": "2032-11-30",
           "last_pcd": "2026-03-04",
           "total_slip_days": -2463,
-          "n_late_moves": 0
+          "n_late_moves": 0,
+          "dimensions_established": true,
+          "slip_established_days": -1031,
+          "slip_refused_revisions": 1,
+          "slip_reported_days": -2463,
+          "slip_fully_established": false
         }
       ],
       "thesis_timeline": {

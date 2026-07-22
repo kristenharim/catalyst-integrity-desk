@@ -1,0 +1,114 @@
+{
+  "subject": "BEAM",
+  "as_of": "2026-07-21",
+  "origin": "frozen",
+  "records": [
+    {
+      "source": "sec.xbrl",
+      "locator": "CIK 0001745999 companyfacts",
+      "published_at": "2026-03-31",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "ticker": "BEAM",
+        "cik": "0001745999",
+        "name": "Beam Therapeutics Inc.",
+        "as_of": "2026-03-31",
+        "cash": 288291000.0,
+        "securities": 923361000.0,
+        "burn_ttm_annual": 369731000.0,
+        "burn_recent_annual": 514052000.0,
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "MarketableSecuritiesCurrent",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": [],
+        "inflow_quarters": []
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.v2",
+      "locator": "query.spons=Beam Therapeutics Inc.",
+      "published_at": null,
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "trials": [
+          {
+            "nct": "NCT05885464",
+            "title": "A Study Evaluating the Safety and Efficacy of BEAM-201 in Relapsed/Refractory T-Cell Acute Lymphoblastic Leukemia (T-ALL) or T-Cell Lymphoblastic Lymphoma (T-LL)",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "pcd": "2026-12",
+            "pcd_type": "ESTIMATED",
+            "phases": [
+              "PHASE1",
+              "PHASE2"
+            ],
+            "sponsor": "Beam Therapeutics Inc."
+          }
+        ]
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.versions",
+      "locator": "NCT05885464",
+      "published_at": "2025-01-06",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "nct": "NCT05885464",
+        "sponsor": "Beam Therapeutics Inc.",
+        "phases": [
+          "PHASE1",
+          "PHASE2"
+        ],
+        "n_versions": 12,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2023-06-01",
+            "pcd": "2031-12",
+            "pcd_type": "ESTIMATED",
+            "status": "NOT_YET_RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 10,
+            "submitted": "2025-01-06",
+            "pcd": "2026-12",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": -1826,
+            "held_days": 2520,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2031-12",
+        "last_pcd": "2026-12",
+        "total_slip_days": -1826,
+        "n_late_moves": 0
+      },
+      "parser_version": 1
+    }
+  ],
+  "negatives": [],
+  "entity": {
+    "ticker": "BEAM",
+    "cik": "0001745999",
+    "sec_legal_name": "Beam Therapeutics Inc.",
+    "registry_query": "Beam Therapeutics Inc.",
+    "state": "exact",
+    "method": "the registry sponsor string equals the SEC legal name"
+  },
+  "missing": [],
+  "schema_version": 1,
+  "digest": "ade442b1d0b58d333186dcfcefe77790c30b3816d24893f30f0ecc430fe19140"
+}

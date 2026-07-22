@@ -189,6 +189,54 @@ only ever been watched passing on the one case it was written for is not yet evi
 The threshold for "approaching breach" is six months. That is a judgement, not a finding:
 a quarter is too tight to act on and a year is not news. Nothing validates it.
 
+## The reported slip figures were not established, and five of seven still are not
+
+This is the largest thing an audit of this project has found, and it was found by a guard
+this project built to catch exactly it.
+
+`total_slip_days` is computed by subtracting registered completion dates across successive
+registry versions. That is only a delay if both dates describe the same commitment. Until
+`engine/promise.py` existed, nothing checked, because the fetcher reads each version's
+status module for the date and never read the endpoint or the enrolment, which were
+sitting unread in the same cached response.
+
+Applying promise identity to the committed snapshot:
+
+| Trial | Reported | Established | Refused |
+|---|---|---|---|
+| PRME NCT06559176 | 122 | 122 | 0 |
+| BEAM NCT05885464 | -1826 | -1826 | 0 |
+| RCKT NCT06092034 | 943 | 0 | 1 |
+| RCKT NCT04248439 | 1008 | -422 | 1 |
+| SRPT NCT03992430 | 760 | 33 | 2 |
+| SRPT NCT06246513 | 32 | -27 | 1 |
+| SRPT NCT06128564 | -2463 | -1031 | 1 |
+
+The clearest case is `NCT04248439`. Of its 1,008 reported days, a single revision
+contributes +1,430 -- and at that revision the primary endpoint changed from "Phenotypic
+correction of bone marrow colony forming units after infusion of RP-L102" to "Bone Marrow
+Colony-Forming Cell Mitomycin-C resistance". Those are different endpoints, so those are
+different promises, so that is not slip. The supported figure is -422 days across the two
+revisions where the commitment held its shape.
+
+**What this does not touch, stated plainly so the finding is not read as bigger than it
+is.** The 677-day expired-date result is about one version carrying an already-passed
+date, not a comparison across two commitments, and is unaffected. The funding gap is
+computed from the current registered date against the runway, not from slip, and is
+unaffected. What is affected is every sentence in this repo that quoted a net-slip number
+as though it were a measured delay.
+
+Both figures are now shown wherever either was, the non-comparable revisions carry an
+amber ring on the timeline, and `tests/test_promise.py` pins the numbers above so a doc
+cannot quote a figure the code no longer produces.
+
+**The residual limit.** Establishing continuity needs `data/cache/`, which is gitignored,
+so the classification is computed at build time and committed. A revision whose version is
+not cached classifies as uncertain and produces no number, which is the correct answer for
+a version nobody has read. Three dimensions are compared -- phase, primary outcome,
+enrolment -- and a sponsor can change what a trial is measuring in ways none of them
+capture. The guard bounds one failure. It does not certify continuity.
+
 ## Untested, and known to be
 
 - ~~The decision receipt's two hashes.~~ Closed. The receipt used to travel in the query

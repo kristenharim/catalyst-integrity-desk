@@ -1,0 +1,140 @@
+{
+  "subject": "PRME",
+  "as_of": "2026-07-21",
+  "origin": "frozen",
+  "records": [
+    {
+      "source": "sec.xbrl",
+      "locator": "CIK 0001894562 companyfacts",
+      "published_at": "2026-03-31",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "ticker": "PRME",
+        "cik": "0001894562",
+        "name": "Prime Medicine, Inc.",
+        "as_of": "2026-03-31",
+        "cash": 64106000.0,
+        "securities": 71391000.0,
+        "burn_ttm_annual": 156417000.0,
+        "burn_recent_annual": 170840000.0,
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": [],
+        "inflow_quarters": []
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.v2",
+      "locator": "query.spons=Prime Medicine, Inc.",
+      "published_at": null,
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "trials": [
+          {
+            "nct": "NCT06559176",
+            "title": "A Study of the Safety and Efficacy of Prime Editing (PM359) in Participants With p47phox Autosomal Recessive Chronic Granulomatous Disease (CGD )",
+            "status": "ENROLLING_BY_INVITATION",
+            "pcd": "2030-01",
+            "pcd_type": "ESTIMATED",
+            "phases": [
+              "PHASE1",
+              "PHASE2"
+            ],
+            "sponsor": "Prime Medicine, Inc."
+          }
+        ]
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.versions",
+      "locator": "NCT06559176",
+      "published_at": "2025-01-22",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "nct": "NCT06559176",
+        "sponsor": "Prime Medicine, Inc.",
+        "phases": [
+          "PHASE1",
+          "PHASE2"
+        ],
+        "n_versions": 13,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2024-08-16",
+            "pcd": "2029-09",
+            "pcd_type": "ESTIMATED",
+            "status": "NOT_YET_RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 3,
+            "submitted": "2024-10-04",
+            "pcd": "2029-10",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 30,
+            "held_days": 1793,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 362.0
+          },
+          {
+            "version": 4,
+            "submitted": "2024-10-09",
+            "pcd": "2029-11",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 31,
+            "held_days": 1818,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 392.8
+          },
+          {
+            "version": 6,
+            "submitted": "2025-01-22",
+            "pcd": "2030-01",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 61,
+            "held_days": 1744,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2029-09",
+        "last_pcd": "2030-01",
+        "total_slip_days": 122,
+        "n_late_moves": 0
+      },
+      "parser_version": 1
+    }
+  ],
+  "negatives": [],
+  "entity": {
+    "ticker": "PRME",
+    "cik": "0001894562",
+    "sec_legal_name": "Prime Medicine, Inc.",
+    "registry_query": "Prime Medicine, Inc.",
+    "state": "exact",
+    "method": "the registry sponsor string equals the SEC legal name"
+  },
+  "missing": [],
+  "schema_version": 1,
+  "digest": "9828f88fed6e62166193d49b0597a164706c16a30b1e3df91d62465799e94e5e"
+}

@@ -211,3 +211,116 @@ def test_no_model_participates_in_classification():
         body = f.read().lower()
     for word in ("granite", "watsonx", "classifier("):
         assert word not in body, f"promise.py references {word!r}"
+
+
+# ---------------------------------------------------------------------------
+# The audit of this project's own reported figures
+# ---------------------------------------------------------------------------
+# This section exists because promise identity, applied to the committed
+# snapshot, found that five of seven trials report a net-slip figure the record
+# does not support. The reported number sums every date movement; the supported
+# number sums only the movements where the endpoint and enrolment held. Where
+# they differ, the difference is a revision that changed the commitment.
+#
+# NCT04248439 is the clearest: 1,008 reported days, of which a single +1,430-day
+# revision coincided with the primary endpoint changing from "Phenotypic
+# correction of bone marrow colony forming units" to "Bone Marrow Colony-Forming
+# Cell Mitomycin-C resistance". Those are different endpoints, so those are
+# different promises, so that is not slip.
+#
+# Unaffected, and worth stating because it is the demo centrepiece: the 677-day
+# expired-date finding is about ONE version carrying an already-passed date, not
+# a diff across two commitments, so nothing here touches it. Nor is the funding
+# gap affected, which compares the current registered date to the runway.
+
+import json as _json  # noqa: E402
+
+_SNAP = os.path.join(os.path.dirname(__file__), "..", "data", "snapshot.json")
+
+
+def _histories():
+    with open(_SNAP) as f:
+        snap = _json.load(f)
+    for ticker, c in snap["contracts"].items():
+        for h in [c.get("history")] + list(c.get("lapsed_history") or []):
+            if h:
+                yield ticker, h
+
+
+def test_every_history_carries_its_audit():
+    """A stored history without a classification would render the old,
+    unaudited figure with nothing marking it."""
+    seen = 0
+    for ticker, h in _histories():
+        seen += 1
+        for key in ("slip_established_days", "slip_refused_revisions",
+                    "slip_reported_days", "slip_fully_established"):
+            assert key in h, f"{ticker} {h['nct']} is missing {key}"
+    assert seen >= 5
+
+
+def test_established_slip_never_exceeds_what_was_classified():
+    """The supported figure must be the sum of comparable movements only."""
+    for ticker, h in _histories():
+        revs = h.get("revisions") or []
+        comparable = sum(r.get("slip_days") or 0
+                         for r in revs if r.get("slip_days") is not None)
+        assert h["slip_established_days"] == comparable, (
+            f"{ticker} {h['nct']}: established {h['slip_established_days']} but "
+            f"comparable revisions sum to {comparable}"
+        )
+
+
+def test_refused_count_matches_the_revisions_marked_uncomparable():
+    for ticker, h in _histories():
+        revs = h.get("revisions") or []
+        marked = sum(1 for r in revs
+                     if r.get("transition") and r.get("slip_days") is None)
+        assert h["slip_refused_revisions"] == marked, (
+            f"{ticker} {h['nct']}: says {h['slip_refused_revisions']} refused, "
+            f"{marked} revisions are marked non-comparable"
+        )
+
+
+def test_the_finding_itself_is_still_true():
+    """At least one committed history reports slip it cannot support.
+
+    If this ever fails it is good news and the docs must be corrected: it means
+    every reported figure became establishable. It fails loudly rather than
+    quietly so that nobody leaves the LIMITS.md section standing after the
+    problem is gone.
+    """
+    unsupported = [
+        (t, h["nct"], h["slip_reported_days"], h["slip_established_days"])
+        for t, h in _histories()
+        if not h["slip_fully_established"]
+    ]
+    assert unsupported, (
+        "every reported slip figure is now fully established. That is an "
+        "improvement, and docs/LIMITS.md must be updated to stop saying "
+        "otherwise."
+    )
+
+
+def test_rocket_lapsed_trial_is_the_documented_case():
+    """The specific numbers quoted in LIMITS.md and the log, pinned.
+
+    A doc that quotes a figure the code no longer produces is the failure this
+    project has already had twice with test counts.
+    """
+    h = next(h for _t, h in _histories() if h["nct"] == "NCT04248439")
+    assert h["slip_reported_days"] == 1008
+    assert h["slip_established_days"] == -422
+    assert h["slip_refused_revisions"] == 1
+
+
+def test_the_677_day_finding_is_untouched():
+    """The demo centrepiece does not depend on promise identity.
+
+    677 days is one version carrying an already-passed date. It is not a diff
+    across two commitments, so nothing in this module can undermine it, and
+    saying so explicitly stops the audit above being read as bigger than it is.
+    """
+    expired = [r for _t, h in _histories()
+               for r in (h.get("revisions") or []) if r.get("carried_expired")]
+    assert max(r["days_expired"] for r in expired) == 677

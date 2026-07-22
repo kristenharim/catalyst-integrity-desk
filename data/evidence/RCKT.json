@@ -1,0 +1,196 @@
+{
+  "subject": "RCKT",
+  "as_of": "2026-07-21",
+  "origin": "frozen",
+  "records": [
+    {
+      "source": "sec.xbrl",
+      "locator": "CIK 0001281895 companyfacts",
+      "published_at": "2026-03-31",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "ticker": "RCKT",
+        "cik": "0001281895",
+        "name": "ROCKET PHARMACEUTICALS, INC.",
+        "as_of": "2026-03-31",
+        "cash": 49610000.0,
+        "securities": 94769000.0,
+        "burn_ttm_annual": 179618000.0,
+        "burn_recent_annual": 181576000.0,
+        "provenance": {
+          "cash": "CashAndCashEquivalentsAtCarryingValue",
+          "securities": "ShortTermInvestments",
+          "burn": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "notes": [],
+        "inflow_quarters": []
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.v2",
+      "locator": "query.spons=ROCKET PHARMACEUTICALS, INC.",
+      "published_at": null,
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "trials": [
+          {
+            "nct": "NCT06092034",
+            "title": "A Gene Therapy Study of RP-A501 in Male Patients With Danon Disease",
+            "status": "RECRUITING",
+            "pcd": "2028-04",
+            "pcd_type": "ESTIMATED",
+            "phases": [
+              "PHASE2"
+            ],
+            "sponsor": "Rocket Pharmaceuticals Inc."
+          },
+          {
+            "nct": "NCT04248439",
+            "title": "Gene Therapy for Fanconi Anemia, Complementation Group A",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "pcd": "2026-05-05",
+            "pcd_type": "ESTIMATED",
+            "phases": [
+              "PHASE2"
+            ],
+            "sponsor": "Rocket Pharmaceuticals Inc."
+          }
+        ]
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.versions",
+      "locator": "NCT06092034",
+      "published_at": "2025-10-01",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "nct": "NCT06092034",
+        "sponsor": "Rocket Pharmaceuticals Inc.",
+        "phases": [
+          "PHASE2"
+        ],
+        "n_versions": 5,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2023-10-17",
+            "pcd": "2025-09",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 3,
+            "submitted": "2025-10-01",
+            "pcd": "2028-04",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": 943,
+            "held_days": -30,
+            "carried_expired": true,
+            "days_expired": 30,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2025-09",
+        "last_pcd": "2028-04",
+        "total_slip_days": 943,
+        "n_late_moves": 0
+      },
+      "parser_version": 1
+    },
+    {
+      "source": "clinicaltrials.versions",
+      "locator": "NCT04248439",
+      "published_at": "2025-12-18",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "payload": {
+        "nct": "NCT04248439",
+        "sponsor": "Rocket Pharmaceuticals Inc.",
+        "phases": [
+          "PHASE2"
+        ],
+        "n_versions": 4,
+        "revisions": [
+          {
+            "version": 0,
+            "submitted": "2020-01-28",
+            "pcd": "2023-08",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": null,
+            "held_days": null,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 60.0
+          },
+          {
+            "version": 1,
+            "submitted": "2020-11-23",
+            "pcd": "2022-06",
+            "pcd_type": "ESTIMATED",
+            "status": "RECRUITING",
+            "moved_days": -426,
+            "held_days": 981,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 196.7
+          },
+          {
+            "version": 2,
+            "submitted": "2024-04-08",
+            "pcd": "2026-05",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 1430,
+            "held_days": -677,
+            "carried_expired": true,
+            "days_expired": 677,
+            "is_late_move": false,
+            "svg_x": 758.0
+          },
+          {
+            "version": 3,
+            "submitted": "2025-12-18",
+            "pcd": "2026-05-05",
+            "pcd_type": "ESTIMATED",
+            "status": "ACTIVE_NOT_RECRUITING",
+            "moved_days": 4,
+            "held_days": 134,
+            "carried_expired": false,
+            "days_expired": 0,
+            "is_late_move": false,
+            "svg_x": 1040.0
+          }
+        ],
+        "first_pcd": "2023-08",
+        "last_pcd": "2026-05-05",
+        "total_slip_days": 1008,
+        "n_late_moves": 0
+      },
+      "parser_version": 1
+    }
+  ],
+  "negatives": [],
+  "entity": {
+    "ticker": "RCKT",
+    "cik": "0001281895",
+    "sec_legal_name": "ROCKET PHARMACEUTICALS, INC.",
+    "registry_query": "ROCKET PHARMACEUTICALS, INC.",
+    "state": "exact",
+    "method": "the registry sponsor string equals the SEC legal name"
+  },
+  "missing": [],
+  "schema_version": 1,
+  "digest": "7b54e16eebfc2dbebd27841d902c12877dd15d604c51b76c6433d115e7a63e9d"
+}

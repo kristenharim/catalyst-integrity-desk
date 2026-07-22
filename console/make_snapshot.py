@@ -452,6 +452,70 @@ def _queue(contracts: dict) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Promise identity, baked into the snapshot
+# ---------------------------------------------------------------------------
+# `engine/dimensions.py` reads the endpoint and enrolment per registry version
+# out of `data/cache/`, which is gitignored and therefore absent from a fresh
+# clone. So the classification is computed once here, at build time, and stored.
+# `apply_displays` never recomputes it: a figure that changes depending on
+# whether a local cache happens to exist is not a figure this project may show.
+
+
+def _classify_history(hist: dict, actor: str) -> dict:
+    """Attach a transition to each revision, and the totals it supports.
+
+    This is where the project's own slip statistics get audited. A revision whose
+    endpoint or enrolment changed did not slip, it changed shape, and the days
+    between its dates describe two different commitments.
+    """
+    from engine.dimensions import enrich
+    from engine.promise import Promise, net_slip_days, walk
+
+    enriched = enrich(hist)
+    revs = enriched.get("revisions") or []
+    promises = [
+        Promise(
+            actor=actor, subject=enriched.get("nct", ""),
+            milestone="primary_completion", due=_parse_date(r.get("pcd")),
+            scope=r.get("phase"), endpoint=r.get("primary_outcome"),
+            population=r.get("enrollment"), status=r.get("status"),
+            version=r.get("version"), submitted=r.get("submitted"),
+        )
+        for r in revs
+    ]
+    transitions = walk(promises)
+    # A transition describes a PAIR, so it is stored on the later revision. The
+    # first revision has no predecessor and therefore no transition, which is
+    # different from having an uncertain one.
+    for rev, t in zip(revs[1:], transitions):
+        rev["transition"] = t.kind
+        rev["transition_reason"] = t.reason
+        rev["transition_changed"] = t.changed
+        rev["slip_days"] = t.slip_days
+    if revs:
+        revs[0]["transition"] = None
+
+    established, refused = net_slip_days(transitions)
+    enriched["slip_established_days"] = established
+    enriched["slip_refused_revisions"] = refused
+    enriched["slip_reported_days"] = hist.get("total_slip_days")
+    enriched["slip_fully_established"] = refused == 0
+    return enriched
+
+
+def apply_transitions(snapshot: dict) -> dict:
+    """Classify every stored revision. Needs data/cache/; run before committing."""
+    for c in snapshot.get("contracts", {}).values():
+        actor = c["runway"]["name"]
+        if c.get("history"):
+            c["history"] = _classify_history(c["history"], actor)
+        c["lapsed_history"] = [
+            _classify_history(h, actor) for h in (c.get("lapsed_history") or []) if h
+        ]
+    return snapshot
+
+
 def apply_displays(snapshot: dict) -> dict:
     """Add or refresh all display sub-dicts in a loaded snapshot dict.
 
@@ -879,12 +943,46 @@ def refresh_unresolved() -> None:
     print(f"Unresolved block refreshed ({len(missing)} of {len(TICKERS)}): {SNAPSHOT_PATH}")
 
 
+def refresh_transitions() -> None:
+    """Classify revisions in an existing snapshot and write it back.
+
+    Offline: reads only `data/cache/`. Idempotent. Prints where the project's
+    own reported slip differs from what promise identity can support, because
+    that difference is the finding.
+    """
+    if not os.path.exists(SNAPSHOT_PATH):
+        print(f"ERROR: {SNAPSHOT_PATH} does not exist.", file=sys.stderr)
+        sys.exit(1)
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+
+    apply_transitions(snap)
+    apply_displays(snap)
+
+    with open(SNAPSHOT_PATH, "w") as f:
+        json.dump(snap, f, indent=2)
+
+    for ticker, c in snap["contracts"].items():
+        for h in [c.get("history")] + list(c.get("lapsed_history") or []):
+            if not h:
+                continue
+            rep, est = h.get("slip_reported_days"), h.get("slip_established_days")
+            ref = h.get("slip_refused_revisions")
+            flag = "" if rep == est else "   <- reported figure is not fully supported"
+            print(f"  {ticker:5} {h['nct']:12} reported {rep!s:>6}  "
+                  f"established {est!s:>6}  refused {ref}{flag}")
+    print(f"Transitions written: {SNAPSHOT_PATH}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build or verify data/snapshot.json")
     parser.add_argument("--verify", action="store_true",
                         help="Load and verify an existing snapshot instead of rebuilding")
     parser.add_argument("--displays", action="store_true",
                         help="Refresh display strings in an existing snapshot (no credentials needed)")
+    parser.add_argument("--transitions", action="store_true",
+                        help="classify every stored revision against promise identity "
+                             "using data/cache/ (offline, no credentials)")
     parser.add_argument("--unresolved", action="store_true",
                         help="Recompute the unresolved-ticker block in an existing snapshot "
                              "(network, but no watsonx credentials)")
@@ -900,6 +998,10 @@ def main() -> None:
 
     if args.unresolved:
         refresh_unresolved()
+        return
+
+    if args.transitions:
+        refresh_transitions()
         return
 
     print("Building snapshot...")

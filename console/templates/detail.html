@@ -178,10 +178,19 @@
         &#8594; {{ r.pcd }}
       </text>
     {% else %}
-      {# Normal revision node: gray circle on axis #}
+      {# Amber ring when the commitment changed shape at this revision: the date
+         difference across it describes two promises, so it is not slip. #}
       <circle cx="{{ r.svg_x }}" cy="110" r="8"
-              fill="#6b7280" stroke="#9ca3af" stroke-width="1"
-              class="revision-node"/>
+              fill="#6b7280"
+              stroke="{% if r.transition and r.slip_days is none %}#d29922{% else %}#9ca3af{% endif %}"
+              stroke-width="{% if r.transition and r.slip_days is none %}2.5{% else %}1{% endif %}"
+              class="revision-node{% if r.transition and r.slip_days is none %} not-comparable{% endif %}"/>
+      {% if r.transition and r.slip_days is none %}
+      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="9" fill="#d29922">
+        not comparable
+      </text>
+      {% endif %}
       <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
         {{ r.submitted }}
@@ -195,10 +204,29 @@
 </svg>
 </div>
 
-<p style="font-size:11px; color:#8b949e; margin:6px 0 20px;">
+{# Slip is only slip when the commitment held its shape.  A revision that also
+   changed the primary endpoint or the enrolment describes a different promise,
+   and the days between its dates are not a delay.  Both figures are shown
+   because showing only the larger one is the error this project exists to
+   catch, and showing only the smaller one hides that the date did move. #}
+<p style="font-size:11px; color:#8b949e; margin:6px 0 4px;">
   {{ c.history.revisions|length }} revisions across {{ c.history.n_versions }} versions
-  &nbsp;|&nbsp; net slip {{ c.history.total_slip_days }} days
   &nbsp;|&nbsp; {{ c.history.n_late_moves }} moved with &lt;90 days notice
+</p>
+<p style="font-size:11px; margin:0 0 20px; max-width:940px;">
+  <span style="color:#8b949e;">Net date movement, across revisions where the
+  commitment held its shape:</span>
+  <strong style="color:#c9d1d9;">{{ c.history.slip_established_days }} days</strong>
+  {% if c.history.slip_refused_revisions %}
+  <br>
+  <span class="verdict-alert">&#9888;
+    {{ c.history.slip_refused_revisions }} revision(s) are not comparable</span>
+  <span style="color:#8b949e;">
+    because the primary endpoint or the enrolment changed at the same time.
+    Subtracting those dates would describe two different commitments. The
+    unaudited total across every revision is
+    {{ c.history.slip_reported_days }} days.</span>
+  {% endif %}
 </p>
 {% endif %}
 
@@ -242,9 +270,19 @@
         &#8594; {{ r.pcd }}
       </text>
     {% else %}
+      {# Amber ring when the commitment changed shape at this revision: the date
+         difference across it describes two promises, so it is not slip. #}
       <circle cx="{{ r.svg_x }}" cy="110" r="8"
-              fill="#6b7280" stroke="#9ca3af" stroke-width="1"
-              class="revision-node"/>
+              fill="#6b7280"
+              stroke="{% if r.transition and r.slip_days is none %}#d29922{% else %}#9ca3af{% endif %}"
+              stroke-width="{% if r.transition and r.slip_days is none %}2.5{% else %}1{% endif %}"
+              class="revision-node{% if r.transition and r.slip_days is none %} not-comparable{% endif %}"/>
+      {% if r.transition and r.slip_days is none %}
+      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="9" fill="#d29922">
+        not comparable
+      </text>
+      {% endif %}
       <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
         {{ r.submitted }}
@@ -258,10 +296,29 @@
 </svg>
 </div>
 
-<p style="font-size:11px; color:#8b949e; margin:6px 0 20px;">
+{# Slip is only slip when the commitment held its shape.  A revision that also
+   changed the primary endpoint or the enrolment describes a different promise,
+   and the days between its dates are not a delay.  Both figures are shown
+   because showing only the larger one is the error this project exists to
+   catch, and showing only the smaller one hides that the date did move. #}
+<p style="font-size:11px; color:#8b949e; margin:6px 0 4px;">
   {{ lh.revisions|length }} revisions across {{ lh.n_versions }} versions
-  &nbsp;|&nbsp; net slip {{ lh.total_slip_days }} days
   &nbsp;|&nbsp; {{ lh.n_late_moves }} moved with &lt;90 days notice
+</p>
+<p style="font-size:11px; margin:0 0 20px; max-width:940px;">
+  <span style="color:#8b949e;">Net date movement, across revisions where the
+  commitment held its shape:</span>
+  <strong style="color:#c9d1d9;">{{ lh.slip_established_days }} days</strong>
+  {% if lh.slip_refused_revisions %}
+  <br>
+  <span class="verdict-alert">&#9888;
+    {{ lh.slip_refused_revisions }} revision(s) are not comparable</span>
+  <span style="color:#8b949e;">
+    because the primary endpoint or the enrolment changed at the same time.
+    Subtracting those dates would describe two different commitments. The
+    unaudited total across every revision is
+    {{ lh.slip_reported_days }} days.</span>
+  {% endif %}
 </p>
 {% endif %}
 {% endfor %}

@@ -1,0 +1,26 @@
+{
+  "subject": "SANA",
+  "as_of": "2026-07-21",
+  "origin": "frozen",
+  "records": [],
+  "negatives": [
+    {
+      "source": "clinicaltrials.v2",
+      "locator": "query.spons=Sana Biotechnology, Inc.",
+      "fetched_at": "2026-07-21T00:00:00+00:00",
+      "reason": "no pivotal trial matched this sponsor name in the registry"
+    }
+  ],
+  "entity": {
+    "ticker": "SANA",
+    "sec_legal_name": "Sana Biotechnology, Inc.",
+    "registry_query": "Sana Biotechnology, Inc.",
+    "state": "review",
+    "method": "sponsor-name search returned nothing; the join is unverified"
+  },
+  "missing": [
+    "clinicaltrials.v2: no matching sponsor"
+  ],
+  "schema_version": 1,
+  "digest": "04f4f3e27cefbf9592cb9a09e1e10fa79d58655ccae90e9d9c98d7b7aff7f66d"
+}
