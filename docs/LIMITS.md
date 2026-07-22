@@ -248,6 +248,26 @@ can change what a trial measures in ways none of them capture. And the contingen
 honest but unresolved: it hands the reword question to a human and nothing here makes that
 judgement cheap.
 
+## A non-atomic cache write, found by interrupting one
+
+`_cached()` in `engine/ctgov_history.py` writes a fetched version straight to its target
+path. Killing a run mid-write therefore leaves a truncated JSON file that parses as
+corrupt, and every later read of that trial fails on it. Found by timing out a cohort run:
+one file of 335, `NCT03919071-v356.json`, 20,107 bytes, and it took down five tests that
+had nothing to do with it.
+
+The fix in the right place is a write to a temporary file and an atomic rename, which is
+three lines. That module is one of the three verified against live APIs and is not to be
+rewritten, so it is recorded here rather than patched, and the readers this project owns
+were hardened instead: `engine/dimensions.py` and `research/backtest.py` skip an unreadable
+entry and classify that version as unestablished, which is the same answer they already
+give for a version nobody has fetched.
+
+That is the correct degradation but it is not the correct fix, and the difference matters:
+a corrupt entry now silently lowers the number of versions a comparison can see, so it
+makes continuity harder to establish rather than easier. It fails toward refusing to state
+a number, which is the safe direction, and it should still be repaired at the source.
+
 ## Untested, and known to be
 
 - ~~The decision receipt's two hashes.~~ Closed. The receipt used to travel in the query

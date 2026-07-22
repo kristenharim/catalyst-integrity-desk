@@ -64,8 +64,12 @@ def _versions(nct: str) -> list[dict]:
             version = int(os.path.basename(path).rsplit("-v", 1)[1][: -len(".json")])
         except (IndexError, ValueError):
             continue
-        with open(path) as f:
-            doc = json.load(f)
+        try:
+            with open(path) as f:
+                doc = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            # See engine/dimensions.py: a truncated entry is skipped, not fatal.
+            continue
         proto = doc.get("study", doc).get("protocolSection", {})
         status = proto.get("statusModule", {})
         pcd = (status.get("primaryCompletionDateStruct") or {}).get("date")

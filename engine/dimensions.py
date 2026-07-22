@@ -90,8 +90,16 @@ def from_cache(nct: str) -> dict[int, Dimensions]:
             version = int(base.rsplit("-v", 1)[1][: -len(".json")])
         except (IndexError, ValueError):
             continue
-        with open(path) as f:
-            proto = _proto(json.load(f))
+        try:
+            with open(path) as f:
+                doc = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            # A truncated cache entry, left by an interrupted fetch. Skipping it
+            # classifies that version as unestablished, which is the correct
+            # answer for a version nobody has successfully read. Crashing here
+            # would let one bad file take down every caller.
+            continue
+        proto = _proto(doc)
         out[version] = Dimensions(
             version=version,
             phase=_phase(proto),

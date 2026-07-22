@@ -8,6 +8,14 @@ carrying a primary completion date of June 2022. **That date had already been ex
 
 Nobody was watching, because nobody's job is to watch.
 
+**And Rocket is not unusual.** In a random sample of industry-sponsored phase 2/3 trials,
+**80.6% carried an already-passed registered completion date at some point**, median
+stretch 246 days. Rocket's 677 sits near the 75th percentile, not at the tail. That is a
+correction to how this project used to open, and it makes the claim bigger rather than
+smaller: the finding is not one sponsor letting a date lapse, it is that **nobody
+reconciles any of it, across an entire registry, as a matter of course**. See
+`docs/COHORT.md` for the frame, the n, and what the sample cannot support.
+
 ## The claim, in one sentence
 
 > **This system measures whether public, dated, self-authored commitments were kept,

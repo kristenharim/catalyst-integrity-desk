@@ -73,6 +73,13 @@ catalyst. The nearest registered completion still in the future puts the same co
 minus 14.5 months, financing required. Nobody filed an amendment. The date simply arrived,
 and passed.
 
+**Rocket is ordinary, and that is the actual finding.** A random sample of industry
+phase 2/3 trials shows 80.6% carrying an already-passed registered completion date at some
+point, median 246 days. Rocket's 677 is around the 75th percentile. So the claim is not
+that one sponsor behaved badly; it is that this is routine and nothing anywhere reconciles
+it against the theses that depend on it. `docs/COHORT.md` states the frame, the n=85 so
+far, and the limits of the sample.
+
 ## The architecture that makes the demo mean something
 
 ```
