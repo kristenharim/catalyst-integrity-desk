@@ -254,8 +254,6 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## Still open
 
-- Export the repair session to `docs/bob-sessions/phase3-console-repair.json` and
-  fill in its `pending export` row. Scan it first.
 - **Publish the repo on GitHub.** Submission requires a public repository with a
   README, and there is currently no remote at all. History is clean of
   credentials, checked across every commit, so no rewrite is needed first.
