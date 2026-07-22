@@ -1,5 +1,34 @@
 {
+  "anchor_case": {
+    "corrected_on": "2024-04-08",
+    "days_carried": 677,
+    "expired_on": "2022-06-01",
+    "industry_stretches": {
+      "at_or_below": 159,
+      "n": 188,
+      "share": 0.8457446808510638
+    },
+    "industry_trials": {
+      "at_or_below": 32,
+      "n": 48,
+      "share": 0.6666666666666666
+    },
+    "nct": "NCT04248439"
+  },
   "as_of": "2026-07-22",
+  "clustering": {
+    "anniversary_centres_days": [
+      365,
+      730,
+      1095
+    ],
+    "control_centres_days": [
+      182,
+      547,
+      912
+    ],
+    "window_half_width_days": 45
+  },
   "frame": {
     "enumeration_cap_per_stratum": 3000,
     "first_posted_from": "2016-01-01",
@@ -23,6 +52,8 @@
     "INDUSTRY": {
       "carried_dead_date": 48,
       "carried_dead_date_rate": 0.8,
+      "carriers_month_precision": 1,
+      "carriers_under_a_year": 1,
       "carrying_days_since_expiry_min": 113,
       "carrying_days_since_expiry_p50": 720.0,
       "carrying_never_revised": 4,
@@ -39,6 +70,12 @@
       "established_p50": 88.0,
       "established_p90": 650.3,
       "lapse_to_estimate_rate": 0.2619047619047619,
+      "max_stretch_trial": {
+        "n_date_changes": 1,
+        "n_stretches": 25,
+        "n_versions": 37,
+        "nct": "NCT04062448"
+      },
       "median_date_changes": 2.0,
       "median_versions": 9.0,
       "n": 60,
@@ -66,10 +103,20 @@
       "revisions_prospective": 60,
       "silent_carrier_days_min": 387,
       "silent_carrier_days_p50": 1101.5,
+      "silent_carrier_versions": [
+        1,
+        2,
+        2,
+        4
+      ],
       "silent_carriers_under_a_year": 0,
       "submit_intervals_bunching_ratio": 0.8834803057025278,
+      "submit_intervals_control_bunching_ratio": 1.7669606114050556,
+      "submit_intervals_control_even_spread_baseline": 0.15271493212669685,
       "submit_intervals_even_spread_baseline": 0.15271493212669685,
       "submit_intervals_n": 126,
+      "submit_intervals_near_control_multiple": 34,
+      "submit_intervals_near_control_rate": 0.2698412698412698,
       "submit_intervals_near_year_multiple": 17,
       "submit_intervals_near_year_rate": 0.1349206349206349,
       "submit_intervals_p50": 289.0,
@@ -85,6 +132,8 @@
     "NIH": {
       "carried_dead_date": 48,
       "carried_dead_date_rate": 0.8,
+      "carriers_month_precision": 0,
+      "carriers_under_a_year": 0,
       "carrying_days_since_expiry_min": null,
       "carrying_days_since_expiry_p50": null,
       "carrying_never_revised": 0,
@@ -101,6 +150,12 @@
       "established_p50": 173.0,
       "established_p90": 1525.8000000000002,
       "lapse_to_estimate_rate": 0.20441988950276244,
+      "max_stretch_trial": {
+        "n_date_changes": 2,
+        "n_stretches": 91,
+        "n_versions": 97,
+        "nct": "NCT02931474"
+      },
       "median_date_changes": 3.0,
       "median_versions": 106.5,
       "n": 60,
@@ -128,10 +183,15 @@
       "revisions_prospective": 124,
       "silent_carrier_days_min": null,
       "silent_carrier_days_p50": null,
+      "silent_carrier_versions": [],
       "silent_carriers_under_a_year": 0,
       "submit_intervals_bunching_ratio": 1.512584407612032,
+      "submit_intervals_control_bunching_ratio": 1.4693677102516882,
+      "submit_intervals_control_even_spread_baseline": 0.1278409090909091,
       "submit_intervals_even_spread_baseline": 0.1278409090909091,
       "submit_intervals_n": 181,
+      "submit_intervals_near_control_multiple": 34,
+      "submit_intervals_near_control_rate": 0.1878453038674033,
       "submit_intervals_near_year_multiple": 35,
       "submit_intervals_near_year_rate": 0.19337016574585636,
       "submit_intervals_p50": 287.0,
@@ -147,6 +207,8 @@
     "OTHER": {
       "carried_dead_date": 37,
       "carried_dead_date_rate": 0.6166666666666667,
+      "carriers_month_precision": 5,
+      "carriers_under_a_year": 3,
       "carrying_days_since_expiry_min": 2,
       "carrying_days_since_expiry_p50": 1178.0,
       "carrying_never_revised": 15,
@@ -163,6 +225,12 @@
       "established_p50": 235.0,
       "established_p90": 1164.7000000000005,
       "lapse_to_estimate_rate": 0.38461538461538464,
+      "max_stretch_trial": {
+        "n_date_changes": 3,
+        "n_stretches": 9,
+        "n_versions": 17,
+        "nct": "NCT04726410"
+      },
       "median_date_changes": 1.0,
       "median_versions": 4.0,
       "n": 60,
@@ -190,10 +258,31 @@
       "revisions_prospective": 42,
       "silent_carrier_days_min": 203,
       "silent_carrier_days_p50": 1178.0,
+      "silent_carrier_versions": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        10
+      ],
       "silent_carriers_under_a_year": 2,
       "submit_intervals_bunching_ratio": 1.8285714285714285,
+      "submit_intervals_control_bunching_ratio": 2.234920634920635,
+      "submit_intervals_control_even_spread_baseline": 0.10817307692307693,
       "submit_intervals_even_spread_baseline": 0.10817307692307693,
       "submit_intervals_n": 91,
+      "submit_intervals_near_control_multiple": 22,
+      "submit_intervals_near_control_rate": 0.24175824175824176,
       "submit_intervals_near_year_multiple": 18,
       "submit_intervals_near_year_rate": 0.1978021978021978,
       "submit_intervals_p50": 372.0,
@@ -209,6 +298,8 @@
     "OTHER_GOV": {
       "carried_dead_date": 32,
       "carried_dead_date_rate": 0.5333333333333333,
+      "carriers_month_precision": 13,
+      "carriers_under_a_year": 2,
       "carrying_days_since_expiry_min": 51,
       "carrying_days_since_expiry_p50": 2028.0,
       "carrying_never_revised": 18,
@@ -225,6 +316,12 @@
       "established_p50": 256.5,
       "established_p90": 931.5000000000002,
       "lapse_to_estimate_rate": 0.375,
+      "max_stretch_trial": {
+        "n_date_changes": 4,
+        "n_stretches": 5,
+        "n_versions": 10,
+        "nct": "NCT04214626"
+      },
       "median_date_changes": 0.0,
       "median_versions": 2.0,
       "n": 60,
@@ -252,10 +349,36 @@
       "revisions_prospective": 16,
       "silent_carrier_days_min": 233,
       "silent_carrier_days_p50": 2288.5,
+      "silent_carrier_versions": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        4,
+        4
+      ],
       "silent_carriers_under_a_year": 1,
       "submit_intervals_bunching_ratio": 2.128086419753086,
+      "submit_intervals_control_bunching_ratio": 2.128086419753086,
+      "submit_intervals_control_even_spread_baseline": 0.09789702683103699,
       "submit_intervals_even_spread_baseline": 0.09789702683103699,
       "submit_intervals_n": 48,
+      "submit_intervals_near_control_multiple": 10,
+      "submit_intervals_near_control_rate": 0.20833333333333334,
       "submit_intervals_near_year_multiple": 10,
       "submit_intervals_near_year_rate": 0.20833333333333334,
       "submit_intervals_p50": 529.0,

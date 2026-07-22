@@ -228,6 +228,25 @@ def test_an_actual_completion_date_is_not_a_lapsed_commitment():
         "only the expired ESTIMATE counts: a past ACTUAL is a completed trial "
         "recording when it completed, and a future estimate has not expired")
 
+    # And what a MISSING type does, which the original assertion never pinned.
+    # `(row.get("last_pcd_type") or "").upper() != "ACTUAL"` is true for a row
+    # with no type at all, so an unmeasured type counts as carrying, in the
+    # flattering direction and in the same shape as the defect above. Every row
+    # in the live store carries a type, so this pins behaviour rather than
+    # recording a live error.
+    missing = cohort.stats(
+        [{**base, "nct": "D", "last_pcd": "2020-01-01"}], "INDUSTRY", as_of)
+    assert missing["carrying_now"] == 1, (
+        "a row with no recorded type counts as carrying. That is the current "
+        "behaviour and it is the flattering direction; `freeze()` refuses rows "
+        "that predate the field, which is what keeps it out of a published "
+        "figure.")
+    live = [r for r in cohort.load_results() if "error" not in r]
+    if live:
+        assert all("last_pcd_type" in r for r in live), (
+            "a stored row has no completion-date type, so it would be counted "
+            "as carrying an expired estimate without ever having been measured")
+
 
 def test_freeze_refuses_an_incomplete_measurement(monkeypatch):
     """A trial that failed to measure must block the freeze. A snapshot that

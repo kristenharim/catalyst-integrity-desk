@@ -1,49 +1,50 @@
-"""Every figure in the claim documents traces to the frozen snapshot.
+"""The claim documents are generated, and this is what enforces that.
 
-This is the console's number-provenance test pointed at markdown. Prose was the
-last unguarded surface in the project, and five rounds of adversarial review
-found the measured figures clean every time and the retyped ones wrong
-repeatedly.
+The previous version of this file was a presence check: every numeric token in a
+table row or a bolded claim had to be a representation of some snapshot field or
+appear in an enumerated `NON_SNAPSHOT` list. It caught what it was built for and
+it had two structural holes that were measured rather than argued. Presence
+cannot falsify a small integer. And an exception list is a laundering route,
+which is how two real snapshot fields ended up unfalsifiable inside it.
 
-The first version of this guard was mutation-tested against three cases it
-happened to catch, declared working, and then failed 19 of 19 planted defects
-written by the reviewers, including the 106.5-printed-as-106 error named in its
-own docstring. That is why the corpus in `tests/mutation_corpus.py` comes from
-the seats rather than from the author, why the checks below run against text so
-the corpus can exercise them, and why `test_the_corpus_is_caught` is the test
-that matters here.
+Both are gone, because the documents are no longer typed. `research/render_writeup.py`
+emits every figure from a named field, and the checks below are what make that a
+guarantee rather than a habit:
 
-What is enforced, stated at the strength it actually holds:
+  - **no digits in prose, over the whole generator.** Not table rows, not bolded
+    lines: every string constant in the module, and every numeric literal in it
+    too. A figure cannot be typed into prose because prose cannot contain a
+    digit, so there is no line for the guard to miss.
+  - **the committed documents are byte-identical to a fresh render.** A figure
+    cannot drift from the field it renders, because nothing copies it.
+  - **no cohort figure survives outside a generated block** in the four
+    documents that are only partly generated.
+  - **the corpus still passes**, and it now attacks the generator, since that is
+    the only place a figure defect can still live.
 
-  - every numeric token in a table row traces to a snapshot field or to an
-    enumerated exception
-  - every `N of M` anywhere in the file, wrapped or not, traces the same way
-  - every line of a paragraph containing a bolded claim is scanned, not just the
-    line the asterisks fall on
-  - a value is accepted only in a representation that does not lose information:
-    a half-integer must print as a half-integer, so 106.5 is never "106"
-  - the headline table binds cell by cell to named fields
-  - every snapshot id named anywhere equals the current one
-  - retired phrases stay retired
-
-What is NOT enforced, because it was measured rather than assumed: a figure that
-is correct, present in the snapshot, and attached to the wrong label outside the
-headline table. See `docs/LIMITS.md`.
+What is NOT enforced, stated at the strength it holds: a cell bound to the wrong
+field. `figures()` could render `open_estimates` where the column says
+`carrying_now` and every check here would pass forever. That is what the
+generator-side fixtures in `tests/mutation_corpus.py` exist for, and they are a
+sample rather than a proof. See `docs/LIMITS.md`.
 """
-import json
+import ast
 import os
 import re
 import sys
+import types
+from datetime import date as _date
 
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.dirname(__file__))
 
-from research import cohort
+from research import cohort, render_writeup
 from mutation_corpus import CORPUS
 
 REPO = os.path.join(os.path.dirname(__file__), "..")
+GENERATOR = "research/render_writeup.py"
 
 CLAIM_DOCS = ["README.md", "docs/WRITEUP.md", "docs/SUBMISSION.md",
               "docs/COHORT.md", "docs/STATUS.md"]
@@ -55,375 +56,576 @@ RETIRED = {
     "overwhelmingly": "unsupported on every measured reading; use the counts",
 }
 
-# Numbers that are not cohort measurements. Each carries its source. Nothing that
-# IS a snapshot field belongs here: listing one turns the exception list into a
-# laundering route, which is how `48` and `188` got in.
-NON_SNAPSHOT = {
-    "2016": "frame start", "2023": "frame end", "20260722": "draw seed",
-    "3000": "enumeration cap", "2026": "as-of year",
-    "11.64": "42 CFR 11.64", 
-    "677": "NCT04248439 carried-expired days, pinned by tests/test_backtest.py",
-    "2022": "its expiry year", "2024": "its correction year",
-    "85": "677 percentile over stretches, store-derived",
-    "67": "677 percentile over trials, store-derived",
-    "159": "stretches at or below 677, store-derived",
-    "84.6": "159/188 as a percentage",
-    "97": "NCT02931474 versions, store-derived",
-    "169": "correction 1", "131": "correction 1", "179": "correction 1",
-    "123": "correction 1", "1,430": "correction 2",
-    "52.4": "correction 8, retracted", "82.7": "correction 8, retracted",
-    "83.3": "correction 7, retracted", "96.7": "correction 7, retracted",
-    "3.5": "contingency overstatement, convenience sample",
-    "6.7": "contingency rate, convenience sample",
-    "58": "correction 5, NIH before recovery",
-    "1,008": "promise audit, tests/test_promise.py", "422": "promise audit",
-    "943": "promise audit", "12.2": "Shadbolt et al. median delay",
-    "166": "suite size", "167": "suite size with credentials",
-    "8050": "default port", "5000": "the port it moved off",
-    "1,769": "observed interval range, store-derived",
-    "15.4": "even-spread baseline, industry",
-    "12.9": "even-spread baseline, NIH", "10.9": "even-spread baseline, OTHER",
-    "9.9": "even-spread baseline, OTHER_GOV",
-    "45": "the anniversary window, half-width in days",
-    "1,800": "longest observed intervals, store-derived",
-    "1.7": "1/60, the trial-level resolution", "5.2": "MB, the initial push payload",
-    "99.9": "a mutation value, quoted", "9999": "a planted literal, quoted",
-    "106": "quoted as the wrong rendering of 106.5, in the sentence forbidding it",
+# EVERY numeric literal in the generator has to be declared here with what it is
+# for. The first version allowed anything under 100, and a reviewer showed that
+# `4 * 31` and a bare `60` both published invented figures through it. An
+# allow-by-magnitude rule is an exception list with no author; this one at least
+# has to be argued for, entry by entry.
+ALLOWED_LITERALS = {
+    0: "index and identity",
+    1: "index, offset and identity",
+    2: "slice width for a two-character list marker",
+    3: "index",
+    4: "the year field of an ISO date, as a slice bound",
+    92: "wrap width, a layout constant",
+    100: "percent conversion",
+    0.5: "the median, as a percentile argument",
+    365.25: "days per Julian year",
 }
 
+# Digit-bearing tokens that are names rather than figures. Declared HERE and not
+# in the generator: the first version read this list out of the module being
+# checked, so the checked artifact defined its own exemption and a reviewer
+# added a figure to it and published the figure.
+LABELS = ("p10", "p50", "p90", "python3")
+
+# Documents that carry cohort claims. Wider than the five generated ones,
+# because `docs/LIMITS.md` was carrying a full prevalence table and a hand-typed
+# ratio while sitting outside every guard, which is where the one uncorrected
+# copy of a wrong sentence was found.
+SCANNED_DOCS = ["README.md", "docs/WRITEUP.md", "docs/SUBMISSION.md",
+                "docs/COHORT.md", "docs/STATUS.md", "docs/LIMITS.md",
+                "docs/DEMO.md", "docs/BACKTEST.md", "docs/CONJECTURE.md",
+                "docs/PRINCIPLE.md", "docs/PARKING.md", "docs/SPEC.md",
+                "docs/FINDINGS.md", "docs/WORKSPACE.md"]
+# Not scanned, each for a stated reason rather than by omission:
+#   docs/BOB_LOG.md   a dated log; its own rule is that a log is not corrected
+#                     by rewriting it, so it holds figures that were right when
+#                     written and are superseded now
+#   BUNDLE.md         a build artifact produced by make_bundle.py
+
+_BLOCK = re.compile(r"<!-- generated: [a-z_]+ -->\n.*?\n<!-- /generated -->", re.S)
+# ISO dates and URLs only. Code spans and link text used to be blanked too, and
+# a reviewer retyped two live cohort figures in backticks and in link text and
+# watched the scan pass on both.
+_CODE = re.compile(r"https?://\S+|\d{4}-\d{2}(?:-\d{2})?")
+_MARKER = re.compile(r"<!--\s*/?\s*generated")
 _NUM = re.compile(r"\d[\d,]*(?:\.\d+)?%?")
-_CODE = re.compile(r"`[^`]*`|\[[^\]]*\]\([^)]*\)|https?://\S+"
-                   r"|\d{4}-\d{2}(?:-\d{2})?")   # ISO dates are not figures
-_STAT = re.compile(r"^\d[\d,]*(?:\.\d+)?%$|^\d[\d,]*\.\d+$|^\d{3,}$|^\d[\d,]{2,}$")
-_N_OF_M = re.compile(r"(\d[\d,]*) of (\d[\d,]*)\b")
-_SNAP_ID = re.compile(r"cohort-[0-9a-f]{12}")
-
-# Sentence-level binding. Presence cannot falsify a small integer, so the claims
-# the headline rests on are bound to the fields they render, by name. This is the
-# "per-element binding" upgrade `docs/LIMITS.md` has named as the fix for the
-# console's provenance test since before this guard existed.
-def _bound_claims(S):
-    def inv(c):
-        return [S[c]["carrying_now_invisible_to_stretches"], S[c]["carrying_now"]]
-    return [
-        ("docs/WRITEUP.md",
-         r"(\d+) of\s+(\d+) in industry, (\d+) of (\d+) in OTHER, (\d+) of (\d+) in\s+OTHER_GOV",
-         inv("INDUSTRY") + inv("OTHER") + inv("OTHER_GOV"),
-         "silent carriers per stratum"),
-        ("README.md",
-         r"(\d+) of (\d+) in industry,\s+(\d+) of (\d+) for government sponsors",
-         inv("INDUSTRY") + inv("OTHER_GOV"),
-         "silent carriers, industry and government"),
-        ("docs/STATUS.md",
-         r"(\d+) of (\d+) in industry,\s+(\d+) of (\d+) for government sponsors",
-         inv("INDUSTRY") + inv("OTHER_GOV"),
-         "silent carriers, industry and government"),
-        ("docs/COHORT.md",
-         r"(\d+) of (\d+) in industry,\s+(\d+) of (\d+) for government sponsors",
-         inv("INDUSTRY") + inv("OTHER_GOV"),
-         "silent carriers, industry and government"),
-        ("docs/SUBMISSION.md",
-         r"(\d+) of (\d+) in industry,\s+(\d+) of (\d+) for government sponsors",
-         inv("INDUSTRY") + inv("OTHER_GOV"),
-         "silent carriers, industry and government"),
-        ("docs/WRITEUP.md",
-         r"median is ([\d,.]+) days in industry, ([\d,.]+) in OTHER\s+and ([\d,.]+) in\s+OTHER_GOV",
-         [S["INDUSTRY"]["silent_carrier_days_p50"], S["OTHER"]["silent_carrier_days_p50"],
-          S["OTHER_GOV"]["silent_carrier_days_p50"]],
-         "silent-carrier medians, in stratum order"),
-        ("docs/WRITEUP.md",
-         r"has stood 720 days in\s+industry, ([\d,]+) in OTHER and ([\d,]+) in OTHER_GOV",
-         [S["OTHER"]["carrying_days_since_expiry_p50"],
-          S["OTHER_GOV"]["carrying_days_since_expiry_p50"]],
-         "carrying-population medians in the innocence split"),
-        ("docs/WRITEUP.md",
-         r"the shortest anywhere is ([\d,]+) days",
-         [min(v["silent_carrier_days_min"] for v in S.values()
-              if v.get("silent_carrier_days_min") is not None)],
-         "minimum silent carry"),
-        ("docs/WRITEUP.md",
-         r"\*\*(\d+) of (\d+) \(([\d.]+)%\)",
-         [S["INDUSTRY"]["submit_intervals_near_year_multiple"],
-          S["INDUSTRY"]["submit_intervals_n"],
-          round(S["INDUSTRY"]["submit_intervals_near_year_rate"] * 100, 1)],
-         "industry near-anniversary intervals"),
-    ]
+_N_OF_M = re.compile(r"\d[\d,]* of \d[\d,]*\b")
 
 
-def _representations(v) -> set:
-    """Representations that do not lose information.
+# ---------------------------------------------------------------------------
+# The checks, as one callable so the corpus exercises exactly what CI runs
+# ---------------------------------------------------------------------------
 
-    `{:.0f}` is admitted only when the value is an integer or is not a
-    half-integer. It used to be unconditional, which made "106" an accepted
-    rendering of 106.5 and let the guard miss the first defect its own docstring
-    names. A half-integer rounds by banker's rounding, so 239.5 goes up to 240
-    and 106.5 goes down to 106 in the same format string: both directions have
-    shipped, so neither is accepted.
+def _digit_strings(source: str, exempt: set, labels: tuple) -> list:
+    """Every string constant in the module that contains a digit.
+
+    Three things are skipped and each has to earn it. A format specification,
+    `{v:.1f}`, is a rendering instruction that can only ever print what it is
+    handed. A docstring is never rendered into a document. And a `CITATIONS`
+    value is a verbatim quotation of an external source, which is the one place
+    a digit is allowed to be typed and is separately checked for laundering.
     """
-    out = set()
-    if isinstance(v, bool) or not isinstance(v, (int, float)):
-        return out
-    out.add(str(v))
-    if v < 0:                            # "-14.5" tokenizes as "14.5"
-        out |= _representations(-v)
-    if float(v) == int(v):
-        out.update({str(int(v)), f"{int(v):,}", f"{v:.0f}", f"{v:.1f}"})
-    else:
-        out.update({f"{v:.1f}", f"{v:.2f}", f"{float(v):g}"})
-        if abs(v) >= 1000:
-            out.add(f"{v:,.1f}")
-        if abs(v - int(v)) != 0.5:
-            out.update({f"{v:.0f}", f"{float(f'{v:.0f}'):,.0f}"})
-    if 0 <= v <= 1:
-        out.update({f"{v:.1%}", f"{v:.2%}"})
-        if abs(v * 100 - int(v * 100)) < 1e-9:
-            out.add(f"{v:.0%}")
+    tree = ast.parse(source)
+    skip = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FormattedValue) and node.format_spec is not None:
+            for c in ast.walk(node.format_spec):
+                if isinstance(c, ast.Constant):
+                    skip.add(id(c))
+        if isinstance(node, (ast.Module, ast.FunctionDef, ast.ClassDef)):
+            body = getattr(node, "body", [])
+            if (body and isinstance(body[0], ast.Expr)
+                    and isinstance(body[0].value, ast.Constant)
+                    and isinstance(body[0].value.value, str)):
+                skip.add(id(body[0].value))
+    out = []
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Constant) and isinstance(node.value, str)
+                and id(node) not in skip and node.value not in exempt):
+            rest = node.value
+            for label in labels:
+                rest = rest.replace(label, "")
+            if any(c.isdigit() for c in rest):
+                out.append((node.lineno, node.value))
     return out
 
 
-def _acceptable() -> set:
-    snap = cohort.load_snapshot()
-    if snap is None:
-        return set()
-    ok = set()
-
-    def walk(node):
-        if isinstance(node, dict):
-            for x in node.values():
-                walk(x)
-        elif isinstance(node, list):
-            for x in node:
-                walk(x)
-        else:
-            ok.update(_representations(node))
-
-    walk(snap)
-    console = os.path.join(REPO, "data", "snapshot.json")
-    if os.path.exists(console):
-        with open(console) as f:
-            walk(json.load(f))
-    S = snap["strata"]
-    for x in S.values():
-        for y in S.values():
-            if x.get("trial_days_p50") and y.get("trial_days_p50"):
-                ok.add(f"{y['trial_days_p50'] / x['trial_days_p50']:.1f}")
-            if x.get("dead_days_p50") and y.get("dead_days_p50"):
-                ok.add(f"{y['dead_days_p50'] / x['dead_days_p50']:.1f}")
-    for v in S.values():
-        for k in ("carrying_now", "carrying_now_invisible_to_stretches",
-                  "trials_with_lapse_to_estimate", "never_revised_and_carrying"):
-            for d in ("carrying_now", "open_estimates", "trials_revising",
-                      "never_revised", "n"):
-                if v.get(d):
-                    ok.update(_representations(v.get(k, 0) / v[d]))
-        for k in ("silent_carrier_days_p50", "carrying_days_since_expiry_p50"):
-            if v.get(k):
-                ok.add(f"{v[k] / 365.25:.1f}")
-    ok |= set(NON_SNAPSHOT)
-    return ok
+def _numeric_literals(source: str) -> list:
+    out = []
+    for node in ast.walk(ast.parse(source)):
+        if (isinstance(node, ast.Constant)
+                and isinstance(node.value, (int, float))
+                and not isinstance(node.value, bool)
+                and node.value not in ALLOWED_LITERALS):
+            out.append((node.lineno, node.value))
+    return out
 
 
-def _scanned(text: str):
-    """(lineno, line, strict) over the surfaces that carry claims.
+def _cohort_figures() -> set:
+    """Renderings of the measured per-stratum fields, and of n.
 
-    A paragraph containing a bolded claim is scanned in full, not only the line
-    the asterisks land on: markdown wraps, and README's medians sat on a
-    continuation line outside the guard entirely.
+    `anchor_case` is deliberately excluded. Its figures are the product's own
+    headline, they appear in demo notes, console tests and verification logs all
+    over this repo, and they are pinned independently and more strongly by
+    `tests/test_backtest.py`, which re-derives them from the raw versions. A
+    residual text scan would add nothing there and would fire on a dozen lines
+    that are not claims about the cohort.
     """
-    lines = text.splitlines()
-    paragraphs, start = [], 0
-    for i, line in enumerate(lines):
-        if not line.strip():
-            if i > start:
-                paragraphs.append((start, i))
-            start = i + 1
-    if start < len(lines):
-        paragraphs.append((start, len(lines)))
+    snap = cohort.load_snapshot()
+    out = set()
 
-    bolded = set()
-    for a, b in paragraphs:
-        if any("**" in lines[j] for j in range(a, b)):
-            bolded.update(range(a, b))
+    def add(v):
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            return
+        for r in (str(v), f"{v:,}", f"{v:.1f}", f"{v * 100:.1f}%"):
+            # Only renderings distinctive enough to be a claim. A bare one- or
+            # two-digit token is too common in prose to guard on, and the counts
+            # that shape is used for are caught by the N-of-M rule instead.
+            if r.endswith("%") or "," in r or sum(c.isdigit() for c in r) >= 3:
+                out.add(r)
 
-    for i, line in enumerate(lines):
-        s = line.strip()
-        if s.startswith("|") and set(s) - set("|-: "):
-            yield i + 1, line, True
-        elif i in bolded and _NUM.search(line):
-            yield i + 1, line, False
+    for v in snap["strata"].values():
+        for x in v.values():
+            if isinstance(x, list):
+                continue                      # a distribution, not a published figure
+            add(x)
+    add(snap["n_distinct_trials"])
+    return out
 
 
-def _violations(doc: str, text: str, ok: set, snapshot_id: str) -> list:
-    """Every guard finding for one document's text.
+def _module(source: str):
+    """The generator as the given source defines it.
 
-    Callable on mutated text, so the corpus exercises exactly the code the real
-    files run through rather than a reconstruction of it.
+    A generator-level fixture has to be rendered through, not merely parsed: the
+    defects that can still ship are wrong fields and lossy formatters, and both
+    are invisible until something renders.
+    """
+    if source == _source():
+        return render_writeup
+    mod = types.ModuleType("render_writeup_mutant")
+    mod.__file__ = os.path.join(REPO, GENERATOR)
+    exec(compile(source, mod.__file__, "exec"), mod.__dict__)
+    return mod
+
+
+def _pctile(xs, p):
+    """Reimplemented rather than imported, so this is a second opinion."""
+    if not xs:
+        return None
+    v = sorted(xs)
+    k = (len(v) - 1) * p
+    lo = int(k)
+    hi = min(lo + 1, len(v) - 1)
+    return v[lo] + (v[hi] - v[lo]) * (k - lo)
+
+
+def _num(v):
+    if v is None:
+        return "n/a"
+    return f"{int(v):,}" if float(v) == int(v) else f"{v:,}"
+
+
+def _expected_rows() -> dict:
+    """Every table row's numeric tokens, recomputed from the store.
+
+    This is the check the corpus needed and did not have. A generator-level
+    defect -- a cell bound to the wrong field, a ratio computed the wrong way
+    round -- survives the byte comparison the moment anyone re-renders, which is
+    the first thing anyone does. Nothing caught it. So the expected tokens are
+    computed here from `data/cohort/results.jsonl` by a second implementation
+    that calls neither `stats()` nor the generator, and compared against the
+    rendered rows.
+
+    It is double entry, not proof: it covers the tables, and a sentence outside
+    one is still only covered by the corpus.
+    """
+    rows = [r for r in cohort.load_results() if "error" not in r]
+    snap = cohort.load_snapshot()
+    as_of = _date.fromisoformat(snap["as_of"])
+    near = snap["clustering"]["window_half_width_days"]
+    anniv = snap["clustering"]["anniversary_centres_days"]
+    ctrl = snap["clustering"]["control_centres_days"]
+    out = {}
+    per = {}
+
+    for c in ("INDUSTRY", "NIH", "OTHER_GOV", "OTHER"):
+        sub = [r for r in rows if r["sponsor_class"] == c]
+        n = len(sub)
+
+        def parse(d):
+            if not d:
+                return None
+            bits = [int(x) for x in d.split("-")]
+            while len(bits) < 3:
+                bits.append(1)
+            return _date(*bits)
+
+        def carrying(r):
+            p = parse(r.get("last_pcd"))
+            return bool(p and p < as_of
+                        and (r.get("last_pcd_type") or "").upper() != "ACTUAL")
+
+        carr = [r for r in sub if carrying(r)]
+        silent = [r for r in carr if not r["dead_date_stretches"]]
+        openest = [r for r in sub if r.get("last_pcd")
+                   and (r.get("last_pcd_type") or "").upper() != "ACTUAL"]
+        versions = _pctile([r.get("n_versions") or 0 for r in sub], .5)
+        changes = _pctile([r.get("n_date_changes") or 0 for r in sub], .5)
+        per_trial = [max(r["dead_date_days"]) for r in sub if r["dead_date_days"]]
+        stretches = [d for r in sub for d in r["dead_date_days"]]
+        ever = [r for r in sub if r["dead_date_stretches"] > 0]
+        dated = sum(r.get("revisions_prospective", 0)
+                    + r.get("revisions_after_lapse", 0) for r in sub)
+        lapse = sum(r.get("revisions_after_lapse", 0) for r in sub)
+        actual = sum(r.get("revisions_after_lapse_to_actual", 0) for r in sub)
+        est = sum(r.get("revisions_after_lapse_to_estimate", 0) for r in sub)
+        trans = sum(r.get("n_transitions", 0) for r in sub)
+        cont = sum(r.get("contingent_revisions", 0) for r in sub)
+        ref = sum(r.get("refused_revisions", 0) for r in sub)
+        scope = sum(r.get("refused_scope", 0) for r in sub)
+        sup = sum(r.get("refused_superseded", 0) for r in sub)
+        unread = sum(r.get("refused_unreadable", 0) for r in sub)
+        iv = [d for r in sub for d in (r.get("submit_intervals") or [])]
+        hit = lambda cs: sum(1 for d in iv
+                             if any(abs(d - y) <= near for y in cs))
+        lo, hi = min(iv), max(iv)
+        base = sum(max(0, min(hi, y + near) - max(lo, y - near))
+                   for y in anniv) / (hi - lo)
+        revising = [r for r in sub if (r.get("revisions_prospective", 0)
+                                       + r.get("revisions_after_lapse", 0)) > 0]
+        t_est = [r for r in revising
+                 if r.get("revisions_after_lapse_to_estimate", 0)]
+        sil_days = sorted((as_of - parse(r["last_pcd"])).days for r in silent)
+        per[c] = {"trial_p50": _pctile(per_trial, .5),
+                  "stretch_p50": _pctile(stretches, .5),
+                  "est": est, "dated": dated, "carr": len(carr),
+                  "silent": len(silent), "rev": len(revising),
+                  "t_est": len(t_est), "n": n,
+                  "sil_p50": _pctile(sil_days, .5)}
+
+        out.setdefault("headline", {})[c] = [
+            _num(len(carr)), _num(n), f"{len(carr) / n * 100:.1f}%",
+            _num(len(carr)), _num(len(openest)),
+            f"{len(carr) / len(openest) * 100:.1f}%",
+            _num(len(silent)), _num(len(carr)), _num(versions), _num(changes)]
+        out.setdefault("reversal", {})[c] = [
+            f"{len(ever) / n * 100:.1f}%", f"{len(carr) / n * 100:.1f}%",
+            _num(versions)]
+        out.setdefault("mechanism", {})[c] = [
+            _num(dated), _num(lapse), _num(actual), _num(est),
+            f"{est / dated * 100:.1f}%"]
+        out.setdefault("trial_duration", {})[c] = [
+            _num(len(per_trial)), _num(_pctile(per_trial, .5)),
+            _num(round(_pctile(per_trial, .9), 1)), _num(max(per_trial))]
+        out.setdefault("stretch_duration", {})[c] = [
+            _num(len(stretches)), _num(_pctile(stretches, .5)),
+            _num(round(_pctile(stretches, .9), 1)), _num(max(stretches)),
+            f"{len(ever) / n * 100:.1f}%"]
+        out.setdefault("comparability", {})[c] = [
+            _num(trans), f"{cont / trans * 100:.1f}%", f"{ref / trans * 100:.1f}%",
+            f"{scope / trans * 100:.1f}%", f"{sup / trans * 100:.1f}%",
+            f"{unread / trans * 100:.1f}%"]
+        out.setdefault("clustering", {})[c] = [
+            _num(len(iv)), _num(_pctile(iv, .5)),
+            _num(hit(anniv)), _num(len(iv)), f"{hit(anniv) / len(iv) * 100:.1f}%",
+            _num(hit(ctrl)), _num(len(iv)), f"{hit(ctrl) / len(iv) * 100:.1f}%",
+            f"{base * 100:.1f}%",
+            f"{hit(anniv) / len(iv) / base:.2f}", f"{hit(ctrl) / len(iv) / base:.2f}"]
+
+    # Sentences whose figure is a relation between strata, which is where a
+    # direction can invert without any single cell being wrong.
+    i = per["INDUSTRY"]
+    out["sentences"] = [
+        ("NIH against industry at the median",
+         f"**{per['NIH']['trial_p50'] / i['trial_p50']:.1f}x**"),
+        ("the per-stretch sensitivity ratio",
+         f"**{per['NIH']['stretch_p50'] / i['stretch_p50']:.1f}x**"),
+        # The shared blocks carry figures that are in no table, which is where a
+        # reviewer put a wrong-field binding and watched it publish.
+        ("industry estimate-to-estimate counts",
+         f"({i['est']} of {i['dated']})"),
+        ("industry trial-level mechanism",
+         f"{i['t_est']} of {i['rev']} ({i['t_est'] / i['rev'] * 100:.1f}%)"),
+        ("industry point prevalence",
+         f"{i['carr'] / i['n'] * 100:.1f}% of all trials"),
+        ("silent carriers, industry",
+         f"{i['silent']} of {i['carr']} in INDUSTRY"),
+        ("silent-carrier median, industry",
+         f"{_num(i['sil_p50'])} days in INDUSTRY"),
+    ]
+    return out
+
+
+def _rendered_rows(text: str, cls: str) -> list:
+    return [line for line in text.splitlines()
+            if line.strip().startswith(f"| {cls} |")]
+
+
+def check(docs: dict, source: str) -> list:
+    """Every finding, over document texts and generator source passed in.
+
+    Callable on mutated inputs, so a fixture exercises the code CI runs rather
+    than a reconstruction of it. The first version of the old corpus compared
+    against zero instead of against the document's own baseline and every
+    fixture "passed" on a pre-existing unrelated defect.
     """
     out = []
-    clean = _CODE.sub(" ", text)
+    mod = _module(source)
+    citations = {v for entry in mod.CITATIONS.values() for v in entry.values()}
 
-    for lineno, line, strict in _scanned(clean):
-        for tok in _NUM.findall(line):
-            if not strict and not _STAT.match(tok):
-                continue
-            t = tok.rstrip("%")
-            if tok in ok or t in ok or t.replace(",", "") in ok:
-                continue
-            out.append(f"{doc}:{lineno}: untraceable {tok!r} in {line.strip()[:80]}")
+    for lineno, s in _digit_strings(source, citations, LABELS):
+        out.append(f"{GENERATOR}:{lineno}: digit in a string constant {s[:60]!r}. "
+                   f"Prose carries no numerals; emit it from a field.")
+    for lineno, v in _numeric_literals(source):
+        out.append(f"{GENERATOR}:{lineno}: undeclared numeric literal {v!r}. A "
+                   f"figure has to be a snapshot field, not a constant.")
 
-    # `N of M` is the shape every headline claim in this project takes, so it is
-    # scanned over the whole file rather than only over claim lines.
-    for i, raw in enumerate(clean.splitlines(), start=1):
-        for a, b in _N_OF_M.findall(raw):
-            for tok in (a, b):
-                if tok in ok or tok.replace(",", "") in ok:
-                    continue
-                out.append(f"{doc}:{i}: untraceable {tok!r} in 'N of M' "
-                           f"{raw.strip()[:80]}")
+    # A citation is a verbatim external quotation. Cohort figures are rates and
+    # thousands-separated counts, so those shapes are refused outright rather
+    # than only when they happen to match a current field: an INVENTED rate
+    # matches nothing and used to pass.
+    for key, entry in mod.CITATIONS.items():
+        if not entry.get("cite"):
+            out.append(f"{GENERATOR}: citation {key} carries no source")
+        for field, text in entry.items():
+            if "%" in text or re.search(r"\d,\d{3}", text):
+                out.append(f"{GENERATOR}: citation {key}.{field} carries a rate or "
+                           f"a thousands-separated count, which is the shape of a "
+                           f"figure from this study and not of a quotation.")
 
-    # Snapshot ids live in code spans, so they are scanned in the raw text.
-    for sid in set(_SNAP_ID.findall(text)):
-        if sid != snapshot_id:
-            out.append(f"{doc}: names superseded snapshot {sid!r}, current is "
-                       f"{snapshot_id!r}")
+    # The write-up quotes source code verbatim. That source is not scanned by
+    # anything else, and a figure added to a docstring in `research/cohort.py`
+    # published straight through it.
+    f = mod.figures(cohort.load_snapshot())
+    for key in ("silent_source", "carrying_source"):
+        if any(ch.isdigit() for ch in f[key]):
+            out.append(f"{GENERATOR}: the quoted source {key} contains a digit. "
+                       f"Code this document quotes has to be digit-free too.")
 
-    snap = cohort.load_snapshot()
-    if snap:
-        S = snap["strata"]
-        # Cell-by-cell binding of the headline table, run here so the corpus
-        # exercises it rather than only the real files.
-        if doc == "docs/WRITEUP.md":
-            for cls, v in S.items():
-                row = _headline_row(text, cls)
-                if row is None:
-                    out.append(f"{doc}: the headline table has no {cls} row")
-                    continue
-                nums = [_NUM.findall(c) for c in
-                        row.strip().strip("|").split("|")]
-                want = [
-                    [f"{v['carrying_now']}", f"{v['n']}",
-                     f"{v['carrying_now_rate']:.1%}"],
-                    [f"{v['carrying_now']}", f"{v['open_estimates']}",
-                     f"{v['carrying_now_of_open_rate']:.1%}"],
-                    [f"{v['carrying_now_invisible_to_stretches']}",
-                     f"{v['carrying_now']}"],
-                    [f"{v['median_versions']:g}"],
-                    [f"{v['median_date_changes']:g}"],
-                ]
-                for got, exp in zip(nums[1:], want):
-                    if got != exp:
-                        out.append(f"{doc}: {cls} headline cell reads {got}, "
-                                   f"fields say {exp}")
-        for bdoc, pattern, expected, label in _bound_claims(S):
-            if bdoc != doc:
-                continue
-            m = re.search(pattern, clean)
-            if m is None:
-                out.append(f"{doc}: bound claim missing ({label}); the sentence "
-                           f"it pins was reworded, so nothing checks it")
-                continue
-            got = [g.replace(",", "") for g in m.groups()]
-            exp = [f"{e:g}" for e in expected]
-            if got != exp:
-                out.append(f"{doc}: {label} reads {got}, fields say {exp}")
+    rendered = mod.render(docs)
+    for doc, text in rendered.items():
+        if docs.get(doc) != text:
+            out.append(f"{doc}: stale, the committed bytes are not what the "
+                       f"snapshot renders. Run `python3 -m research.render_writeup`.")
 
-    low = text.lower()
-    for phrase, why in RETIRED.items():
-        if phrase in low:
-            out.append(f"{doc}: retired phrase {phrase!r} ({why})")
+    # Every table row, against a recomputation from the store.
+    expected = _expected_rows()
+    writeup = rendered[mod.WRITEUP]
+    for table, per_cls in expected.items():
+        if table == "sentences":
+            continue
+        for cls, want in per_cls.items():
+            got = [_NUM.findall(r) for r in _rendered_rows(writeup, cls)]
+            if want not in got:
+                out.append(f"{mod.WRITEUP}: no {cls} row renders the {table} "
+                           f"table's fields; recomputed from the store they are "
+                           f"{want}")
+    everything = "\n".join(rendered.values())
+    for label, want in expected["sentences"]:
+        if want not in everything:
+            out.append(f"generated text: {label} does not read {want!r}, which "
+                       f"is what the store gives")
+
+    # The write-up is generated whole, so every figure in it is emitted by
+    # construction and the byte comparison above covers it. The rest are partly
+    # generated or not generated at all, and that is where a figure gets retyped.
+    figures = _cohort_figures()
+    for doc in SCANNED_DOCS:
+        text = docs.get(doc)
+        if text is None or doc == mod.WRITEUP:
+            continue
+        opens = len(_MARKER.findall(text))
+        matched = len(mod._BLOCK.findall(text)) * 2
+        if opens != matched:
+            out.append(f"{doc}: {opens - matched} malformed generated marker(s); a "
+                       f"block whose marker does not parse is never substituted and "
+                       f"freezes silently.")
+        residual = _CODE.sub(" ", mod._BLOCK.sub(" ", text))
+        for i, line in enumerate(residual.split("\n"), start=1):
+            # `N of M` is the shape every cohort count claim takes, but it is
+            # also the shape of an ordinary sentence, so it is enforced only on
+            # the documents that carry generated blocks. Elsewhere a retyped
+            # count has to be caught as a field rendering.
+            if doc in mod.BLOCK_DOCS:
+                for tok in _N_OF_M.findall(line):
+                    out.append(f"{doc}:{i}: {tok!r} outside a generated block; an "
+                               f"N-of-M count is a cohort claim and has to be "
+                               f"emitted.")
+            for tok in _NUM.findall(line):
+                if tok in figures or tok.replace(",", "") in figures:
+                    out.append(f"{doc}:{i}: {tok!r} is a cohort field rendering "
+                               f"and sits outside a generated block.")
+
+    for doc, text in docs.items():
+        low = text.lower()
+        for phrase, why in RETIRED.items():
+            if phrase in low:
+                out.append(f"{doc}: retired phrase {phrase!r} ({why})")
     return out
 
 
-@pytest.mark.parametrize("doc", CLAIM_DOCS)
-def test_every_figure_in_a_claim_traces_to_the_snapshot(doc):
+def _check_with(mod) -> list:
+    """The citation and quoted-source rules, run against a substitute module."""
+    out = []
+    f = mod.figures(cohort.load_snapshot())
+    for key in ("silent_source", "carrying_source"):
+        if any(ch.isdigit() for ch in f[key]):
+            out.append(f"{GENERATOR}: the quoted source {key} contains a digit.")
+    return out
+
+
+def _live_docs() -> dict:
+    out = {}
+    for doc in sorted(set(CLAIM_DOCS) | set(SCANNED_DOCS)):
+        path = os.path.join(REPO, doc)
+        if os.path.exists(path):
+            out[doc] = open(path).read()
+    return out
+
+
+def _source() -> str:
+    return open(os.path.join(REPO, GENERATOR)).read()
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+def test_the_prose_templates_contain_no_numerals():
+    """Total scope: the whole generator, not selected lines of the output."""
+    findings = [f for f in check(_live_docs(), _source())
+                if f.startswith(GENERATOR)]
+    assert not findings, ("the generator carries a figure in prose:\n  "
+                          + "\n  ".join(findings[:20]))
+
+
+def test_every_generated_document_is_current():
     snap = cohort.load_snapshot()
     if snap is None:
         pytest.skip("no snapshot frozen yet")
-    path = os.path.join(REPO, doc)
-    if not os.path.exists(path):
-        pytest.skip(f"{doc} does not exist")
-    with open(path) as f:
-        text = f.read()
-    v = _violations(doc, text, _acceptable(), snap["snapshot_id"])
-    assert not v, (f"{len(v)} finding(s) in {doc}:\n  " + "\n  ".join(v[:25])
-                   + "\n\nEither the figure is wrong, or it is a real non-cohort "
-                     "figure and belongs in NON_SNAPSHOT with its source.")
+    assert not render_writeup.stale(), (
+        f"stale generated documents: {render_writeup.stale()}. The committed "
+        f"bytes disagree with the snapshot, so a published figure is one freeze "
+        f"behind. Run `python3 -m research.render_writeup`.")
+
+
+def test_no_cohort_figure_survives_outside_a_generated_block():
+    findings = [f for f in check(_live_docs(), _source())
+                if "outside a generated block" in f]
+    assert not findings, (
+        f"{len(findings)} retyped cohort figure(s):\n  " + "\n  ".join(findings[:20])
+        + "\n\nMove the sentence into a generated block, or say it without the "
+          "numeral.")
+
+
+def test_a_retired_phrase_stays_retired():
+    findings = [f for f in check(_live_docs(), _source()) if "retired phrase" in f]
+    assert not findings, "\n  ".join(findings)
 
 
 def test_the_corpus_is_caught():
-    """All 19 reviewer-planted defects, applied to the real documents.
+    """Every planted defect, applied to the real files, must be caught.
 
     This is the test that matters. A guard amendment is accepted only when every
-    fixture here is watched failing and then passing on the real files.
+    fixture here is watched failing and then passing. Compared against each
+    input's OWN baseline rather than against zero, because the first version of
+    this test compared against zero and scored 19/19 on a pre-existing unrelated
+    defect that made any mutation look caught.
     """
     snap = cohort.load_snapshot()
     if snap is None:
         pytest.skip("no snapshot frozen yet")
-    ok, sid = _acceptable(), snap["snapshot_id"]
+    docs, source = _live_docs(), _source()
+    before = set(check(docs, source))
     stale, missed = [], []
-    for name, doc, find, replace, why in CORPUS:
-        with open(os.path.join(REPO, doc)) as f:
-            text = f.read()
-        if find not in text:
-            stale.append(f"{name}: {find!r} no longer in {doc}")
+    for name, target, find, replace, why in CORPUS:
+        if target == GENERATOR:
+            body = source
+        elif target in docs:
+            body = docs[target]
+        else:
+            stale.append(f"{name}: {target} is not a checked file")
             continue
-        # Against the document's OWN baseline, not against zero. The first
-        # version compared to zero, and every fixture "passed" because the
-        # documents happened to carry an unrelated defect at the time: a
-        # pre-existing stale snapshot id made all 19 look caught while the
-        # checks that should catch them did nothing.
-        before = set(_violations(doc, text, ok, sid))
-        after = set(_violations(doc, text.replace(find, replace, 1), ok, sid))
+        if find not in body:
+            stale.append(f"{name}: {find!r} no longer in {target}")
+            continue
+        mutated = body.replace(find, replace, 1)
+        if target == GENERATOR:
+            # Re-render before checking. A generator defect makes the committed
+            # documents stale, and staleness is what a reviewer showed was
+            # "catching" 22 of 23 fixtures: delete the digit rule and the whole
+            # residual scan and the corpus still scored 23/23. Anyone who edits
+            # the generator re-renders in the same breath, and after that the
+            # byte comparison has nothing to say. So the fixture is checked
+            # against the mutant's own output, where only a real rule can fire.
+            after = set(check(_module(mutated).render(), mutated))
+        else:
+            after = set(check({**docs, target: mutated}, source))
         if after - before:
             continue
-        missed.append(f"{name} ({why}): {find!r} -> {replace!r} in {doc}")
+        missed.append(f"{name} ({why}): {find!r} -> {replace!r} in {target}")
     assert not stale, (
-        "stale fixture(s); the prose moved and the mutation no longer applies, "
+        "stale fixture(s); the target moved and the mutation no longer applies, "
         "so it was silently testing nothing:\n  " + "\n  ".join(stale))
     assert not missed, (
         f"{len(missed)} of {len(CORPUS)} planted defects passed the guard:\n  "
         + "\n  ".join(missed))
 
 
-def _headline_row(text: str, cls: str):
-    for line in text.splitlines():
-        if line.strip().startswith(f"| {cls} |"):
-            return line
-    return None
+def test_the_quoted_source_rule_fires_on_a_digit():
+    """The write-up embeds `research/cohort.py` verbatim, and that file is
+    scanned by nothing else. A figure added to one of the quoted docstrings
+    published straight through, so the rule is asserted here rather than only
+    exercised by a fixture the corpus cannot target across two modules."""
+    clean = render_writeup.figures(cohort.load_snapshot())
+    assert not any(c.isdigit() for c in clean["silent_source"])
+    assert not any(c.isdigit() for c in clean["carrying_source"])
+
+    class _Mod:
+        CITATIONS = render_writeup.CITATIONS
+        BLOCK_DOCS = render_writeup.BLOCK_DOCS
+        WRITEUP = render_writeup.WRITEUP
+        _BLOCK = render_writeup._BLOCK
+        render = staticmethod(render_writeup.render)
+
+        @staticmethod
+        def figures(snap):
+            f = dict(clean)
+            f["silent_source"] = f["silent_source"] + "\n    # 71 trials"
+            return f
+
+    findings = [f for f in _check_with(_Mod) if "quoted source" in f]
+    assert findings, "a digit planted in the quoted source was not caught"
 
 
-def test_the_headline_table_binds_cell_by_cell_to_named_fields():
-    """Correspondence, not presence, for the table the headline rests on.
+def test_no_citation_is_a_snapshot_figure():
+    """`CITATIONS` is for quotations from outside this study.
 
-    Token presence cannot catch a small-integer error, and cannot catch a value
-    that is real but sitting in the wrong cell. Every numeric cell of this table
-    is bound to the field it claims to render.
+    The old `NON_SNAPSHOT` list held two real snapshot fields, which made both
+    unfalsifiable. The replacement is much smaller and gets the same check: if a
+    figure in a citation is derivable from the snapshot, it is a measurement
+    wearing a quotation's clothes and belongs in a field.
     """
     snap = cohort.load_snapshot()
     if snap is None:
         pytest.skip("no snapshot frozen yet")
+    figures = _cohort_figures()
+    bad = []
+    for key, entry in render_writeup.CITATIONS.items():
+        assert entry.get("cite"), f"{key} carries no source"
+        for field, text in entry.items():
+            for tok in _NUM.findall(text):
+                if tok in figures or tok.replace(",", "") in figures:
+                    bad.append(f"{key}.{field}: {tok!r} is a snapshot rendering")
+    assert render_writeup.CITATIONS, "the citation table is empty"
+    assert not bad, (
+        "these are quoted as external and are also measurements here: "
+        + ", ".join(bad))
+
+
+def test_the_correction_log_numbers_itself():
+    """Numbers come from the order, so they cannot skip, repeat or disagree."""
+    keys = render_writeup.CORRECTIONS
+    assert len(set(keys)) == len(keys), "a correction key is used twice"
+    f = render_writeup.figures(cohort.load_snapshot())
+    numbers = [int(f["c_" + k].split()[-1]) for k in keys]
+    assert numbers == list(range(1, len(keys) + 1)), numbers
     text = open(os.path.join(REPO, "docs", "WRITEUP.md")).read()
-    seen = 0
-    for cls, v in snap["strata"].items():
-        row = _headline_row(text, cls)
-        assert row is not None, f"the headline table has no {cls} row"
-        seen += 1
-        cells = [c.strip() for c in row.strip().strip("|").split("|")]
-        nums = [_NUM.findall(c) for c in cells]
-        expected = [
-            [f"{v['carrying_now']}", f"{v['n']}", f"{v['carrying_now_rate']:.1%}"],
-            [f"{v['carrying_now']}", f"{v['open_estimates']}",
-             f"{v['carrying_now_of_open_rate']:.1%}"],
-            [f"{v['carrying_now_invisible_to_stretches']}", f"{v['carrying_now']}"],
-            [f"{v['median_versions']:g}"],
-            [f"{v['median_date_changes']:g}"],
-        ]
-        labels = ("carrying/n/rate", "carrying/open/rate", "invisible/carrying",
-                  "median_versions", "median_date_changes")
-        for got, want, label in zip(nums[1:], expected, labels):
-            assert got == want, (
-                f"{cls} {label}: table reads {got}, fields say {want}")
-    assert seen == 4, "all four strata must appear in the headline table"
+    for k in keys:
+        assert f["c_" + k] + ":" in text, (
+            f"{k} is numbered but its entry is not in the write-up")
 
 
 def test_n_pcd_revisions_is_not_the_number_of_changes():
@@ -437,38 +639,15 @@ def test_n_pcd_revisions_is_not_the_number_of_changes():
         assert r["n_date_changes"] == max(0, (r.get("n_pcd_revisions") or 0) - 1)
 
 
-def test_no_exception_launders_a_real_snapshot_field():
-    """`NON_SNAPSHOT` is for figures the snapshot does not carry.
-
-    `48` and `188` were listed here while being `n_trials_with_a_carry` and
-    `n_stretches`, which made two real fields unfalsifiable.
-    """
-    snap = cohort.load_snapshot()
-    if snap is None:
-        pytest.skip("no snapshot frozen yet")
-    fields = set()
-    for v in snap["strata"].values():
-        for val in v.values():
-            fields |= _representations(val)
-    launder = sorted(set(NON_SNAPSHOT) & fields)
-    assert not launder, (
-        f"these are listed as exceptions and are also snapshot fields: {launder}. "
-        f"An exception list containing real fields cannot falsify them.")
-
-
 def test_a_hedge_present_in_most_claim_docs_is_present_in_all():
     """Cross-document consistency, matched wrap-insensitively because the first
     version silently exempted README on a line break."""
     claim = re.compile(r"cannot\s+separate\s+reconciliation\s+from\s+filing\s+"
                        r"frequency", re.I)
     cues = ("not a tested", "untested", "ordering across four",
-            "an association", "not separable")
+            "an association", "not separable", "across four points")
     offenders = []
-    for doc in CLAIM_DOCS:
-        path = os.path.join(REPO, doc)
-        if not os.path.exists(path):
-            continue
-        text = open(path).read()
+    for doc, text in _live_docs().items():
         if claim.search(text) and not any(c in text.lower() for c in cues):
             offenders.append(doc)
     assert not offenders, (

@@ -63,35 +63,59 @@ hash-chains into a tamper-evident ledger.
 
 ## The problem, in one example
 
-In April 2024, Rocket Pharmaceuticals filed a protocol revision carrying a primary
-completion date of June 2022. That date had already been expired for 677 days, in public,
-on a federal registry, machine-readable the whole time. No press release, no 8-K, and
-nothing in the thesis that depended on it moved.
+<!-- generated: anchor -->
+In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
+carrying a primary completion date of June 2022. **That date had already been expired for
+677 days**, in public, on a federal registry, machine readable the entire time.
+<!-- /generated -->
+
+No press release, no 8-K, and nothing in the thesis that depended on it moved.
 
 Then that date passed too. A thesis anchored to it read plus 8.4 months, funded to
 catalyst. The nearest registered completion still in the future puts the same company at
 minus 14.5 months, financing required. Nobody filed an amendment. The date simply arrived,
 and passed.
 
-**Rocket is ordinary, and the actual finding is about the registry.** In a random sample of
-240 phase 2/3 trials, this study cannot separate reconciliation from filing frequency, and most trials carrying an
-expired commitment have never reconciled a lapsed date: 4 of 5 in industry,
-20 of 27 for government sponsors. The ordering is monotone
-across all four strata, which is an ordering across four points and not a tested relationship: NIH sponsors file a median of
-106.5 registry versions per trial and have zero trials carrying an expired completion date,
-while government and academic sponsors file a median of 2 and **27 of their 29 still-open
-commitments have already expired**. Counting only lapses that a later filing corrected inverts
-that ranking, because a lapse becomes visible only when the sponsor files again. A measure that
-needs its subject to keep talking cannot see the subject that stops.
+**Rocket is ordinary, and the actual finding is about the registry.**
 
-Among sponsors still filing, **26.2% of industry completion-date revisions replace an estimate
-that had already expired** (33 of 126). Industry point prevalence is 8.3% of all trials and
-33.3% of those still carrying an open commitment. Rocket's 677 days is the 85th percentile of
-188 such stretches.
+<!-- generated: headline -->
+In a random sample of 240 phase 2 / 2-3 / 3 trials, **this study cannot separate
+reconciliation from filing frequency, and most trials carrying an expired commitment have
+never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
+OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
+OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
+trial and have **zero** trials currently carrying an expired completion date. Government
+sponsors outside NIH file a median of 2, and **27 of 29 of their still-open commitments have
+already expired**. The ordering is monotone in filing frequency across all four strata,
+which is an association across four points rather than a tested relationship.
+<!-- /generated -->
 
-Every cohort figure is a field of snapshot `cohort-5b03269658b8`: 240 trials, 60 in each of
-four sponsor strata, all measured, point prevalence as of 2026-07-22. `docs/COHORT.md` has the
-frame and the limits; `docs/WRITEUP.md` is the write-up.
+Counting only lapses that a later filing corrected inverts that ranking, because a lapse
+becomes visible only when the sponsor files again. A measure that needs its subject to keep
+talking cannot see the subject that stops.
+
+<!-- generated: mechanism -->
+The supporting mechanism, among sponsors still filing: **26.2% of industry completion-date
+revisions replace an estimate that had already expired** (33 of 126), and 24 of 52 (46.2%)
+industry trials that revised a date at all did it at least once. That is narrower than
+running late, which is well documented, and narrower than the raw after-lapse count, because
+a revision recording an *actual* completion is the update the regulation requires rather
+than a failure to file it.
+
+Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
+still open. The anchor case's 677 days sits at the **85th percentile** of 188 such
+stretches: long, but not the tail.
+<!-- /generated -->
+
+<!-- generated: provenance -->
+Every cohort figure in the claim documents is emitted from a field of snapshot
+`cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each of four
+sponsor strata, all measured, point prevalence as of 2026-07-22. The prose around them
+contains no numerals and a test regenerates every generated block and fails on a one-byte
+difference.
+<!-- /generated -->
+
+`docs/COHORT.md` has the frame and the limits; `docs/WRITEUP.md` is the write-up.
 
 ## The architecture that makes the demo mean something
 

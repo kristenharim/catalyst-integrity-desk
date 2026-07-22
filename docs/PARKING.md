@@ -17,9 +17,9 @@ would take the amendment past the three-line change the procedure approved, and 
 amendment to make it tidier is exactly what `AMENDING_PROTECTED_MODULES.md` forbids. Revisit
 only if crash-loops start filling the cache directory.
 
-**NIH trials carry far more revision episodes than industry ones.** 493 dead-date stretches
-across 60 NIH trials against 188 across 60 industry trials, from `cohort-5b03269658b8`.
-That is 2.6x the episodes on top of 2.4x the duration, and nothing in this study explains
+**NIH trials carry far more revision episodes than industry ones.** The per-stretch counts
+are in the sensitivity table of `docs/WRITEUP.md`: NIH runs several times industry's on
+episodes as well as on duration, and nothing in this study explains
 it. Plausibly it is just version count, since NIH trials in the sample carry many more
 protocol versions, two of them over 300. Worth one afternoon to check whether normalising by
 version count collapses the difference, because if it does not, it is a second finding

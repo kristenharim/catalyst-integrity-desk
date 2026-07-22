@@ -2,40 +2,56 @@
 
 An auditable monitor for the moment an investment thesis quietly stops being true.
 
+<!-- generated: anchor -->
 In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
 carrying a primary completion date of June 2022. **That date had already been expired for
 677 days**, in public, on a federal registry, machine readable the entire time.
+<!-- /generated -->
 
 Nobody was watching, because nobody's job is to watch.
 
 **And Rocket is not unusual. The actual finding is about the registry, not the sponsor.**
-In a random sample of 240 phase 2/3 trials, **this study cannot separate reconciliation from
-filing frequency, and most trials carrying an expired commitment have never reconciled a lapsed date** — 4 of 5 in industry, 20 of 27 for government sponsors, dates that have stood
-a median of 1,101.5 and 2,288.5 days respectively. NIH
-sponsors file a median of 106.5 registry versions per trial and have **zero** trials currently
-carrying an expired completion date. Government and academic sponsors file a median of 2, and
-**27 of their 29 still-open commitments have already expired**. The ordering is monotone in
-filing frequency across all four strata, which is an ordering across four strata rather
-than a tested relationship.
+
+<!-- generated: headline -->
+In a random sample of 240 phase 2 / 2-3 / 3 trials, **this study cannot separate
+reconciliation from filing frequency, and most trials carrying an expired commitment have
+never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
+OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
+OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
+trial and have **zero** trials currently carrying an expired completion date. Government
+sponsors outside NIH file a median of 2, and **27 of 29 of their still-open commitments have
+already expired**. The ordering is monotone in filing frequency across all four strata,
+which is an association across four points rather than a tested relationship.
+<!-- /generated -->
 
 That inverts the measure this project started with. Counting lapses that a later filing
 corrected, government sponsors look like the *best* reconcilers, because a lapse only becomes
 visible when the sponsor files again. A measure that needs its subject to keep talking cannot
 see the subject that stops.
 
+<!-- generated: mechanism -->
 The supporting mechanism, among sponsors still filing: **26.2% of industry completion-date
-revisions replace an estimate that had already expired** (33 of 126), and 24 of the 52 industry
-trials that revised a date at all did it at least once. That is narrower than running late, which is
-well documented, and narrower than the raw after-lapse count, because a revision recording an
-*actual* completion is the update the regulation requires rather than a failure to file it.
+revisions replace an estimate that had already expired** (33 of 126), and 24 of 52 (46.2%)
+industry trials that revised a date at all did it at least once. That is narrower than
+running late, which is well documented, and narrower than the raw after-lapse count, because
+a revision recording an *actual* completion is the update the regulation requires rather
+than a failure to file it.
 
-Industry point prevalence is 8.3% of all 60 trials, and 33.3% of the 15 whose commitment is
-still open. Rocket's 677 days sits at the **85th percentile** of 188 such stretches: long, but
-not the tail.
+Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
+still open. The anchor case's 677 days sits at the **85th percentile** of 188 such
+stretches: long, but not the tail.
+<!-- /generated -->
 
-`docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the working record. Every
-cohort figure is a field of snapshot `cohort-5b03269658b8`: 240 trials, 60 in each of four
-sponsor strata, all measured, point prevalence as of 2026-07-22.
+`docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the
+working record.
+
+<!-- generated: provenance -->
+Every cohort figure in the claim documents is emitted from a field of snapshot
+`cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each of four
+sponsor strata, all measured, point prevalence as of 2026-07-22. The prose around them
+contains no numerals and a test regenerates every generated block and fails on a one-byte
+difference.
+<!-- /generated -->
 
 ## The claim, in one sentence
 

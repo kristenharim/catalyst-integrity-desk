@@ -56,6 +56,20 @@ FRAME_START, FRAME_END = "2016-01-01", "2023-12-31"
 PHASES = ("PHASE2", "PHASE2_PHASE3", "PHASE3")
 SEED = 20260722          # stored with the results; changing it changes the sample
 
+# The case this project opened on. Its figures are snapshot fields rather than
+# prose constants, because the write-up is generated and a figure that is not a
+# field cannot appear in it at all.
+ANCHOR_NCT = "NCT04248439"
+
+# Batching test parameters. Named here and written into the snapshot so the
+# write-up can cite them without retyping them.
+NEAR_DAYS = 45
+YEAR_MULTIPLES = (365, 730, 1095)
+# Control centres, offset half a year from each anniversary and the same width.
+# Without them the anniversary count has nothing to be compared against except a
+# null that assumes an even spread, which the interval distribution is not.
+CONTROL_MULTIPLES = (182, 547, 912)
+
 # Lead-sponsor classes to stratify on. Industry is the population the product is
 # about; the others are the contrast that says whether anything found is a
 # property of commercial sponsors or of registries in general.
@@ -282,6 +296,54 @@ def measure(nct: str, sponsor_class: str) -> dict:
     return row
 
 
+# ---------------------------------------------------------------------------
+# The two predicates the write-up is about
+# ---------------------------------------------------------------------------
+#
+# Module level, and called rather than restated, because `docs/WRITEUP.md` is
+# generated and quotes both of these verbatim by reading this source. A prose
+# paraphrase of a predicate is a second implementation of it that no test runs,
+# and this project has already shipped one: the definition paragraph said "no
+# correction since this date lapsed" for the measure below, which is a weaker
+# condition than the code applies.
+
+def carrying_expired_now(row: dict, as_of: date) -> bool:
+    """The trial's most recent registered primary completion date is in the past
+    and is still typed as an estimate.
+
+    An ACTUAL date in the past is the reconciled case, a completed trial
+    recording when it completed, and does not count.
+    """
+    p = _parse_date(row.get("last_pcd"))
+    return bool(p is not None and p < as_of
+                and (row.get("last_pcd_type") or "").upper() != "ACTUAL")
+
+
+def silent_carrier(row: dict, as_of: date) -> bool:
+    """Carrying an expired estimate, and invisible to the stretch measure.
+
+    `carried_until_corrected()` emits a stretch only where a later filing
+    arrived while an already-passed date was standing, so a trial with no
+    stretch at all has never had a lapsed date ended by a later correction at
+    any point in its history. Not once.
+    """
+    return carrying_expired_now(row, as_of) and not row["dead_date_stretches"]
+
+
+def store_paths() -> dict:
+    """Repo-relative paths to the store, its archive and the frozen snapshot.
+
+    Public because `research/render_writeup.py` names these in the write-up, and
+    a path typed into prose goes stale exactly the way a figure does. It returns
+    names and not contents, so the rule that only `load_results()` reads the
+    store is untouched.
+    """
+    repo = os.path.join(os.path.dirname(__file__), "..")
+    return {k: os.path.relpath(p, repo) for k, p in (
+        ("store", _results_path()), ("archive", _archive_path()),
+        ("snapshot", _snapshot_path()))}
+
+
 def _results_path() -> str:
     return os.path.join(OUT, "results.jsonl")
 
@@ -447,20 +509,24 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
     as_of = as_of or date.today()
 
     def _carr(r: dict) -> bool:
-        p = _parse_date(r.get("last_pcd"))
-        return bool(p is not None and p < as_of
-                    and (r.get("last_pcd_type") or "").upper() != "ACTUAL")
+        return carrying_expired_now(r, as_of)
 
     carrying_now = silent = 0
-    since, since_silent = [], []
+    since, since_silent, silent_versions = [], [], []
     for r in sub:
         if _carr(r):
             carrying_now += 1
             d = (as_of - _parse_date(r["last_pcd"])).days
             since.append(d)
-            if not r["dead_date_stretches"]:
+            if silent_carrier(r, as_of):
                 silent += 1                      # invisible to the stretch measure
                 since_silent.append(d)
+                # Lifetime registry-version count, kept as the distribution
+                # rather than as a threshold, so how busy this population is can
+                # be stated from fields instead of illustrated with one trial.
+                # It is a LIFETIME count: nothing here records when those
+                # versions were filed relative to the expiry. See Correction 11.
+                silent_versions.append(r.get("n_versions") or 0)
 
     # PRIMARY duration: one observation per trial, its longest carry. The stretch
     # unit emits a row per consecutive version pair, so one lapse spanning many
@@ -490,18 +556,35 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
 
     # Batching test. If sponsors swept the registry on a yearly cycle, intervals
     # between date-changing filings would bunch near multiples of a year.
-    NEAR, YEARS = 45, (365, 730, 1095)
+    NEAR, YEARS = NEAR_DAYS, YEAR_MULTIPLES
     intervals = [d for r in sub for d in (r.get("submit_intervals") or [])]
-    near = sum(1 for d in intervals
-               if any(abs(d - y) <= NEAR for y in YEARS))
-    # The null the comparison is against, published rather than asserted: the
-    # share of the observed range covered by the three windows. An even spread
-    # would land in them at this rate.
-    baseline = None
-    if intervals and max(intervals) > min(intervals):
+
+    def _near(centres: tuple) -> int:
+        return sum(1 for d in intervals
+                   if any(abs(d - y) <= NEAR for y in centres))
+
+    def _baseline(centres: tuple) -> float | None:
+        """The null the comparison is against, published rather than asserted:
+        the share of the observed range covered by the three windows. An even
+        spread would land in them at this rate."""
+        if not intervals or max(intervals) <= min(intervals):
+            return None
         lo, hi = min(intervals), max(intervals)
-        cov = sum(max(0, min(hi, y + NEAR) - max(lo, y - NEAR)) for y in YEARS)
-        baseline = cov / (hi - lo)
+        cov = sum(max(0, min(hi, y + NEAR) - max(lo, y - NEAR)) for y in centres)
+        return cov / (hi - lo)
+
+    near = _near(YEARS)
+    baseline = _baseline(YEARS)
+    # The same count against windows that are not anniversaries. An anniversary
+    # window scoring above an even-spread null means nothing on its own if a
+    # window placed anywhere else scores the same, and the interval distribution
+    # is not even. This is the control the first version of the test lacked.
+    ctrl = _near(CONTROL_MULTIPLES)
+    ctrl_baseline = _baseline(CONTROL_MULTIPLES)
+
+    # The trial contributing the most stretches, which is what makes the
+    # per-stretch unit a sensitivity rather than the primary.
+    top = max(sub, key=lambda r: r.get("dead_date_stretches") or 0, default=None)
 
     # Trials still carrying an open commitment: the last registered date is an
     # estimate rather than an actual. The denominator a reader who only looks at
@@ -529,7 +612,17 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
         # have stood is what earns the word "stopped".
         "silent_carrier_days_p50": _pct(sorted(since_silent), .5),
         "silent_carrier_days_min": min(since_silent) if since_silent else None,
+        "carriers_under_a_year": sum(1 for d in since if d < 365),
+        # Registry dates come at month precision as often as at day precision.
+        # `_parse_date` resolves `2024-03` to the first of the month, so every
+        # days-since-expiry figure for such a trial is inflated by up to the
+        # length of a month. Counted rather than left implicit, because this
+        # document discloses a boundary convention affecting two revisions and
+        # was silent about one affecting a third of the carriers.
+        "carriers_month_precision": sum(
+            1 for r in sub if _carr(r) and len(r["last_pcd"]) == len("YYYY-MM")),
         "silent_carriers_under_a_year": sum(1 for d in since_silent if d < 365),
+        "silent_carrier_versions": sorted(silent_versions),
         "carrying_never_revised": sum(1 for r in sub
                                       if not r.get("n_date_changes") and _carr(r)),
         "never_revised": len(never),
@@ -543,6 +636,13 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
         "submit_intervals_even_spread_baseline": baseline,
         "submit_intervals_bunching_ratio": (
             (near / len(intervals)) / baseline if intervals and baseline else None),
+        "submit_intervals_near_control_multiple": ctrl,
+        "submit_intervals_near_control_rate": (
+            (ctrl / len(intervals)) if intervals else None),
+        "submit_intervals_control_even_spread_baseline": ctrl_baseline,
+        "submit_intervals_control_bunching_ratio": (
+            (ctrl / len(intervals)) / ctrl_baseline
+            if intervals and ctrl_baseline else None),
         "carrying_now_of_open_rate": (carrying_now / len(open_est)) if open_est else None,
         "trial_days_p50": _pct(per_trial, .5),
         "trial_days_p90": _pct(per_trial, .9),
@@ -568,6 +668,12 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
         "carried_dead_date": len(with_dead),
         "carried_dead_date_rate": len(with_dead) / n,
         "n_stretches": len(durations),
+        "max_stretch_trial": ({
+            "nct": top["nct"],
+            "n_versions": top.get("n_versions"),
+            "n_date_changes": top.get("n_date_changes"),
+            "n_stretches": top.get("dead_date_stretches"),
+        } if top and top.get("dead_date_stretches") else None),
         "dead_days_p50": _pct(durations, .5),
         "dead_days_p90": _pct(durations, .9),
         "dead_days_max": max(durations) if durations else None,
@@ -589,6 +695,47 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
         "established_p10": _pct(est, .1),
         "established_p50": _pct(est, .5),
         "established_p90": _pct(est, .9),
+    }
+
+
+def anchor_case(rows: list[dict]) -> dict:
+    """The 677-day case, placed against the industry distribution.
+
+    Every figure the write-up states about it is here rather than in prose: the
+    days carried, the two dates, and its rank on both units. The ranks were
+    store-derived and asserted by nothing while they lived in the document; a
+    generated document cannot carry a figure that is not a field, so they became
+    fields instead of exceptions.
+
+    Reads the version cache, which is gitignored. That is why this is computed
+    once at freeze time and committed, and not at render time: rendering the
+    write-up must work from a clone with no cache and no network.
+    """
+    stretches = carried_until_corrected(ANCHOR_NCT)
+    if not stretches:
+        raise ValueError(
+            f"{ANCHOR_NCT} has no carried-expired stretch. Its versions are not "
+            f"cached, so the anchor case cannot be measured; freeze from a "
+            f"machine that has data/cache/ rather than publishing without it.")
+    worst = max(stretches, key=lambda s: s["days_carried"])
+    days = worst["days_carried"]
+
+    sub = [r for r in rows if r["sponsor_class"] == "INDUSTRY"]
+    per_stretch = sorted(d for r in sub for d in r["dead_date_days"])
+    per_trial = sorted(max(r["dead_date_days"]) for r in sub if r["dead_date_days"])
+
+    def rank(xs: list[int]) -> dict:
+        at_or_below = sum(1 for d in xs if d <= days)
+        return {"at_or_below": at_or_below, "n": len(xs),
+                "share": at_or_below / len(xs) if xs else None}
+
+    return {
+        "nct": ANCHOR_NCT,
+        "days_carried": days,
+        "expired_on": worst["expired_on"],
+        "corrected_on": worst["corrected_on"],
+        "industry_stretches": rank(per_stretch),
+        "industry_trials": rank(per_trial),
     }
 
 
@@ -641,6 +788,12 @@ def freeze() -> dict:
             "requires_registered_primary_completion": True,
             "enumeration_cap_per_stratum": 3000,
         },
+        "clustering": {
+            "window_half_width_days": NEAR_DAYS,
+            "anniversary_centres_days": list(YEAR_MULTIPLES),
+            "control_centres_days": list(CONTROL_MULTIPLES),
+        },
+        "anchor_case": anchor_case(rows),
         "n_distinct_trials": len(rows),
         "n_failed_to_measure": len(errors),
         "n_rows_stored": (sum(1 for _ in open(_results_path()))
@@ -807,6 +960,13 @@ def main() -> None:
               f"{snap['n_distinct_trials']} trials ({counts}).")
         print(f"Written to {os.path.relpath(_snapshot_path())}. Cite this id "
               f"beside every published figure.")
+        # The claim documents are rendered from this file, so freezing without
+        # re-rendering leaves every published figure one snapshot behind. Local
+        # import: the renderer reads this module.
+        from research.render_writeup import write
+        changed = write()
+        print("Regenerated: " + (", ".join(changed) if changed
+                                 else "nothing, the documents were already current"))
     elif args.report:
         report()
     else:

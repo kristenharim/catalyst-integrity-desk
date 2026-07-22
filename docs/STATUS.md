@@ -309,9 +309,17 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## The cohort study, closed 2026-07-22
 
-The random cohort is finished and frozen. 240 trials drawn, 60 in each of four sponsor
-strata, all 240 measured, none failed. Snapshot **`cohort-5b03269658b8`**, and every
-published figure now cites it. `docs/WRITEUP.md` is the publishable write-up;
+The random cohort is finished and frozen. Every drawn trial is measured and none failed.
+
+<!-- generated: provenance -->
+Every cohort figure in the claim documents is emitted from a field of snapshot
+`cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each of four
+sponsor strata, all measured, point prevalence as of 2026-07-22. The prose around them
+contains no numerals and a test regenerates every generated block and fails on a one-byte
+difference.
+<!-- /generated -->
+
+`docs/WRITEUP.md` is the publishable write-up and is itself generated;
 `docs/COHORT.md` is the working record with the full correction history.
 
 What closing it required, in case any of it recurs:
@@ -335,27 +343,52 @@ What closing it required, in case any of it recurs:
 - **A wrong figure of my own, published for one revision and retracted.** The first point
   prevalence read the ESTIMATED/ACTUAL type from a helper that did not return it, so the
   filter never fired and every completed trial that had correctly recorded its completion
-  date counted as carrying a lapsed one. It read 83.3% industry; the true figure is 8.3%.
+  date counted as carrying a lapsed one. It read an order of magnitude high for industry,
+  and the corrected figures are in `docs/WRITEUP.md`.
   The defect pattern this file has documented six times over, committed again: a check that
   silently does not apply looks exactly like a check that passes, and this one was in the
   flattering direction.
 
-**Where the study now stands, after two council rounds that both blocked.** The headline is
-the registry-level result: **this study cannot separate reconciliation from filing frequency,
-and most trials carrying an expired commitment have never reconciled a lapsed date** — 4 of 5 in industry, 20 of 27 for government sponsors. NIH files a median of
-106.5 versions per trial and carries zero expired commitments; OTHER_GOV files a median of 2
-and 27 of its 29 open commitments have expired. Monotone across all four strata, which is an ordering across four points rather than a
-tested relationship.
+**Where the study now stands, after seven council rounds.** The headline is the
+registry-level result:
 
-The supporting mechanism, among sponsors still filing, is that 26.2% of industry revisions
-replace an already-expired estimate (33 of 126). A draft published 52.4% for this, which
-counted the mandated update-to-actual filing as a failure to reconcile; retracted as
-Correction 8.
+<!-- generated: headline -->
+In a random sample of 240 phase 2 / 2-3 / 3 trials, **this study cannot separate
+reconciliation from filing frequency, and most trials carrying an expired commitment have
+never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
+OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
+OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
+trial and have **zero** trials currently carrying an expired completion date. Government
+sponsors outside NIH file a median of 2, and **27 of 29 of their still-open commitments have
+already expired**. The ordering is monotone in filing frequency across all four strata,
+which is an association across four points rather than a tested relationship.
+<!-- /generated -->
 
-Primary frequency is point prevalence, 8.3% of all industry trials and 33.3% of those still
-open. Primary duration is per-trial longest carry, NIH 590 days against industry 390, 1.5x, and
-every duration here is measured on completed spells only. The stretch-based figures (80.0%,
-median 240, 2.4x) are a labelled secondary and cannot see a sponsor that stops filing.
+<!-- generated: mechanism -->
+The supporting mechanism, among sponsors still filing: **26.2% of industry completion-date
+revisions replace an estimate that had already expired** (33 of 126), and 24 of 52 (46.2%)
+industry trials that revised a date at all did it at least once. That is narrower than
+running late, which is well documented, and narrower than the raw after-lapse count, because
+a revision recording an *actual* completion is the update the regulation requires rather
+than a failure to file it.
+
+Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
+still open. The anchor case's 677 days sits at the **85th percentile** of 188 such
+stretches: long, but not the tail.
+<!-- /generated -->
+
+A draft published the undivided after-lapse rate for that mechanism, which counted the
+mandated update-to-actual filing as a failure to reconcile; it is retracted in the write-up's
+correction log.
+
+<!-- generated: primary_measures -->
+Primary frequency is point prevalence, 8.3% of all industry trials and 33.3% of those whose
+commitment is still open. Primary duration is per-trial longest carry, NIH 590 days against
+industry 390, a ratio of 1.5x, and every duration here is measured on completed spells only.
+The stretch-based figures are a labelled secondary and cannot see a sponsor that stops
+filing. **No all-strata average exists anywhere**, and the no-pooling rule rests on three
+differences rather than on one ratio.
+<!-- /generated -->
 
 **No all-strata average exists
 anywhere**, and the no-pooling rule now rests on three differences rather than one ratio.

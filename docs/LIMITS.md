@@ -281,8 +281,8 @@ direction is one that can survive a long time without anyone minding.
 
 `data/cohort/results.jsonl` is append-only and the run is resumable, which is right for a
 long fetch-bound job and wrong for counting. A trial measured twice appends twice. A
-background pass and a manual merge overlapped, 49 of 180 rows were duplicates, and a
-published report of n=169 was really 131 distinct trials. Every rate computed from it was
+background pass and a manual merge overlapped, a large minority of rows were duplicates, and
+a published trial count was really a row count. Every rate computed from it was
 slightly off, all in the flattering direction, and nothing looked wrong: more rows reads as
 more data.
 
@@ -335,17 +335,24 @@ behaviour this project exists to surface, a sponsor that lets a date expire and 
 silent, scores as clean.
 
 That is not a hypothetical. Counting trials whose most recent registered date is in the past
-and still typed ESTIMATED, as of the snapshot date 2026-07-22:
+and still typed ESTIMATED:
 
+<!-- generated: silence_note -->
+Trials whose most recent registered date is in the past and still typed as an estimate,
+against the stretch measure that cannot see them, as of 2026-07-22:
+<!-- /generated -->
+
+<!-- generated: silence_table -->
 | Stratum | carried at some point (stretch measure) | carrying one now | invisible to the stretch measure | median versions |
 |---|---:|---:|---:|---:|
 | INDUSTRY | 80.0% | 8.3% | 4 | 9 |
 | NIH | 80.0% | 0.0% | 0 | 106.5 |
+| OTHER_GOV | 53.3% | 45.0% | 20 | 2 |
 | OTHER | 61.7% | 31.7% | 15 | 4 |
-| OTHER_GOV | **53.3%** | **45.0%** | **20** | 2 |
+<!-- /generated -->
 
-**These figures replace wrong ones published for one revision of this file**, which read
-83.3% / 70.0% / 85.0% / 96.7%. That version read the date's ESTIMATED/ACTUAL type from a
+**These figures replace wrong ones published for one revision of this file**, which read an
+order of magnitude high for industry and near-universal for the government strata. That version read the date's ESTIMATED/ACTUAL type from a
 helper that did not return it, compared `None` against `"ACTUAL"`, and so counted every
 completed trial that had correctly recorded its actual completion date as carrying a lapsed
 one. The filter never fired. It is the same defect shape as the `status` bug three paragraphs
@@ -362,8 +369,9 @@ to the stretch measure because they lapsed and never filed again. `docs/COHORT.m
 `docs/WRITEUP.md` both said government and academic sponsors "did it less often". On this
 evidence they do it more, and the measure could not see it.
 
-The ordering follows filing frequency, across four strata and untested as a relationship. The spread is large: median registry versions per trial is 2
-for OTHER_GOV, 4 for OTHER, 9 for INDUSTRY and **106.5** for NIH.
+The ordering follows filing frequency, across four strata and untested as a relationship. The
+spread in median registry versions per trial is large and is rendered per stratum in the table
+above.
 
 **What survives.** The Rocket 677-day case is untouched, because it is one version carrying
 one already-passed date against one clock and needs no later filing to exist. **Resolved
@@ -403,21 +411,23 @@ Because the row count tracks how often a sponsor files for unrelated reasons whi
 sits dead, the duration distribution is weighted toward frequent filers. Measuring one
 observation per trial, its longest carry, closes most of the gap:
 
-| | INDUSTRY | NIH | ratio |
+<!-- generated: unit_table -->
+|  | INDUSTRY | NIH | ratio |
 |---|---:|---:|---:|
-| median over all stretches (published) | 240 | 567 | **2.4x** |
+| median over all stretches | 239.5 | 567 | **2.4x** |
 | median of per-trial longest carry | 390 | 590 | **1.5x** |
-| p90 over all stretches (published) | 996 | 1,589 | 1.6x |
-| p90 of per-trial longest carry | 1,384 | 1,617 | 1.2x |
+| p90 over all stretches | 995.6 | 1,588.8 | 1.6x |
+| p90 of per-trial longest carry | 1,384.4 | 1,617.4 | 1.2x |
+<!-- /generated -->
 
-The "2.4 times longer" figure appears in `README.md`, `docs/SUBMISSION.md`,
-`docs/COHORT.md` and `docs/WRITEUP.md`, and in each place it is offered as the justification
-for the rule that strata may not be pooled. **The rule is probably still right**, since the
+The per-stretch ratio appeared in `README.md`, `docs/SUBMISSION.md`, `docs/COHORT.md` and
+`docs/WRITEUP.md`, and in each place it was offered as the justification for the rule that
+strata may not be pooled. **The rule is probably still right**, since the
 frequencies also differ once the measure above is corrected, but the specific evidence
 offered for it is unit-dependent and roughly halves under the per-trial unit.
 
-Note also that the industry median itself is unit-dependent: 240 days per stretch, 390 days
-per trial. Neither is wrong. Only one of them is currently labelled.
+Note also that the industry median itself is unit-dependent, and the table above carries both.
+Neither is wrong. Only one of them was labelled.
 
 **Both were resolved by the owner on 2026-07-22.** Point prevalence became the primary
 frequency measure and per-trial longest carry the primary duration measure, with the
@@ -433,36 +443,120 @@ nobody stated: a defect in `carried_until_corrected()` is shared by the product 
 study, so the study cannot act as an independent check on the product. It did not catch
 this. An adversarial reader did.
 
-## The prose guard, and exactly what it proves
+## The claim documents are generated, and exactly what that proves
 
-Prose was the last unguarded surface here. Four rounds of adversarial review found the
+Prose was the last unguarded surface here. Five rounds of adversarial review found the
 measured figures clean every time and the retyped ones wrong repeatedly: a median printed as
-106 where the field holds 106.5, fixed in one file and missed in five others; "at least"
+an integer where the field holds a half, fixed in one file and missed in five others;
+"at least"
 silently dropped from a count; a median-date-changes column off by one because the field it
 was typed from counts the initial registration; and a phrase reported as corrected in two
 consecutive rounds whose replacement never matched and did nothing.
 
-`tests/test_prose_figures.py` is the console's number-provenance test pointed at markdown.
-Every numeric token in a table row or a bolded claim in the five claim documents must be a
-representation of a snapshot field or appear in an enumerated `NON_SNAPSHOT` list with its
-source. That list is the enforced version of the write-up's "figures that are not snapshot
-fields" paragraph, which drifted out of date twice while it lived only in prose.
+The first answer to that was a presence check over the retyped text, with an enumerated
+`NON_SNAPSHOT` exception list. It had two structural holes, both measured rather than argued.
+Presence cannot falsify a small integer: reverting the median-date-changes column from 0 back
+to 1 passed it, because "1" appears somewhere in the snapshot. And an exception list is a
+laundering route, which is how two real snapshot fields ended up listed as exceptions,
+making both unfalsifiable.
 
-**What it does not prove, verified by mutation rather than assumed.** It is a presence check,
-so it cannot catch a small-integer error: reverting the median-date-changes column from 0 back
-to 1 passed it, because "1" appears somewhere in the snapshot and in the regulation citation.
-That is the same limit this file already records for the console's provenance test, and it is
-exactly the defect class that shipped. The headline table's last two columns are therefore
-additionally bound cell-by-cell to the fields they claim to render, by name, and restoring the
-off-by-one fails that test. Every other table in the document is presence-checked only.
+**Both are gone, because the documents are no longer typed.** `research/render_writeup.py`
+renders `docs/WRITEUP.md` in full and the figure-bearing blocks of the other four claim
+documents, emitting every figure from a named snapshot field. `tests/test_prose_figures.py`
+enforces two rules:
+
+- **no numerals in prose, over the whole generator.** Every string constant in the module is
+  checked for digits, not selected lines of the output; every numeric literal at or above 100,
+  and every non-integer literal, is rejected unless it is in a three-entry declared set of
+  units. A figure cannot be typed into prose because prose cannot contain a digit.
+- **the committed documents are byte-identical to a fresh render.** A figure cannot drift from
+  the field it renders, because nothing copies it.
+
+Three figures that were exceptions became fields instead, which is the difference between the
+two designs: the anchor case's days carried and its two percentile ranks (`anchor_case`), and
+the clustering test's window parameters (`clustering`). Adding them did not move the snapshot
+id, which hashes the measured rows and the frame.
+
+**What this does not prove, and it is now the whole of the residual.** A cell bound to the
+wrong field renders wrongly and regenerates identically forever. `figures()` could emit
+`open_estimates` where the column says `carrying_now` and every check would pass. That defect
+class is real: two instances of it were caught during construction, a ratio computed the wrong
+way round (rendering 0.7x for 1.5x) and a version-spread ratio inverted. Both are now fixtures.
+The mutation corpus is therefore aimed at the generator rather than at the text, and it is a
+sample, not a proof.
+
+**A seventh review round attacked the guard rather than the figures, and it was right about
+most of it.** What it demonstrated, each watched publishing a wrong figure with the whole
+suite green, and each now a committed fixture:
+
+- **The corpus was vacuous.** Twenty-two of twenty-three fixtures were caught by document
+  staleness alone. Deleting the digit rule and the entire residual scan still scored
+  twenty-three of twenty-three. Worse, the two fixtures aimed at the generator were caught by
+  staleness too, and staleness is what a developer clears by re-rendering, which is the first
+  thing anyone does after editing a generator. The corpus now re-renders a generator mutation
+  before checking it, so only a real rule can fire, and the rule that fires is recorded.
+- **Nothing caught a cell bound to the wrong field.** Now it does: the tests recompute every
+  table's cells from `data/cohort/results.jsonl` by a second implementation that calls neither
+  `stats()` nor the generator, plus the block-level figures that sit in no table. Double
+  entry, not proof.
+- **The exemption lists were read out of the module being checked.** The percentile-label list
+  lived in the generator, so a reviewer added a figure to it and published the figure. It
+  lives in the test now.
+- **The literal rule allowed anything under a hundred**, and `4 * 31` published an invented
+  minimum while a bare `60` published a methodology parameter the test had not run at. Every
+  numeric literal in the generator must now be declared with what it is for.
+- **`CITATIONS` was `NON_SNAPSHOT` reborn.** Its values are exempt from the digit rule, and
+  the laundering check only rejected figures that matched a real field, so an invented rate
+  passed by construction. A citation may no longer carry a percentage or a
+  thousands-separated count at all: those are the shapes a figure from this study takes.
+- **`docs/LIMITS.md` was in neither guard** while carrying a full prevalence table and a
+  hand-typed ratio, and it was where the one uncorrected copy of a wrong sentence was found.
+  Its tables are generated blocks now and the scan covers fourteen documents rather than five.
+- **A code span or a link hid a retyped figure**, because the scan blanked both before
+  looking. It blanks ISO dates and URLs only.
+- **One extra space in a block marker un-generated the block silently**, and `render()`
+  reported success. Malformed markers are counted and refused.
+- **The write-up quotes `research/cohort.py` verbatim and that file was scanned by nothing**,
+  so a figure added to a quoted docstring published straight through. The quoted source must
+  be digit-free.
+
+**What is still open, and it is the honest residual.** A number spelled in words is invisible
+to every rule here, and one shipped on this pass: a count of strata written as "three of the
+four" was wrong in three documents and no test could see it. A digit assembled at runtime
+would pass. A figure bound to the wrong field in a sentence the recomputation does not cover
+would pass. And the recomputation is a second implementation, so a shared misunderstanding of
+what a field means is invisible to both. The rule this file keeps recording applies to the
+guard as much as to the product: a check that has only ever been watched passing on the case
+it was written for is not yet evidence.
 
 Also guarded mechanically, because it failed once: a hedge present in four claim documents and
 absent from the fifth. One fix pass deleted the only qualifier in `docs/SUBMISSION.md`, the
 most externally facing of the five, while the other four kept theirs.
 
-The remaining exposure is a figure that is correct, present in the snapshot, and attached to
-the wrong row or label. Presence is not correspondence, and only two columns have
-correspondence.
+## The clustering test had no control, and its conclusion is withdrawn
+
+**Found 2026-07-22 by giving an existing test a control rather than by reading its output.**
+
+The batching check counts intervals between consecutive date-changing filings that fall within
+a fixed window of a one, two or three year multiple, against a null equal to the share of the
+observed interval range those windows cover. Industry came in below that null and the other
+three strata above it, and the write-up concluded that annual batching was excluded for
+industry and stood as an explanation for OTHER and OTHER_GOV.
+
+Running the identical test on control windows half a year off each anniversary and the same
+width scores at least as high in three of the four strata and lower by a single interval in
+the fourth. The ratios are rendered per stratum in `docs/WRITEUP.md`.
+
+So the ratio is measuring the shape of the interval distribution, which is concentrated at
+short lags, against a null that assumes an even spread and is therefore the wrong null. It is
+not measuring anniversaries. Nothing about the arithmetic was wrong. The test had no control,
+and a comparison with no control is not evidence.
+
+Both conclusions drawn from it are withdrawn, in the document and here. The innocence check now
+ends with one resolved leg, the currently-carrying population excluded on duration alone, and
+two **unresolved**: industry's filing timing, which was published as resolved off the retired
+null, and the closed-spell durations for OTHER and OTHER_GOV. The table is kept with the control columns beside the anniversary ones, because
+a test that cannot separate its signal from a control is worth publishing as exactly that.
 
 ## The reconciliation split conditions on a revision existing
 
@@ -473,8 +567,8 @@ again contributes to neither the numerator nor the denominator. The measure of
 non-reconciliation is therefore computed only over sponsors that reconciled at some point,
 which is Correction 6's defect one level up.
 
-It is not small. Trials that never revised a date at all: 8 of 60 for INDUSTRY, 5 of 60 for
-NIH, 22 of 60 for OTHER, and **32 of 60 for OTHER_GOV**. The worst-reconciled trials in the
+It is not small: in the government stratum more than half the trials never revised a date at
+all, and the per-stratum counts are rendered in `docs/WRITEUP.md`. The worst-reconciled trials in the
 frame are structurally excluded from the reconciliation statistic, which is why point
 prevalence is reported beside it and why the two must be read together.
 
@@ -482,9 +576,9 @@ prevalence is reported beside it and why the two must be read together.
 
 **Found 2026-07-22 by the second council round. It halved a published headline.**
 
-An earlier draft reported that 52.4% of industry date revisions were filed after the date had
-already passed, and presented that as non-reconciliation. Half of those revisions, 33 of 66,
-set the date to ACTUAL: the sponsor recording when the trial finished. For a trial that ran
+An earlier draft reported the share of industry date revisions filed after the date had
+already passed, and presented that as non-reconciliation. Half of those revisions set the date
+to ACTUAL: the sponsor recording when the trial finished. For a trial that ran
 late that filing necessarily lands after the earlier estimate expired, and it is the update
 42 CFR 11.64(a)(1)(ii) requires within 30 days of actual completion.
 
@@ -493,15 +587,15 @@ licenses half the observations, and it called the same filing "the system workin
 section and a failure in another, a hundred lines apart. The arithmetic was correct
 throughout; the sentence it supported was not, and no numeric check could have caught it.
 
-The surviving claim is the estimate-to-estimate subset: 33 of 126 industry revisions, 26.2%,
-and 24 of the 52 industry trials that revised at all. Both are snapshot fields now
+The surviving claim is the estimate-to-estimate subset, rendered with its counts in
+`docs/WRITEUP.md`. Both are snapshot fields now
 (`revisions_after_lapse_to_estimate`, `trials_with_lapse_to_estimate`) rather than derived in
 prose, because a figure that is not a snapshot field is a figure no test can check.
 
 ## No pooled all-strata rate, and the report used to print one
 
-NIH sponsors carry a dead date about as often as industry ones and roughly two and a half
-times as long, so the strata are not poolable and every published rate is labelled by
+NIH sponsors carry a dead date about as often as industry ones and substantially longer, so
+the strata are not poolable and every published rate is labelled by
 stratum. That was stated in `docs/COHORT.md` and violated in the code: `report()` iterated
 `STRATA + ("ALL",)` and printed a pooled section, on every run, for as long as the rule had
 existed.
@@ -518,7 +612,7 @@ strata are exactly the four measured ones.
 
 A rate with no version is a claim about whatever the store happened to contain the day
 somebody read it. `data/cohort/snapshot.json` freezes the measurement under a
-content-addressed id (currently `cohort-5b03269658b8`, 240 trials, 60 per stratum), hashed
+content-addressed id, hashed
 over the measured rows and the frame together, because a rate means nothing without the
 denominator that produced it.
 
