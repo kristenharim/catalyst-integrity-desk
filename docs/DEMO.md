@@ -12,7 +12,8 @@ python3 -m console.app
 
 **Say "registered primary completion" out loud, never "catalyst date" and never
 "readout".** They differ by two to four months and the gap is always optimistic. The
-distinction is a credibility advantage and the first thing a domain judge tests.
+distinction is what a domain judge tests first, and getting it right is the
+difference between a screen and a monitor.
 
 The structure is deliberate: open on a fact nobody in the room knows, show the machine
 catching it, hand the decision to a human, then prove the record cannot be quietly
@@ -201,7 +202,7 @@ on screen doing exactly that.
 **"Couldn't you just delete the ledger entry?"**
 We tried, and the plain hash chain did not notice. That is why the head hash and entry count
 now live outside the chain. It detects deletion and replacement, given the anchor was not
-also rewritten. Tamper evident, not immutable, and `docs/LIMITS.md` says so in those words.
+also rewritten. Tamper evident, not immutable, and `docs/LIMITS.md` says so in those words.  [lexicon-exempt]
 
 **"How do you know Granite actually ran?"**
 Point the endpoint at an invalid host and the live test fails rather than passes, because it
@@ -218,6 +219,6 @@ universe run needs an alias table and hand review of the largest names.
 - Do not claim the causal result.
 - Do not say "no tool does this". BiopharmaWatch sells a runway-filtered catalyst screener
   across 949 companies and a judge will find it.
-- Do not say "immutable" or "append-only" about the ledger. Say tamper evident.
+- Do not say "immutable" or "append-only" about the ledger. Say tamper evident.  [lexicon-exempt]
 - Do not rebuild the snapshot before filming. It calls Granite and it can move the figures
   this script quotes.

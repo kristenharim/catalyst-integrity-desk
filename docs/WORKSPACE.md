@@ -327,5 +327,5 @@ Carried forward verbatim, because the value of this project is that these hold.
   printing a gap figure beside a row the system calls unrankable.
 - A lapsed completion date is never a catalyst. It is retained and surfaced as a
   date-integrity signal.
-- Say "registered primary-completion expectation", never "readout date".
+- Say "registered primary-completion expectation", never "readout date".  [lexicon-exempt]
 - The claim is the monitor. Not a novel dataset, and not a finding.

@@ -32,6 +32,7 @@ import urllib.parse
 import urllib.request
 
 from engine.ledger import BeliefCard, Breach
+from orchestrator import lexicon
 from orchestrator.classifier import (
     LABELS, Classification, StubClassifier,
     DIRECT_CONTRADICTION, ASSUMPTION_WEAKENED, ASSUMPTION_STRENGTHENED, NEW_MATERIAL_EVIDENCE,
@@ -353,6 +354,20 @@ class GraniteClassifier:
         invented = _fabricated(rationale, card, breach)
         if invented:
             raise ValueError(f"model invented {invented}, provenance broken: {rationale!r}")
+
+        # Second structural guard, same treatment as the first.  _fabricated()
+        # stops the model inventing a number; this stops it making a claim the
+        # evidence does not support -- feasibility, intent, causation, or
+        # silence asserted as fact.  A model that says "this looks like fraud"
+        # has broken provenance exactly as badly as one that says "47.2 months",
+        # so it is discarded the same way and the deterministic stub answers.
+        banned = lexicon.scan(rationale)
+        if banned:
+            raise ValueError(
+                "model made a claim the evidence does not support: "
+                + "; ".join(str(v) for v in banned)
+                + f" in {rationale!r}"
+            )
 
         confidence = float(obj.get("confidence", 0.5))
         if not 0.0 <= confidence <= 1.0:

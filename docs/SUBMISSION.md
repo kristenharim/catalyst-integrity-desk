@@ -114,7 +114,7 @@ table and analyst belief form. Both are logged in `docs/BOB_LOG.md` at the same 
 the Bob rows. The console's three original views, the snapshot generator and the test
 suite are Bob's.
 
-## What makes it credible
+## What makes it checkable
 
 Every real defect in this project had the same shape: everything stayed green. A test
 narrowed around a known bug. A live-model test that passed without reaching the model,
@@ -141,7 +141,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 52 passed, 1 skipped (53 passed with watsonx credentials)
+python3 -m pytest tests/ -q   # 99 passed, 1 skipped (100 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -173,9 +173,9 @@ from memory: every figure in this file traces to `data/snapshot.json` or `docs/B
 
 ## Do not say
 
-- "Immutable" or "append-only" about the ledger. It is tamper evident, and deletion is
+- "Immutable" or "append-only" about the ledger. It is tamper evident, and deletion is  [lexicon-exempt]
   detectable given the anchor was not also rewritten.
-- "Readout date". It is a registered primary-completion expectation, and the two differ by
+- "Readout date". It is a registered primary-completion expectation, and the two differ by  [lexicon-exempt]
   two to four months, always optimistically.
 - That cash-constrained sponsors revise dates differently. That is an open question this
   project deliberately does not answer.
