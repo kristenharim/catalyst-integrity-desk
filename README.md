@@ -10,11 +10,22 @@ Nobody was watching, because nobody's job is to watch.
 
 **And Rocket is not unusual.** In a random sample of industry-sponsored phase 2/3 trials,
 **80.6% carried an already-passed registered completion date at some point**, median
-stretch 246 days. Rocket's 677 sits near the 75th percentile, not at the tail. That is a
-correction to how this project used to open, and it makes the claim bigger rather than
-smaller: the finding is not one sponsor letting a date lapse, it is that **nobody
-reconciles any of it, across an entire registry, as a matter of course**. See
-`docs/COHORT.md` for the frame, the n, and what the sample cannot support.
+stretch 246 days. Rocket's 677 days sits at the **84th percentile** of 221 such stretches:
+long, but not the tail.
+
+That is a correction to how this project used to open, and it makes the claim bigger
+rather than smaller. The finding is not one sponsor letting a date lapse. It is that
+**four in five do, for a median of eight months, and nothing anywhere reconciles it
+against the theses that depend on it.**
+
+The boring explanation was checked and does not hold: 42 CFR 11.64(a)(1)(ii) requires the
+primary completion date to be updated "not later than 30 calendar days" after a trial
+reaches actual primary completion. The observed median is eight times that window, so this
+is not an artifact of annual update batching.
+
+`docs/COHORT.md` has the frame, the n, the strata (NIH sponsors run 619 days, two and a
+half times industry, which is why every rate here stays labelled), and what the sample
+cannot support.
 
 ## The claim, in one sentence
 

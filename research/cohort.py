@@ -176,6 +176,30 @@ def measure(nct: str, sponsor_class: str) -> dict:
     ]
     transitions = walk(promises)
     b = slip_breakdown(transitions)
+
+    # Why each refusal happened. Without this, "refused" bundles a finding about
+    # the sponsor (a count changed) with a gap in our data (a dimension was
+    # unreadable), and the two cannot be told apart afterwards. An upper bound
+    # that mixes them supports no downstream claim at all.
+    reasons: dict[str, int] = {}
+    for t in transitions:
+        if t.comparable or t.kind == "text_revised":
+            continue
+        if t.kind == "supersession":
+            key = "supersession"
+        elif t.kind == "scope_revision":
+            key = "scope:" + "+".join(sorted(t.changed)) if t.changed else "scope"
+        else:
+            key = "unreadable:" + ("+".join(sorted(t.changed)) if t.changed
+                                   else "no_date")
+        reasons[key] = reasons.get(key, 0) + 1
+    row["refusal_reasons"] = reasons
+    row["refused_scope"] = sum(v for k, v in reasons.items()
+                               if k.startswith("scope"))
+    row["refused_unreadable"] = sum(v for k, v in reasons.items()
+                                    if k.startswith("unreadable"))
+    row["refused_superseded"] = reasons.get("supersession", 0)
+
     row["n_transitions"] = len(transitions)
     row["established_days"] = b["established"]
     row["contingent_days"] = b["contingent"]
@@ -209,8 +233,14 @@ def run(n_per_stratum: int) -> None:
                    "frame_end": FRAME_END, "phases": list(PHASES),
                    "n_per_stratum": n_per_stratum, "picked": picked}, f, indent=2)
 
+    # Under-measured strata first. NIH trials carry far more versions, so a
+    # fetch-bound run that takes strata in dict order starves them, which is a
+    # stratification risk and not merely incompleteness: if NIH trials also
+    # reconcile differently, every "all strata" rate inherits the gap.
+    priority = {"NIH": 0, "OTHER_GOV": 1, "OTHER": 2, "INDUSTRY": 3}
     todo = [(nct, cls) for cls, ncts in picked.items()
             for nct in ncts if nct not in done]
+    todo.sort(key=lambda t: (priority.get(t[1], 9), picked[t[1]].index(t[0])))
     print(f"\n{len(todo)} to measure ({len(done)} already stored).")
     with open(_results_path(), "a") as out:
         for i, (nct, cls) in enumerate(todo, 1):
@@ -269,6 +299,18 @@ def report() -> None:
         if trans:
             print(f"  contingent on prose alone           {cont:>4} ({cont/trans:.1%})")
             print(f"  refused outright                    {ref:>4} ({ref/trans:.1%})")
+            # Split, because a finding about the sponsor and a gap in our data
+            # are different things and one number cannot carry both.
+            scope = sum(r.get("refused_scope", 0) for r in sub)
+            unread = sum(r.get("refused_unreadable", 0) for r in sub)
+            sup = sum(r.get("refused_superseded", 0) for r in sub)
+            unsplit = ref - scope - unread - sup
+            print(f"    of which scope changed            {scope:>4} ({scope/trans:.1%})")
+            print(f"    of which unreadable here          {unread:>4} ({unread/trans:.1%})")
+            print(f"    of which superseded               {sup:>4} ({sup/trans:.1%})")
+            if unsplit:
+                print(f"    measured before the split         {unsplit:>4}"
+                      f"  <- re-measure these to close the bundle")
         if est:
             print(f"  established movement, days          "
                   f"p10 {_pct(est,.1):.0f}   p50 {_pct(est,.5):.0f}   "

@@ -5,10 +5,9 @@ those fourteen were the trials of five companies picked by hand to illustrate th
 A sample selected on the outcome cannot produce a base rate. This is the first attempt at
 one.
 
-**Status: incomplete and resumable.** 85 trials measured of 240 drawn. The draw is seeded
-and stored, so the remainder continues rather than restarting. Reporting at n=85 rather
-than waiting, because two of the results contradict things already stated in this repo and
-leaving those standing while the run finishes would be the failure this project is about.
+**Status: partial and resumable.** 169 trials measured of 240 drawn, NIH complete, INDUSTRY
+at 62 and awaiting a re-measure. The draw is seeded and stored, so the remainder continues
+rather than restarting.
 
 ## The frame, which is the denominator
 
@@ -22,18 +21,42 @@ enumeration is capped at 3,000 per stratum, so within a stratum the draw is unif
 the registry's own ordering rather than over the whole stratum, which is a real limitation
 and not a rounding one.
 
-## Results at n=85
+## Results
 
-| Stratum | n | Carried a dead date | Dead-date days p50 / p90 / max | Transitions | Contingent | Refused |
-|---|---:|---:|---|---:|---:|---:|
-| INDUSTRY | 62 | **80.6%** | 246 / 1018 / 2104 | 130 | 6.9% | 40.0% |
-| NIH | 11 | 81.8% | 1561 / 1616 / 1672 | 23 | 8.7% | 43.5% |
-| OTHER_GOV | 6 | 50.0% | 504 / 606 / 686 | 5 | 0% | 0% |
-| OTHER | 6 | 50.0% | 323 / 535 / 555 | 6 | 0% | 50.0% |
-| **ALL** | **85** | **76.5%** | 365 / 1602 / 2104 | 164 | **6.7%** | **39.6%** |
+| Stratum | n | Carried a dead date | Dead-date days p50 / p90 / max | Transitions | Contingent | Refused | of which scope | unreadable |
+|---|---:|---:|---|---:|---:|---:|---:|---:|
+| INDUSTRY | 62 | **80.6%** | **246** / 1018 / 2104 | 130 | 6.9% | 40.0% | not yet split | not yet split |
+| NIH | 95 | 82.1% | **619** / 1595 / 2716 | 295 | 6.1% | 35.9% | 25.4% | **0%** |
+| OTHER_GOV | 6 | 50.0% | 504 / 606 / 686 | 5 | 0% | 0% | 0% | 0% |
+| OTHER | 6 | 50.0% | 323 / 535 / 555 | 6 | 0% | 50.0% | not yet split | not yet split |
 
-INDUSTRY is the population the product is about and the only stratum with an n worth
-reading. The others are listed for contrast and are too small to compare.
+## The strata differ, so every rate stays labelled
+
+NIH sponsors carry a dead date about as *often* as industry ones (82.1% against 80.6%) and
+roughly **two and a half times as long**: median 619 days against 246.
+
+That is why the 80.6% figure is written as an INDUSTRY number everywhere it appears, and
+why an all-strata average would be actively misleading. Two populations that differ this
+much on duration should not be pooled into one "sponsors do this" claim, and pooling them
+was the sampling bias worth avoiding rather than a completeness detail.
+
+## The refusal bundle is resolved, and the hole was empty
+
+The previous version of this file flagged "refused, 39.6%" as uninterpretable because it
+mixed a finding about the sponsor (a count changed) with a gap in our own data (a dimension
+was unreadable). Recording the reason per transition settles it, at least for the stratum
+that has been re-measured:
+
+    NIH, 295 transitions:   scope changed 25.4%   superseded 10.5%   unreadable 0.0%
+
+**Zero unreadable.** Every refusal is a real event in the record: either a count or
+enumeration genuinely changed, or the commitment was withdrawn or terminated. The bundle
+was not corrupted; it was correct and unlabelled. Worth stating plainly, because a check
+that comes back clean is evidence too, and the honest outcome of looking for a hole is
+sometimes that there is not one.
+
+INDUSTRY still shows "measured before the split" and its 40.0% remains an upper bound until
+those 62 trials are re-measured. Same command, already running.
 
 ## Two things this contradicts
 
@@ -67,21 +90,37 @@ That materially changes the product question from the last round. An adjudicatio
 is right, and the load it has to ration is much lighter than the convenience sample
 implied.
 
-## A defect in this report, named rather than fixed
+## The innocence check: is there a boring explanation?
 
-**"Refused" bundles two different things.** A transition is refused when a count or
-enumeration changed, and also when continuity could not be established because a dimension
-was unreadable in both versions. The first is a finding about the sponsor; the second is a
-gap in the data. Reporting 39.6% as one number conflates them, which is exactly the sort
-of thing this project exists to refuse.
+Before "nobody reconciles this" goes anywhere external, the dull hypothesis has to be
+ruled out. If sponsors batch their registry updates annually, a median lapse of 246 days
+is an artifact of update cadence and not of anyone ignoring anything.
 
-A diagnostic pass over the cached versions shows enrolment as the dominant identifiable
-driver of genuine scope revisions. Separating the two properly requires re-running the
-cohort with the refusal reason recorded per transition, which is the next change to
-`research/cohort.py` and is not done here.
+It is not. **42 CFR 11.64(a)(1)(ii)** sets a field-specific deadline for exactly this
+field:
 
-Until it is, read 39.6% as an upper bound on genuine scope revisions, not as a measurement
-of them.
+> "Primary Completion Date must be updated not later than 30 calendar days after the
+> clinical trial reaches its actual primary completion date."
+
+Thirty days. The observed median stretch is 246, roughly eight times the window, and the
+p90 of 1,018 days is about thirty-four times it. Whatever explains the distribution, it is
+not an annual update cycle, because the rule for this element is not annual.
+
+**What that does and does not license, precisely.** The rule concerns updating the date to
+*actual* once a trial reaches its actual primary completion. What is observed here is a
+registered *estimated* date that passed and stayed standing. Those overlap but are not the
+same event: a trial that did not complete on its estimated date owes a revision, and a
+trial that did owes an update to actual, but this data does not say which happened. So:
+
+- The batching explanation is ruled out as a *complete* explanation of the distribution.
+- No individual stretch is called a breach, because that would need to know whether the
+  trial actually completed on the registered date, and it is not in this dataset.
+- The duty can be *named*, which is what `orchestrator/lexicon.py` requires before any
+  statement touching disclosure obligations is allowed at all.
+
+The 30-day window is therefore used as a reference line on a distribution, not as a test
+any trial passes or fails. `research/sponsor_profile.py` renders it that way and says so
+in the output.
 
 ## What this does not license
 
