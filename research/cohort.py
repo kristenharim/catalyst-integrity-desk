@@ -154,11 +154,28 @@ def measure(nct: str, sponsor_class: str) -> dict:
     row["dead_date_days"] = [s["days_carried"] for s in stretches]
     row["max_dead_days"] = max((s["days_carried"] for s in stretches), default=0)
 
-    # Was the LAST registered date still standing after passing, uncorrected?
-    last_pcd = _parse_date(revs[-1]["pcd"]) if revs else None
-    row["ends_with_uncorrected_dead_date"] = bool(
+    # Point prevalence: is this trial carrying a dead date RIGHT NOW? The stretch
+    # measure above is ever-prevalence and counts only stretches that were
+    # eventually corrected, so a date still standing today appears in neither.
+    #
+    # The discriminator is the date's own type, not the trial's status. An ACTUAL
+    # date in the past is the reconciled case: the trial completed and the sponsor
+    # recorded when. An ESTIMATED date in the past is a forecast that expired and
+    # that nothing has reconciled since.
+    #
+    # 2026-07-22: this read `hist.__dict__.get("status")`, and `TrialHistory` has
+    # no `status` field, so the "not COMPLETED" exclusion it appears to apply
+    # never fired on any trial and the flag silently meant "the last date is in
+    # the past". Nothing consumed it, so no published figure was affected, which
+    # is luck and not design. Status is a per-revision field; the date's type is
+    # the better discriminator and is why the fix does not simply reach for it.
+    last = revs[-1] if revs else None
+    last_pcd = _parse_date(last["pcd"]) if last else None
+    row["last_pcd_type"] = (last or {}).get("pcd_type")
+    row["last_status"] = (last or {}).get("status")
+    row["carries_dead_date_now"] = bool(
         last_pcd is not None and last_pcd < date.today()
-        and (hist.__dict__.get("status") or "") not in ("COMPLETED",)
+        and (row["last_pcd_type"] or "").upper() != "ACTUAL"
     )
 
     # Comparability, via the product's own classifier.

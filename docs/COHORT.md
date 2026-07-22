@@ -80,6 +80,24 @@ OTHER_GOV and OTHER moved a great deal, from n=6 each to n=60, and their earlier
 should be treated as having said nothing. They were labelled badly under-measured at the
 time and they were.
 
+## Open: the cross-stratum comparisons below are undercut
+
+An adversarial review on 2026-07-22 found two measurement problems, both confirmed against
+the store and both written up in `docs/LIMITS.md`. They are unresolved and they are the
+owner's call, because fixing them changes what the headline measures.
+
+1. **A stretch needs a later filing to close it**, so a sponsor that lets a date lapse and
+   then files nothing scores as never having carried one. OTHER_GOV has the lowest rate in
+   the table below (53.3%) and the highest share carrying an unreconciled lapsed date right
+   now (96.7%), because 28 of its 60 trials went quiet. Every ranking between strata in the
+   next two sections is suspect.
+2. **A stretch is counted per filing, not per lapse.** One NIH trial with three date
+   revisions contributes 91 stretches. The 2.4x duration ratio falls to 1.5x when each trial
+   contributes one observation.
+
+The INDUSTRY figures are the least affected and both corrections move them the conservative
+way: 80.0% is a lower bound and 83.3% of industry trials are carrying a lapsed date now.
+
 ## The strata differ, so every rate stays labelled
 
 On the complete draw, NIH and INDUSTRY sponsors carry a dead date at the *same* frequency,

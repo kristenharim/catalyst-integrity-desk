@@ -74,11 +74,16 @@ minus 14.5 months, financing required. Nobody filed an amendment. The date simpl
 and passed.
 
 **Rocket is ordinary, and that is the actual finding.** A random sample of industry
-phase 2/3 trials shows 80.6% carrying an already-passed registered completion date at some
-point, median 246 days. Rocket's 677 is around the 75th percentile. So the claim is not
-that one sponsor behaved badly; it is that this is routine and nothing anywhere reconciles
-it against the theses that depend on it. `docs/COHORT.md` states the frame, the n=85 so
-far, and the limits of the sample.
+phase 2/3 trials shows 80.0% carrying an already-passed registered completion date at some
+point, median 240 days. Rocket's 677 sits at the 85th percentile of 188 such stretches. So
+the claim is not that one sponsor behaved badly; it is that this is routine and nothing
+anywhere reconciles it against the theses that depend on it. `docs/COHORT.md` states the
+frame and the limits, and every figure cites cohort snapshot `cohort-65fdf1f71b1d`: 240
+trials, 60 in each of four sponsor strata, all measured. An adversarial review found the
+measure cannot see a sponsor that lapses and then stops filing, which makes 80.0% a lower
+bound (83.3% of industry trials are carrying a lapsed date right now) and undercuts the
+comparisons between strata. Both findings are in `docs/LIMITS.md` and `docs/WRITEUP.md` is
+blocked until they are settled.
 
 ## The architecture that makes the demo mean something
 
@@ -208,7 +213,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 153 passed, 1 skipped (154 passed with watsonx credentials)
+python3 -m pytest tests/ -q   # 154 passed, 1 skipped (155 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a

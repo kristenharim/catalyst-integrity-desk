@@ -318,6 +318,93 @@ rule, one in `load_results()` and one implied by `compact()`. There is now one, 
 and both call it. A cohort study measured by a second implementation measures the second
 implementation, and the same is true of a cohort store compacted by one.
 
+## The dead-date measure cannot see a sponsor that lapses and goes quiet
+
+**Found 2026-07-22 by an adversarial review of the cohort write-up, confirmed against the
+store, and open. It affects published figures and it is the most serious item in this file.**
+
+`carried_until_corrected()` walks consecutive registry versions and emits a stretch for each
+pair where the earlier version's completion date had already passed when the later one was
+filed. Every stretch therefore needs **a later filing to close it**. A trial whose date
+lapsed and that never filed again produces no stretch at all and is counted as never having
+carried a dead date.
+
+So the quantity actually measured is not "carried an already-passed date". It is **"carried
+an already-passed date and subsequently filed something"**. The purest instance of the
+behaviour this project exists to surface, a sponsor that lets a date expire and then goes
+silent, scores as clean.
+
+That is not a hypothetical. Counting trials whose most recent registered date is in the past
+and still typed ESTIMATED, as of the snapshot date 2026-07-22:
+
+| Stratum | carried at some point (published) | carrying one now | invisible to the stretch measure |
+|---|---:|---:|---:|
+| INDUSTRY | 80.0% | 83.3% | 6 |
+| NIH | 80.0% | 70.0% | 2 |
+| OTHER_GOV | **53.3%** | **96.7%** | **28** |
+| OTHER | 61.7% | 85.0% | 17 |
+
+**The cross-stratum comparison is inverted by this.** OTHER_GOV has the lowest published
+rate and the highest share of trials sitting on an unreconciled lapsed date right now,
+because 28 of its 60 trials lapsed and never filed again. `docs/COHORT.md` and
+`docs/WRITEUP.md` both said government and academic sponsors "did it less often". On this
+evidence they do it more, and the measure could not see it.
+
+The mechanism is filing frequency, and it is large: median registry versions per trial is 2
+for OTHER_GOV, 4 for OTHER, 9 for INDUSTRY and **106** for NIH.
+
+**What survives.** The industry figure is a lower bound and moves the right way: 80.0% ever,
+83.3% currently carrying. The Rocket 677-day case is untouched, because it is one version
+carrying one already-passed date against one clock and needs no later filing to exist.
+
+**What does not survive.** Any statement ranking strata by how often they carry a dead date.
+
+## A stretch is not an episode, and the 2.4x is largely a filing-frequency artifact
+
+**Found in the same review, confirmed, and open.**
+
+`docs/WRITEUP.md` claimed "a trial contributes one stretch per episode". That is false. A
+stretch is emitted per consecutive version pair, so one lapse spanning many filings
+contributes many overlapping rows measuring the same expiry to successively later endpoints.
+They are nested prefixes, not independent observations.
+
+`NCT02931474` has 97 registry versions, **3** completion-date revisions, and **91** stretches,
+with durations running 42, 114, 356, 357, 359, 364, 400, 402 and upward. At most three real
+episodes produced 91 rows, and that single trial is 18% of the NIH stratum's entire duration
+distribution. The top five NIH trials are 49% of it.
+
+Because the row count tracks how often a sponsor files for unrelated reasons while a date
+sits dead, the duration distribution is weighted toward frequent filers. Measuring one
+observation per trial, its longest carry, closes most of the gap:
+
+| | INDUSTRY | NIH | ratio |
+|---|---:|---:|---:|
+| median over all stretches (published) | 240 | 567 | **2.4x** |
+| median of per-trial longest carry | 390 | 590 | **1.5x** |
+| p90 over all stretches (published) | 996 | 1,589 | 1.6x |
+| p90 of per-trial longest carry | 1,384 | 1,617 | 1.2x |
+
+The "2.4 times longer" figure appears in `README.md`, `docs/SUBMISSION.md`,
+`docs/COHORT.md` and `docs/WRITEUP.md`, and in each place it is offered as the justification
+for the rule that strata may not be pooled. **The rule is probably still right**, since the
+frequencies also differ once the measure above is corrected, but the specific evidence
+offered for it is unit-dependent and roughly halves under the per-trial unit.
+
+Note also that the industry median itself is unit-dependent: 240 days per stretch, 390 days
+per trial. Neither is wrong. Only one of them is currently labelled.
+
+**Both of these are unresolved and are the owner's call**, because the fix is a change to
+what the study's headline measures rather than a defect to be patched. They are recorded
+here rather than acted on, and `docs/WRITEUP.md` is blocked from publication until they are
+settled.
+
+**Why this is the same lesson as everything else in this file.** The cohort deliberately
+measures with the product's own code, on the argument that a study measured by a
+reimplementation measures the reimplementation. That argument is sound and it has a cost
+nobody stated: a defect in `carried_until_corrected()` is shared by the product and the
+study, so the study cannot act as an independent check on the product. It did not catch
+this. An adversarial reader did.
+
 ## No pooled all-strata rate, and the report used to print one
 
 NIH sponsors carry a dead date about as often as industry ones and roughly two and a half

@@ -307,6 +307,31 @@ credit. Export the two console sessions into `docs/bob-sessions/` and the two
 grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 ```
 
+## The cohort study, closed 2026-07-22
+
+The random cohort is finished and frozen. 240 trials drawn, 60 in each of four sponsor
+strata, all 240 measured, none failed. Snapshot **`cohort-65fdf1f71b1d`**, and every
+published figure now cites it. `docs/WRITEUP.md` is the publishable write-up;
+`docs/COHORT.md` is the working record with the full correction history.
+
+What closing it required, in case any of it recurs:
+
+- **The first amendment to a protected engine module**, under
+  `docs/AMENDING_PROTECTED_MODULES.md`, which had never been invoked. The `_cached()`
+  non-atomic write is fixed at the source. The condition that did the work was the
+  before-and-after gate diff: it is the only one of the four that cannot be satisfied by
+  reading the diff and feeling confident.
+- **The store compacted**, one row per trial, superseded rows archived rather than deleted.
+  A test now fails if any shipped module reads the store around `load_results()`.
+- **A rule that was written down and violated in code.** The report printed a pooled
+  all-strata section on every run, for as long as the rule against pooling had existed.
+  Same lesson as everything else in this file: prose does not enforce anything.
+
+**The headline numbers moved and it needs a human read.** INDUSTRY did not move at all,
+which is the stratum the headline rests on: 80.0%, median 240 days, p90 996, max 2,104, n=60
+throughout. NIH moved on completing from 57 to 60 trials: 80.7% to 80.0%, median 580 to 567
+days. OTHER_GOV and OTHER went from n=6 to n=60 and their earlier figures said nothing.
+
 ## Still open
 
 - ~~The breach-moment Bob task has no transcript.~~ Closed 2026-07-21. All twelve rows

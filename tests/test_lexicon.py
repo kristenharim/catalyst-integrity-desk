@@ -38,7 +38,12 @@ PAGES = ["/contract/RCKT", "/contract/BEAM", "/contracts", "/redline", "/queue",
 # Documents that make claims on the project's behalf. LIMITS.md and this file's
 # own source are excluded: both quote banned phrases constantly, by design.
 CLAIM_DOCS = ["README.md", "docs/SUBMISSION.md", "docs/DEMO.md",
-              "docs/PRINCIPLE.md", "docs/WORKSPACE.md", "docs/BACKTEST.md"]
+              "docs/PRINCIPLE.md", "docs/WORKSPACE.md", "docs/BACKTEST.md",
+              # The cohort write-up is the most claim-dense document here and the
+              # one most likely to be read on its own, so it is enforced like a
+              # rendered page rather than trusted like a working note. It caught
+              # two violations in the first draft.
+              "docs/WRITEUP.md"]
 
 
 @pytest.fixture(scope="module")
