@@ -6,9 +6,9 @@ A sample selected on the outcome cannot produce a base rate. This is the first a
 one.
 
 **Status: complete and frozen.** All 240 drawn trials are measured, 60 in every stratum,
-none failed. Frozen as snapshot **`cohort-65fdf1f71b1d`** on 2026-07-22. Every number below
-is a statement about that snapshot and nothing else, and the id is content-addressed, so
-changing one measured row changes it.
+none failed. Frozen as snapshot **`cohort-c2de38f09698`** on 2026-07-22, with point prevalence
+computed as of that same pinned date. Every number below is a statement about that snapshot
+and nothing else, and the id is content-addressed, so changing one measured row changes it.
 
 ## The correction history, which is the reason to trust the numbers
 
@@ -17,10 +17,13 @@ place rather than quietly restated. They belong at the top rather than in a foot
 because a measurement's error history is the only evidence available that anyone was
 actually checking.
 
-**One: n was inflated by 29%.** A revision of this file reported n=169. It was 131 distinct
-trials. The store is append-only and resumable, a background pass and a manual merge
-appended concurrently, and 49 trials were counted twice. Every rate computed from the
-inflated n was slightly wrong. `load_results()` now deduplicates on read, the store is
+**One: n was inflated by about 37%.** The store is written by appending and the run is
+resumable, so a background pass and a manual merge appended concurrently. At the commit where
+the fix landed it held 179 rows and 131 distinct trials, 48 counted twice, and the "169 trials
+measured" published mid-run was a row count covering 123 distinct trials. Every rate computed
+from the inflated n was slightly wrong. This correction was itself first published wrong, as
+"n=169 was really 131, inflated by 29%", pairing a row count from one moment with a distinct
+count from a later one. `load_results()` now deduplicates on read, the store is
 compacted to one row per trial with the superseded rows archived, and a test fails if any
 shipped module reads the store directly. The inflation was invisible in exactly the way
 that matters: more rows reads as more data, never as a bug, and it moved the headline in
@@ -55,7 +58,7 @@ enumeration is capped at 3,000 per stratum, so within a stratum the draw is unif
 the registry's own ordering rather than over the whole stratum, which is a real limitation
 and not a rounding one.
 
-## Results, complete, from snapshot `cohort-65fdf1f71b1d`
+## Secondary results: lapsed and subsequently filed again
 
 | Stratum | n | Carried a dead date | Dead-date days p50 / p90 / max | Transitions | Contingent | Refused | of which scope | superseded | unreadable |
 |---|---:|---:|---|---:|---:|---:|---:|---:|---:|
@@ -64,47 +67,78 @@ and not a rounding one.
 | OTHER_GOV | 60 | 53.3% | 222 / 686 / 2556 | 48 | 2.1% | 25.0% | 22.9% | 2.1% | **0%** |
 | OTHER | 60 | 61.7% | 270 / 874 / 1929 | 91 | 3.3% | 33.0% | 24.2% | 8.8% | **0%** |
 
-There is deliberately no ALL row. See below.
+There is deliberately no ALL row. **This table is the secondary measure**, kept because it
+is what earlier revisions published and because a duration distribution over stretches is
+still informative. It cannot see a sponsor that lapsed and then stopped filing, so it should
+never be read as a frequency ranking between strata.
 
-**What moved from the last published version, and what did not.** INDUSTRY did not move at
-all: same n, same 80.0%, same 240 / 996 / 2104. It was already complete at 60 when those
-figures were published, so finishing the draw could not touch it, and that is the stratum
-the headline rests on.
+The primary figures are point prevalence and per-trial longest carry:
 
-NIH moved, because it went from 57 measured to 60. Its frequency went 80.7% to 80.0%, its
-median dead-date stretch 580 days to 567, its superseded share 9.8% to 9.4%. Small, and
-still a correction: the previous figures described 57 trials and were published as though
-they described the stratum.
+| Stratum | carrying an expired estimate now | invisible to the stretch measure | longest carry p50 | median versions |
+|---|---:|---:|---:|---:|
+| INDUSTRY | 5 of 60 (8.3%) | 4 | 390 | 9 |
+| NIH | 0 of 60 (0.0%) | 0 | 590 | 106 |
+| OTHER | 19 of 60 (31.7%) | 15 | 439 | 4 |
+| OTHER_GOV | 27 of 60 (45.0%) | 20 | 336 | 2 |
 
-OTHER_GOV and OTHER moved a great deal, from n=6 each to n=60, and their earlier figures
-should be treated as having said nothing. They were labelled badly under-measured at the
-time and they were.
+The two frequency measures rank the strata in exactly opposite order, and the ordering is
+filing frequency.
 
-## Open: the cross-stratum comparisons below are undercut
+## Resolved: the measure changed, and the primary figures with it
 
-An adversarial review on 2026-07-22 found two measurement problems, both confirmed against
-the store and both written up in `docs/LIMITS.md`. They are unresolved and they are the
-owner's call, because fixing them changes what the headline measures.
+An adversarial review on 2026-07-22 found two measurement problems, both confirmed against the
+store. The owner resolved them the same day and the study was re-measured and re-frozen as
+`cohort-c2de38f09698`.
 
 1. **A stretch needs a later filing to close it**, so a sponsor that lets a date lapse and
-   then files nothing scores as never having carried one. OTHER_GOV has the lowest rate in
-   the table below (53.3%) and the highest share carrying an unreconciled lapsed date right
-   now (96.7%), because 28 of its 60 trials went quiet. Every ranking between strata in the
-   next two sections is suspect.
-2. **A stretch is counted per filing, not per lapse.** One NIH trial with three date
-   revisions contributes 91 stretches. The 2.4x duration ratio falls to 1.5x when each trial
-   contributes one observation.
+   then files nothing scored as never having carried one. **Point prevalence is now the
+   primary frequency measure**: a trial whose most recent registered date is in the past and
+   still typed as an estimate. The stretch-based rate is retained and labelled "lapsed and
+   subsequently filed again". The silent population is a first-class result: the two measures
+   rank the four strata in exactly opposite order, and 20 of OTHER_GOV's 27
+   currently-expired trials are invisible to the stretch measure.
+2. **A stretch is counted per filing, not per lapse.** **Per-trial longest carry is now the
+   primary duration measure** at a NIH/industry ratio of 1.5x; the per-stretch figures are a
+   labelled sensitivity at 2.4x. "2.4x" is removed as a headline everywhere, and the
+   no-pooling rule is re-justified on three independent differences rather than on it.
 
-The INDUSTRY figures are the least affected and both corrections move them the conservative
-way: 80.0% is a lower bound and 83.3% of industry trials are carrying a lapsed date now.
+A third finding came out of fixing the first: the initial point-prevalence pass read the
+ESTIMATED/ACTUAL type from a helper that did not return it, so the filter never fired and
+every completed trial that had correctly recorded its actual completion date was counted as
+carrying a lapsed one. It published 83.3% for industry and 96.7% for OTHER_GOV for one
+revision. The true figures are 8.3% and 45.0%. See `docs/LIMITS.md`.
+
+## The finding the study now leads on
+
+Registered dates are revised, and **when** they are revised is the whole distinction:
+
+| Stratum | dated revisions | filed after the date had lapsed | trials revising, at least one after a lapse |
+|---|---:|---:|---:|
+| INDUSTRY | 126 | 66 (**52.4%**) | 43 of 52 (82.7%) |
+| NIH | 181 | 57 (31.5%) | 32 of 55 (58.2%) |
+| OTHER_GOV | 48 | 32 (66.7%) | 23 of 28 (82.1%) |
+| OTHER | 91 | 49 (53.8%) | 27 of 38 (71.1%) |
+
+A sponsor revising while the date is still in the future is forecasting, and the trial may be
+very late with the record still honest. That is the delay literature. A sponsor revising only
+afterwards carried a commitment it had stopped believing, and that is this project's claim.
 
 ## The strata differ, so every rate stays labelled
 
-On the complete draw, NIH and INDUSTRY sponsors carry a dead date at the *same* frequency,
-80.0% each, to three significant figures, and NIH carries it **2.4 times as long**: median
-567 days against 240. The frequencies converging as both strata filled out is the more
-striking version of the result, not a weaker one. Whatever produces this is not specific to
-commercial sponsors.
+The strata differ on three independent things, and the no-pooling rule rests on all three
+rather than on any single ratio:
+
+1. **Reconciliation behaviour.** 52.4% of industry revisions are filed after a lapse, against
+   31.5% of NIH ones.
+2. **Point prevalence.** 45.0% of OTHER_GOV trials carry an expired estimate now, against
+   0.0% of NIH trials.
+3. **Filing frequency**, which drives both: a median of 2 registry versions per trial for
+   OTHER_GOV against 106 for NIH.
+
+On the primary duration measure NIH carries **1.5 times as long** as industry, median 590 days
+against 390. On the per-stretch sensitivity the same comparison reads 2.4x, and the gap
+between the two is the filing-frequency artifact rather than a finding. "2.4x" is no longer
+used as a headline anywhere.
 
 Duration is where they separate, and they separate by more than a factor of two. So the
 80.0% figure is written as an INDUSTRY number everywhere it appears, and **no all-strata

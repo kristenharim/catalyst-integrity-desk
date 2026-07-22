@@ -337,25 +337,38 @@ silent, scores as clean.
 That is not a hypothetical. Counting trials whose most recent registered date is in the past
 and still typed ESTIMATED, as of the snapshot date 2026-07-22:
 
-| Stratum | carried at some point (published) | carrying one now | invisible to the stretch measure |
-|---|---:|---:|---:|
-| INDUSTRY | 80.0% | 83.3% | 6 |
-| NIH | 80.0% | 70.0% | 2 |
-| OTHER_GOV | **53.3%** | **96.7%** | **28** |
-| OTHER | 61.7% | 85.0% | 17 |
+| Stratum | carried at some point (stretch measure) | carrying one now | invisible to the stretch measure | median versions |
+|---|---:|---:|---:|---:|
+| INDUSTRY | 80.0% | 8.3% | 4 | 9 |
+| NIH | 80.0% | 0.0% | 0 | 106 |
+| OTHER | 61.7% | 31.7% | 15 | 4 |
+| OTHER_GOV | **53.3%** | **45.0%** | **20** | 2 |
 
-**The cross-stratum comparison is inverted by this.** OTHER_GOV has the lowest published
-rate and the highest share of trials sitting on an unreconciled lapsed date right now,
-because 28 of its 60 trials lapsed and never filed again. `docs/COHORT.md` and
+**These figures replace wrong ones published for one revision of this file**, which read
+83.3% / 70.0% / 85.0% / 96.7%. That version read the date's ESTIMATED/ACTUAL type from a
+helper that did not return it, compared `None` against `"ACTUAL"`, and so counted every
+completed trial that had correctly recorded its actual completion date as carrying a lapsed
+one. The filter never fired. It is the same defect shape as the `status` bug three paragraphs
+down and as everything else in this file: a check that silently does not apply is
+indistinguishable from a check that passes, and this one produced a more dramatic number in
+the flattering direction and survived a manual review. Corrected 2026-07-22 under snapshot
+`cohort-c2de38f09698`; a test now asserts a past ACTUAL date does not count.
+
+**The cross-stratum comparison is inverted by this**, and on the corrected figures the two
+measures rank the four strata in exactly opposite order. OTHER_GOV is lowest on the stretch
+measure and highest on point prevalence, with 20 of its 27 currently-expired trials invisible
+to the stretch measure because they lapsed and never filed again. `docs/COHORT.md` and
 `docs/WRITEUP.md` both said government and academic sponsors "did it less often". On this
 evidence they do it more, and the measure could not see it.
 
 The mechanism is filing frequency, and it is large: median registry versions per trial is 2
 for OTHER_GOV, 4 for OTHER, 9 for INDUSTRY and **106** for NIH.
 
-**What survives.** The industry figure is a lower bound and moves the right way: 80.0% ever,
-83.3% currently carrying. The Rocket 677-day case is untouched, because it is one version
-carrying one already-passed date against one clock and needs no later filing to exist.
+**What survives.** The Rocket 677-day case is untouched, because it is one version carrying
+one already-passed date against one clock and needs no later filing to exist. **Resolved
+2026-07-22:** point prevalence is now the primary frequency measure, the stretch measure is
+retained and labelled "lapsed and subsequently filed again", and the silent population is
+reported as a result rather than as a gap.
 
 **What does not survive.** Any statement ranking strata by how often they carry a dead date.
 
@@ -393,10 +406,12 @@ offered for it is unit-dependent and roughly halves under the per-trial unit.
 Note also that the industry median itself is unit-dependent: 240 days per stretch, 390 days
 per trial. Neither is wrong. Only one of them is currently labelled.
 
-**Both of these are unresolved and are the owner's call**, because the fix is a change to
-what the study's headline measures rather than a defect to be patched. They are recorded
-here rather than acted on, and `docs/WRITEUP.md` is blocked from publication until they are
-settled.
+**Both were resolved by the owner on 2026-07-22.** Point prevalence became the primary
+frequency measure and per-trial longest carry the primary duration measure, with the
+stretch-based figures retained as a labelled sensitivity. "2.4x" is removed as a headline
+everywhere and the no-pooling rule is re-justified on three independent differences:
+reconciliation behaviour, point prevalence, and filing frequency. The store was re-measured
+and the snapshot re-frozen as `cohort-c2de38f09698`.
 
 **Why this is the same lesson as everything else in this file.** The cohort deliberately
 measures with the product's own code, on the argument that a study measured by a
@@ -425,7 +440,7 @@ strata are exactly the four measured ones.
 
 A rate with no version is a claim about whatever the store happened to contain the day
 somebody read it. `data/cohort/snapshot.json` freezes the measurement under a
-content-addressed id (currently `cohort-65fdf1f71b1d`, 240 trials, 60 per stratum), hashed
+content-addressed id (currently `cohort-c2de38f09698`, 240 trials, 60 per stratum), hashed
 over the measured rows and the frame together, because a rate means nothing without the
 denominator that produced it.
 

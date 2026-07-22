@@ -79,6 +79,11 @@ def _versions(nct: str) -> list[dict]:
             "version": version,
             "submitted": submitted,
             "pcd": pcd,
+            # ESTIMATED or ACTUAL. Read from the same record as the date, because
+            # the two together are what say whether a past date is reconciled: an
+            # ACTUAL date in the past is a completed trial recording when it
+            # completed, and an ESTIMATE in the past is a forecast that expired.
+            "pcd_type": (status.get("primaryCompletionDateStruct") or {}).get("type"),
             "status": status.get("overallStatus"),
         })
     out.sort(key=lambda r: (r["submitted"] or "", r["version"]))

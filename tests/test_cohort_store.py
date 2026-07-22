@@ -172,9 +172,55 @@ def test_snapshot_figures_match_a_recomputation():
     if snap is None:
         pytest.skip("no snapshot frozen yet")
     rows = [r for r in cohort.load_results() if "error" not in r]
+    # The snapshot's own as-of date, never the clock. Point prevalence is a
+    # statement about a date, so recomputing it against today would make this
+    # test start failing tomorrow for no reason and, worse, would let a snapshot
+    # frozen on one date be silently validated against another.
+    as_of = cohort._parse_date(snap["as_of"])
     for cls in cohort.STRATA:
-        assert snap["strata"][cls] == cohort.stats(rows, cls), cls
+        assert snap["strata"][cls] == cohort.stats(rows, cls, as_of), cls
     assert snap["n_distinct_trials"] == len(rows)
+
+
+def test_point_prevalence_is_pinned_not_read_from_the_clock():
+    """The primary frequency must not drift with the wall clock.
+
+    Verified by asking for the same stratum at two different as-of dates and
+    requiring the answer to change. If it did not, the as_of argument would be
+    decorative and the snapshot would silently mean 'whenever you ran it'.
+    """
+    import datetime
+    rows = [r for r in cohort.load_results() if "error" not in r]
+    if not rows:
+        pytest.skip("no cohort measured yet")
+    early = cohort.stats(rows, "INDUSTRY", datetime.date(2016, 1, 1))
+    late = cohort.stats(rows, "INDUSTRY", datetime.date(2030, 1, 1))
+    assert early["carrying_now"] < late["carrying_now"], (
+        "point prevalence did not move between 2016 and 2030, so the as-of date "
+        "is not reaching the computation")
+
+
+def test_an_actual_completion_date_is_not_a_lapsed_commitment():
+    """A past date typed ACTUAL is the reconciled case and must not count.
+
+    This is the check whose absence produced a wrong published figure: an earlier
+    pass read the type from a helper that never returned it, compared `None`
+    against "ACTUAL", and counted every completed trial that had correctly
+    recorded its completion date as carrying a lapsed one.
+    """
+    import datetime
+    as_of = datetime.date(2026, 7, 22)
+    base = {"sponsor_class": "INDUSTRY", "dead_date_stretches": 0,
+            "dead_date_days": [], "n_transitions": 0, "established_days": 0}
+    rows = [
+        {**base, "nct": "A", "last_pcd": "2020-01-01", "last_pcd_type": "ACTUAL"},
+        {**base, "nct": "B", "last_pcd": "2020-01-01", "last_pcd_type": "ESTIMATED"},
+        {**base, "nct": "C", "last_pcd": "2029-01-01", "last_pcd_type": "ESTIMATED"},
+    ]
+    s = cohort.stats(rows, "INDUSTRY", as_of)
+    assert s["carrying_now"] == 1, (
+        "only the expired ESTIMATE counts: a past ACTUAL is a completed trial "
+        "recording when it completed, and a future estimate has not expired")
 
 
 def test_freeze_refuses_an_incomplete_measurement(monkeypatch):

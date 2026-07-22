@@ -8,32 +8,27 @@ carrying a primary completion date of June 2022. **That date had already been ex
 
 Nobody was watching, because nobody's job is to watch.
 
-**And Rocket is not unusual.** In a random sample of industry-sponsored phase 2/3 trials,
-**80.0% carried an already-passed registered completion date at some point**, median
-stretch 240 days. Rocket's 677 days sits at the **85th percentile** of 188 such stretches:
-long, but not the tail.
+**And Rocket is not unusual, which is the actual finding.** In a random sample of
+industry-sponsored phase 2/3 trials, **52.4% of registered completion-date revisions were
+filed only after the date had already passed** (66 of 126). At the trial level, 43 of the 52
+industry trials that revised a date at all let at least one lapse before touching it. That is
+not the same as running late, which is well documented: a sponsor who revises the date while
+it is still in the future is forecasting, and the public record stays honest. A sponsor who
+revises only afterwards left a commitment standing that it had already stopped believing.
 
-That is a correction to how this project used to open, and it makes the claim bigger
-rather than smaller. The finding is not one sponsor letting a date lapse. It is that
-**four in five do, for a median of eight months, and nothing anywhere reconciles it
-against the theses that depend on it.**
+Rocket's 677 days sits at the **85th percentile** of 188 such stretches: long, but not the
+tail. That is a correction to how this project used to open, and it makes the claim bigger
+rather than smaller.
 
-The boring explanation was checked and does not hold: 42 CFR 11.64(a)(1)(ii) requires the
-primary completion date to be updated "not later than 30 calendar days" after a trial
-reaches actual primary completion. The observed median is eight times that window, so this
-is not an artifact of annual update batching.
+The boring explanation was checked and is not fully ruled out: 42 CFR 11.64(a)(1)(ii) requires
+the primary completion date to be updated "not later than 30 calendar days" after a trial
+reaches actual primary completion, so annual housekeeping would not be compliant. That is a
+statement about the duty rather than a refutation of the cadence, and the clustering test that
+would settle it has not been run.
 
-`docs/COHORT.md` has the frame, the n, the strata and what the sample cannot support. Every
-figure cites cohort snapshot `cohort-65fdf1f71b1d`: 240 trials, 60 per stratum, all measured.
-
-**Two open findings against the cross-stratum comparisons, from an adversarial review on
-2026-07-22, both in `docs/LIMITS.md` and both the owner's call.** A stretch needs a later
-filing to close it, so the measure cannot see a sponsor that lapses and goes quiet, which
-inverts the ranking between strata. And a stretch is counted per filing rather than per
-lapse, so the "2.4 times longer" duration gap is largely a filing-frequency artifact and
-falls to 1.5x per trial. The industry figures above are the least affected and move in the
-conservative direction: 80.0% ever, 83.3% carrying one right now. `docs/WRITEUP.md` is the
-standalone write-up and is **blocked from publication** until both are settled.
+`docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the working record. Every
+figure cites cohort snapshot `cohort-c2de38f09698`: 240 trials, 60 in each of four sponsor
+strata, all measured, point prevalence as of 2026-07-22.
 
 ## The claim, in one sentence
 
@@ -110,7 +105,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 154 passed, 1 skipped
+python3 -m pytest tests/ -q       # 156 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -120,7 +115,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 155 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 157 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -273,8 +268,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 155
-  passed; without them that one test skips and you see 154 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. With credentials the suite is 157
+  passed; without them that one test skips and you see 156 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.

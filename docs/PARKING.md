@@ -18,7 +18,7 @@ amendment to make it tidier is exactly what `AMENDING_PROTECTED_MODULES.md` forb
 only if crash-loops start filling the cache directory.
 
 **NIH trials carry far more revision episodes than industry ones.** 493 dead-date stretches
-across 60 NIH trials against 188 across 60 industry trials, from `cohort-65fdf1f71b1d`.
+across 60 NIH trials against 188 across 60 industry trials, from `cohort-c2de38f09698`.
 That is 2.6x the episodes on top of 2.4x the duration, and nothing in this study explains
 it. Plausibly it is just version count, since NIH trials in the sample carry many more
 protocol versions, two of them over 300. Worth one afternoon to check whether normalising by
@@ -34,6 +34,13 @@ second sample under a different ordering and see whether the rates move.
 growing or shrinking is a genuinely different study and the more interesting one, and it
 needs the frame rebuilt as of several historical dates. Out of scope here, and the single
 most obvious follow-up.
+
+**The version-cache read is a full directory glob per trial.** `measure()` now calls
+`_versions()` to get the true latest registered date and its ESTIMATED/ACTUAL type, which
+globs every cached file for that trial. On a 700-version trial that is 700 file reads for two
+fields. It is fast enough on a local cache and it is the correct source, so it stays. If a
+re-measure ever becomes a routine operation rather than a rare one, cache the last version per
+trial instead.
 
 **The `--compact` command is one-time by design and nothing schedules it.** After the next
 resumable run appends duplicates, `test_store_holds_one_row_per_trial` will fail until

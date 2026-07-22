@@ -73,17 +73,22 @@ catalyst. The nearest registered completion still in the future puts the same co
 minus 14.5 months, financing required. Nobody filed an amendment. The date simply arrived,
 and passed.
 
-**Rocket is ordinary, and that is the actual finding.** A random sample of industry
-phase 2/3 trials shows 80.0% carrying an already-passed registered completion date at some
-point, median 240 days. Rocket's 677 sits at the 85th percentile of 188 such stretches. So
-the claim is not that one sponsor behaved badly; it is that this is routine and nothing
-anywhere reconciles it against the theses that depend on it. `docs/COHORT.md` states the
-frame and the limits, and every figure cites cohort snapshot `cohort-65fdf1f71b1d`: 240
-trials, 60 in each of four sponsor strata, all measured. An adversarial review found the
-measure cannot see a sponsor that lapses and then stops filing, which makes 80.0% a lower
-bound (83.3% of industry trials are carrying a lapsed date right now) and undercuts the
-comparisons between strata. Both findings are in `docs/LIMITS.md` and `docs/WRITEUP.md` is
-blocked until they are settled.
+**Rocket is ordinary, and that is the actual finding.** In a random sample of industry
+phase 2/3 trials, **52.4% of registered completion-date revisions were filed only after the
+date had already passed** (66 of 126), and 43 of the 52 industry trials that revised a date
+at all let at least one lapse before touching it. That is the distinction the project turns
+on: running late is documented in the literature, but a sponsor who revises the date while it
+is still in the future keeps the public record honest, and one who revises only afterwards
+left a commitment standing it had stopped believing. Rocket's 677 days is the 85th percentile
+of 188 such stretches.
+
+Every figure cites cohort snapshot `cohort-c2de38f09698`: 240 trials, 60 in each of four
+sponsor strata, all measured, point prevalence as of 2026-07-22. `docs/COHORT.md` states the
+frame and the limits and `docs/WRITEUP.md` is the standalone write-up. Two measures are
+reported side by side because they disagree: 8.3% of industry trials are carrying an expired
+estimate right now, while 80.0% carried one at some point and subsequently filed again. The
+second cannot see a sponsor that lapses and then stops filing, which is why it is the
+secondary measure and why the silent population is reported as a result in its own right.
 
 ## The architecture that makes the demo mean something
 
@@ -213,7 +218,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 154 passed, 1 skipped (155 passed with watsonx credentials)
+python3 -m pytest tests/ -q   # 156 passed, 1 skipped (157 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a

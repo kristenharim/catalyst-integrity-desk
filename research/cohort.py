@@ -48,7 +48,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from engine.ctgov_history import _get, _parse_date
 from engine.dimensions import from_cache
 from engine.promise import Promise, slip_breakdown, walk
-from research.backtest import carried_until_corrected
+from research.backtest import carried_until_corrected, _versions as _cached_versions
 
 V2 = "https://clinicaltrials.gov/api/v2/studies"
 OUT = os.path.join(os.path.dirname(__file__), "..", "data", "cohort")
@@ -169,14 +169,36 @@ def measure(nct: str, sponsor_class: str) -> dict:
     # the past". Nothing consumed it, so no published figure was affected, which
     # is luck and not design. Status is a per-revision field; the date's type is
     # the better discriminator and is why the fix does not simply reach for it.
-    last = revs[-1] if revs else None
-    last_pcd = _parse_date(last["pcd"]) if last else None
+    # Stored raw rather than resolved here, so the as-of date lives in the frozen
+    # snapshot instead of in whenever the row happened to be measured. A point
+    # prevalence computed against the wall clock is a different number every day
+    # and silently so.
+    # Read from the latest submitted version, NOT from `revs[-1]`. `revs` holds
+    # only versions where the date's VALUE changed, so a sponsor who later flipped
+    # the type from ESTIMATED to ACTUAL while keeping the same date does not appear
+    # in it, and `revs[-1].pcd_type` then reports a stale ESTIMATED forever. That
+    # over-counted point prevalence by 3 to 6 trials per stratum when measured.
+    cached = _cached_versions(nct)
+    last = cached[-1] if cached else None
+    row["last_pcd"] = (last or {}).get("pcd")
     row["last_pcd_type"] = (last or {}).get("pcd_type")
     row["last_status"] = (last or {}).get("status")
-    row["carries_dead_date_now"] = bool(
-        last_pcd is not None and last_pcd < date.today()
-        and (row["last_pcd_type"] or "").upper() != "ACTUAL"
-    )
+
+    # The separation the thesis turns on. `held_days` is how much runway the OLD
+    # date still had when the sponsor moved it, so its sign splits two behaviours
+    # that a delay statistic cannot tell apart:
+    #
+    #   >= 0  revised while the date was still in the future. The sponsor is
+    #         forecasting. The trial may be very late and the record still honest.
+    #   <  0  revised only after the date had already passed. The record carried a
+    #         commitment its author had stopped believing.
+    #
+    # Lateness is documented in the literature. Non-reconciliation is the claim
+    # this project makes, and without this split the two are the same number.
+    held = [r.get("held_days") for r in revs if r.get("held_days") is not None]
+    row["held_days"] = held
+    row["revisions_prospective"] = sum(1 for h in held if h >= 0)
+    row["revisions_after_lapse"] = sum(1 for h in held if h < 0)
 
     # Comparability, via the product's own classifier.
     dims = from_cache(nct)
@@ -353,7 +375,7 @@ def snapshot_id(rows: list[dict] | None = None) -> str:
     return "cohort-" + hashlib.sha256(_canonical(rows)).hexdigest()[:12]
 
 
-def stats(rows: list[dict], cls: str) -> dict:
+def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
     """Every rate for one stratum, computed once and used by both the report and
     the frozen snapshot, so the printed number and the published number cannot
     drift apart.
@@ -383,8 +405,48 @@ def stats(rows: list[dict], cls: str) -> dict:
     ref = sum(r.get("refused_revisions", 0) for r in sub)
     cont = sum(r.get("contingent_revisions", 0) for r in sub)
 
+    # PRIMARY frequency: is the trial carrying a lapsed date right now? Needs no
+    # later filing to exist, so unlike the stretch measure it can see a sponsor
+    # that lapsed and went quiet. An ACTUAL date in the past is the reconciled
+    # case and must not count; an ESTIMATE in the past is an expired forecast.
+    as_of = as_of or date.today()
+    carrying_now = silent = 0
+    for r in sub:
+        p = _parse_date(r.get("last_pcd"))
+        if p is not None and p < as_of \
+                and (r.get("last_pcd_type") or "").upper() != "ACTUAL":
+            carrying_now += 1
+            if not r["dead_date_stretches"]:
+                silent += 1                      # invisible to the stretch measure
+
+    # PRIMARY duration: one observation per trial, its longest carry. The stretch
+    # unit emits a row per consecutive version pair, so one lapse spanning many
+    # filings contributes many overlapping rows and a frequent filer contributes
+    # more of them. Kept below as a labelled sensitivity, not as the headline.
+    per_trial = [max(r["dead_date_days"]) for r in sub if r["dead_date_days"]]
+
+    # The lateness/non-reconciliation split.
+    pro = sum(r.get("revisions_prospective", 0) for r in sub)
+    late = sum(r.get("revisions_after_lapse", 0) for r in sub)
+    versions = sorted(r.get("n_versions") or 0 for r in sub)
+
     return {
         "n": n,
+        # --- primary ---
+        "carrying_now": carrying_now,
+        "carrying_now_rate": carrying_now / n,
+        "carrying_now_invisible_to_stretches": silent,
+        "trial_days_p50": _pct(per_trial, .5),
+        "trial_days_p90": _pct(per_trial, .9),
+        "trial_days_max": max(per_trial) if per_trial else None,
+        "n_trials_with_a_carry": len(per_trial),
+        # --- the lateness split ---
+        "revisions_prospective": pro,
+        "revisions_after_lapse": late,
+        "revisions_dated": pro + late,
+        "revised_after_lapse_rate": (late / (pro + late)) if (pro + late) else None,
+        "median_versions": _pct(versions, .5),
+        # --- secondary, stretch-based: "lapsed and subsequently filed again" ---
         "carried_dead_date": len(with_dead),
         "carried_dead_date_rate": len(with_dead) / n,
         "n_stretches": len(durations),
@@ -429,7 +491,17 @@ def freeze() -> dict:
             f"before freezing; a snapshot that quietly drops trials is the n-inflation "
             f"bug wearing the other sign.")
 
-    by_stratum = {cls: stats(rows, cls) for cls in STRATA}
+    # Point prevalence is as of a date, so the date is pinned into the snapshot
+    # rather than read from the clock on every later report.
+    as_of = datetime.now(timezone.utc).date()
+    stale = [r["nct"] for r in rows if "last_pcd_type" not in r]
+    if stale:
+        raise ValueError(
+            f"{len(stale)} rows predate the point-prevalence fields "
+            f"({', '.join(stale[:5])}). Re-measure before freezing; the primary "
+            f"frequency cannot be computed from them and would silently read as 0.")
+
+    by_stratum = {cls: stats(rows, cls, as_of) for cls in STRATA}
     unsplit = {c: s["refused_unsplit"] for c, s in by_stratum.items()
                if s.get("refused_unsplit")}
     if unsplit:
@@ -440,7 +512,8 @@ def freeze() -> dict:
     snap = {
         "snapshot_id": snapshot_id(all_rows),
         "snapshot_version": SNAPSHOT_VERSION,
-        "frozen_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "frozen_at": as_of.isoformat(),
+        "as_of": as_of.isoformat(),
         "seed": SEED,
         "frame": {
             "study_type": "INTERVENTIONAL",
@@ -541,15 +614,30 @@ def report() -> None:
     # No ALL section, and its absence is the finding. NIH sponsors carry a dead
     # date about as often as industry ones and roughly two and a half times as
     # long, so a pooled rate would describe no population that exists.
+    as_of = _parse_date((snap or {}).get("as_of")) or date.today()
     for cls in STRATA:
-        s = stats(rows, cls)
+        s = stats(rows, cls, as_of)
         if not s["n"]:
             continue
         print(f"--- {cls}  (n={s['n']}) ---")
-        print(f"  carried a dead date at some point   {s['carried_dead_date']:>4} "
+        print(f"  CARRYING a lapsed date, {as_of}   {s['carrying_now']:>4} "
+              f"({s['carrying_now_rate']:.1%})"
+              f"   [{s['carrying_now_invisible_to_stretches']} invisible to stretches]")
+        if s["trial_days_p50"] is not None:
+            print(f"  longest carry per trial, days       "
+                  f"p50 {s['trial_days_p50']:.0f}   p90 {s['trial_days_p90']:.0f}   "
+                  f"max {s['trial_days_max']}")
+        if s["revisions_dated"]:
+            print(f"  date revisions                      {s['revisions_dated']:>4}"
+                  f"   after it had lapsed {s['revisions_after_lapse']:>4} "
+                  f"({s['revised_after_lapse_rate']:.1%})"
+                  f"   prospective {s['revisions_prospective']:>4}")
+        print(f"  median registry versions            {s['median_versions']:>4.0f}")
+        print(f"  -- secondary: lapsed AND subsequently filed again --")
+        print(f"  carried at some point               {s['carried_dead_date']:>4} "
               f"({s['carried_dead_date_rate']:.1%})")
         if s["n_stretches"]:
-            print(f"  dead-date duration, days            "
+            print(f"  per-stretch duration, days          "
                   f"p50 {s['dead_days_p50']:.0f}   p90 {s['dead_days_p90']:.0f}   "
                   f"max {s['dead_days_max']}")
         print(f"  transitions                         {s['transitions']:>4}")
