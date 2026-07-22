@@ -38,7 +38,7 @@ PAGES = ["/contract/RCKT", "/contract/BEAM", "/contracts", "/redline", "/queue",
 # Documents that make claims on the project's behalf. LIMITS.md and this file's
 # own source are excluded: both quote banned phrases constantly, by design.
 CLAIM_DOCS = ["README.md", "docs/SUBMISSION.md", "docs/DEMO.md",
-              "docs/PRINCIPLE.md", "docs/WORKSPACE.md"]
+              "docs/PRINCIPLE.md", "docs/WORKSPACE.md", "docs/BACKTEST.md"]
 
 
 @pytest.fixture(scope="module")
