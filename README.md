@@ -1,6 +1,6 @@
 # Catalyst Integrity Desk
 
-An auditable monitor for the moment a biotech investment thesis quietly stops being true.
+An auditable monitor for the moment an investment thesis quietly stops being true.
 
 In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
 carrying a primary completion date of June 2022. **That date had already been expired for
@@ -8,10 +8,29 @@ carrying a primary completion date of June 2022. **That date had already been ex
 
 Nobody was watching, because nobody's job is to watch.
 
+## The claim, in one sentence
+
+> **This system measures whether public, dated, self-authored commitments were kept,
+> revised, superseded, or allowed to expire without reconciliation. It does not measure
+> whether the underlying claim was ever true.**
+
+The second sentence is half the product. Diligence really wants a verdict on the
+underlying science, and on whether the stated dates will hold. No system reading public
+records can deliver one, and a model that pretends to is an opinion dressed as evidence.
+What is answerable, and already public: whether the promises survived contact with their
+own prior versions.
+
+Theranos is the useful example because of what the tell was **not**. In real time nobody
+was going to catch it by evaluating the microfluidics. What was visible continuously was a
+decade of claims that did not reconcile against their own earlier versions. That pattern
+is measurable. Feasibility is not. `docs/PRINCIPLE.md` states the rule and the claims this
+system is therefore forbidden from making, and `orchestrator/lexicon.py` enforces them on
+the model, the pages and the docs.
+
 ## The problem
 
 Every clinical-stage biotech thesis rests on a date. The company has cash into month X,
-the trial reads out before month X, therefore it is funded to its catalyst and does not
+the trial completes before month X, therefore it is funded to its catalyst and does not
 need to raise.
 
 The left side of that sentence comes from SEC filings. The right side comes from
@@ -21,11 +40,39 @@ and nothing reconciles that revision against the thesis that depended on the old
 Every revision is public, timestamped, and undiffed. The analyst who wrote the thesis in
 January is not re-reading the registry in April.
 
+A registry entry is not an observation. It is a claim, made by an interested party, that
+can be revised at any time, where every revision is public and timestamped and nobody
+diffs it. ClinicalTrials.gov is one instance of that shape.
+
 This project treats the thesis as a contract and audits both sides of it.
 
 ```
 funding gap = runway exhaustion date - registered primary completion date
 ```
+
+## Two modes, one computation path
+
+```
+DEMO                                  WORKSPACE
+
+data/evidence/*.json                  ticker
+committed, no network                     |
+        |                                 v
+        |                           live SEC + ClinicalTrials.gov
+        |                                 |
+        +---------> EvidenceSnapshot <----+
+                          |
+       normalise -> promise identity -> metrics -> guarded prose -> ledger
+```
+
+`evidence/` is the seam and the only layer that knows where bytes came from.
+`tests/test_layering.py` walks the AST and fails if `engine/` or `orchestrator/` imports
+it, so no module that computes a displayed number can ask whether it is running live and
+answer differently. That is what makes the frozen demo evidence about the product rather
+than a mock of it.
+
+`/workspace` runs the real flow with no credentials, because the committed bundles and a
+live fetch are the same schema.
 
 ## Quickstart
 
@@ -58,6 +105,7 @@ on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 | the table below it | every input with the XBRL tag it resolved through |
 | `/contracts` | the ranked list, unreliable rows shown below it and never ranked, and below those any ticker that produced no contract at all, with the reason |
 | `/redline` | the thesis breaking: approved against a date that then lapsed, and Granite's memo about it |
+| `/workspace` | ticker in, monitored contract out. Identity and the empty queries are shown before any candidate; a lapsed date is listed and cannot be chosen |
 | `/belief/new` | where a belief comes from. The analyst writes the thesis, the trial, and the gap below which they would stop believing it |
 | Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
 
@@ -108,6 +156,22 @@ figure absent from its input and falls back to a deterministic stub if it finds 
 guard deliberately does not ban all digits: quoting a number from the belief's own claim
 text is quotation, not invention. The rule is "a number absent from the input".
 
+**Two structural guards, not one.** `_fabricated()` stops the model inventing a number.
+`orchestrator/lexicon.py` stops it making a claim the evidence does not support: a
+feasibility verdict, an accusation of intent, a causal explanation for why a date moved, or
+silence asserted as fact. A rationale that trips either guard is discarded and the
+deterministic stub answers. The same lexicon scans every rendered page and every
+claim-bearing document, so the rule cannot hold in the code and drift in the pitch. It
+caught three violations already shipped in this repo when it was first run.
+
+**Slip is only slip when the promise held its shape.** `engine/promise.py` classifies every
+registry revision as unchanged, date-only, a scope revision, a supersession, or uncertain,
+and only the first two may produce a number. A revision that also changed the primary
+endpoint describes a different commitment, and subtracting its dates is not a delay. This
+found that five of the seven trials in the snapshot had been reporting net-slip figures the
+record does not support, including this project's own headline numbers. See
+`docs/LIMITS.md`.
+
 Two supporting rules do the rest of the work.
 
 **Every displayed number names its source.** `Runway.provenance` records which XBRL tag
@@ -152,13 +216,18 @@ judging. Those boundaries held.
 Other AI tools were used for review, which the challenge permits, and `docs/BOB_LOG.md`
 records those passes separately from the build.
 
-Two later changes were written by hand with Claude Code rather than by Bob, after Bob's
-build was complete, and are logged as such with the same detail as the Bob rows. They are
-the unresolved-ticker row on `/contracts`, which fixed a silent drop, and the thesis-break
-timeline, the derivation table and the analyst belief form. Everything else in the
-console, including all three original views, the snapshot generator and the test suite,
-is Bob's. Saying otherwise would be a worse failure than admitting a second tool
-touched it.
+Work after Bob's build was completed by hand with Claude Code, not by Bob, and every line
+of it is logged in `docs/BOB_LOG.md` at the same detail as the Bob rows. That is: the
+unresolved-ticker row on `/contracts`, the thesis-break timeline, the derivation table, the
+analyst belief form, the monitoring queue, and then the larger pass that added the evidence
+seam, promise identity, the enforced claims lexicon and workspace mode.
+
+**Bob built the thing that works. What came after is mostly the project auditing itself**,
+which is the part that produced the finding about its own slip figures. Everything in the
+original console -- all three views, the snapshot generator, the redline loop, the
+governance port and the first test suite -- is Bob's, and `.bob/custom_modes.yaml` shows
+the constraints it was built under. Describing that split inaccurately would be a worse
+failure than admitting a second tool touched the repo.
 
 ## How it was verified
 
@@ -242,6 +311,10 @@ differ systematically by two to four months, and the gap is always optimistic.
 ## Layout
 
 ```
+evidence/                 the seam: EvidenceSnapshot, frozen and live providers
+engine/promise.py         promise identity; refuses a slip number it cannot establish
+engine/dimensions.py      the endpoint and enrolment per registry version
+orchestrator/lexicon.py   the forbidden-claims list, enforced on model and pages
 engine/runway.py          cash runway from SEC XBRL company facts, as a band
 engine/ctgov_history.py   registry revision history, notice and expiry metrics
 engine/gap.py             the catalyst contract join
@@ -251,6 +324,8 @@ console/                  Flask console, four views, snapshot generator
 research/                 the monitoring-queue panel, CSV and figure
 tests/                    40 tests, no network, no credentials
 data/snapshot.json        the frozen demo artifact
+docs/PRINCIPLE.md         the one-sentence claim and the forbidden-claims list
+docs/WORKSPACE.md         the two-mode design
 docs/BOB_LOG.md           what Bob built versus what preceded it
 docs/bob-sessions/        full Bob task exports, the evidence behind that log
 docs/FINDINGS.md          eight data gotchas, prior art, attack surface

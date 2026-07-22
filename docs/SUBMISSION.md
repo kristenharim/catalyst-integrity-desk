@@ -31,6 +31,19 @@ Catalyst Integrity Desk
 
 An auditable monitor for the moment a biotech investment thesis quietly stops being true.
 
+## The claim, in one sentence
+
+This system measures whether public, dated, self-authored commitments were kept, revised,
+superseded, or allowed to expire without reconciliation. It does not measure whether the
+underlying claim was ever true.
+
+The second sentence is half the product. Diligence wants a verdict on the underlying
+science and on whether the stated dates will hold; no system reading public records can
+give one, and a model that pretends to is an opinion dressed as evidence. What is
+answerable, and already public, is whether the promises survived contact with their own
+prior versions. `docs/PRINCIPLE.md` states the rule and the claims that follow from it,
+and `orchestrator/lexicon.py` enforces them on the model, the pages and the docs.
+
 ## Short description
 
 Every clinical-stage biotech thesis rests on a date: the company has cash into month X,
@@ -60,6 +73,27 @@ catalyst. The nearest registered completion still in the future puts the same co
 minus 14.5 months, financing required. Nobody filed an amendment. The date simply arrived,
 and passed.
 
+## The architecture that makes the demo mean something
+
+```
+DEMO                                  WORKSPACE
+data/evidence/*.json                  ticker
+committed, no network                     |
+        |                                 v
+        |                           live SEC + ClinicalTrials.gov
+        |                                 |
+        +---------> EvidenceSnapshot <----+
+                          |
+       normalise -> promise identity -> metrics -> guarded prose -> ledger
+```
+
+`evidence/` is the only layer that knows where bytes came from. `tests/test_layering.py`
+walks the AST and fails if `engine/` or `orchestrator/` imports it, so no module that
+computes a displayed number can ask whether it is running live and answer differently.
+That is what makes a frozen demo evidence about the product instead of a mock of it, and
+`/workspace` runs the real ticker-to-contract flow with no credentials because the
+committed bundles and a live fetch are the same schema.
+
 ## The AI approach
 
 **Python computes. Granite judges prose. Humans decide.**
@@ -75,6 +109,26 @@ Two supporting rules: every displayed number names the XBRL tag or registry vers
 from, and a lapsed completion date is never treated as a catalyst, because you cannot run
 out of money before an event that already happened.
 
+## What it found in its own numbers
+
+The most useful result this project produced is a correction to itself.
+
+`total_slip_days` subtracts registered completion dates across successive registry
+versions. That is a delay only if both dates describe the same commitment, and nothing
+checked. `engine/promise.py` now classifies every revision and refuses to state a movement
+it cannot establish. Five of the seven trials in the snapshot turn out to have been
+reporting figures the record does not support.
+
+The clearest case: `NCT04248439` reported 1,008 days. A single +1,430-day revision
+coincided with the primary endpoint changing from phenotypic correction of bone marrow
+colony forming units to Mitomycin-C resistance of bone marrow colony-forming cells.
+Different endpoint, different promise, not a delay. The supported figure is -422 days
+across the two revisions where the commitment held its shape.
+
+Unaffected, and stated so the finding is not read as bigger than it is: the 677-day
+expired-date result is one version carrying an already-passed date, not a comparison
+across two commitments. So is the funding gap. `docs/LIMITS.md` has the table.
+
 ## Theme fit: intelligent systems for the future of work
 
 The work being automated is not analysis. It is **noticing**.
@@ -88,31 +142,28 @@ vocabulary, and stops. The judgement stays human; the vigilance is what gets aut
 
 ## How IBM Bob was used
 
-Bob was the primary development tool. Twelve logged tasks, nine full session transcripts
-committed to the repository at `docs/bob-sessions/`, 6.1 MB of them. Every row is backed:
-nine transcripts cover twelve rows because three Bob sessions each produced two.
+Bob was the primary development tool and built the working system. Eleven logged tasks,
+nine full session transcripts committed at `docs/bob-sessions/`.
 
 Bob built: the governance port (ledger, challenge, classifier, Granite client), the redline
-loop, the entire console including all three views and the test suite, the snapshot
-generator, the integrity-badge repair, the ledger anchor, the decision receipt, and the
-research panel.
+loop, the entire original console including all three views and the test suite, the
+snapshot generator, the integrity-badge repair, the ledger anchor, the decision receipt,
+and the research panel.
 
-What preceded Bob and is not its work: the three verified engine modules in `engine/`, and
-the spec, findings, demo script and prompt pack in `docs/`.
+What preceded Bob: the three verified engine modules in `engine/`, and the spec, findings,
+demo script and prompt pack in `docs/`.
 
 Bob was constrained rather than trusted. `.bob/custom_modes.yaml` puts a `fileRegex` on
 edit permission so the three verified engine modules cannot be rewritten, and defines a
 reviewer mode with no edit permission at all so a review cannot quietly fix what it is
 judging.
 
-`docs/BOB_LOG.md` records every task and separates build work from review passes. Other AI
-tools were used for review, which the challenge permits.
-
-Two changes after Bob's build was complete were written by hand with Claude Code, not by
-Bob: the unresolved-ticker row on `/contracts`, and the thesis-break timeline, derivation
-table and analyst belief form. Both are logged in `docs/BOB_LOG.md` at the same detail as
-the Bob rows. The console's three original views, the snapshot generator and the test
-suite are Bob's.
+Work after Bob's build was done by hand with Claude Code, logged in `docs/BOB_LOG.md` at
+the same detail as the Bob rows: the unresolved-ticker row, the thesis-break timeline, the
+derivation table, the belief form, the monitoring queue, and the pass that added the
+evidence seam, promise identity, the enforced claims lexicon and workspace mode. Bob built
+the thing that works; what came after is largely the project auditing itself, which is what
+produced the correction to its own slip figures.
 
 ## What makes it checkable
 
@@ -179,5 +230,10 @@ from memory: every figure in this file traces to `data/snapshot.json` or `docs/B
   two to four months, always optimistically.
 - That cash-constrained sponsors revise dates differently. That is an open question this
   project deliberately does not answer.
+- That the technology works, that a timeline will hold, or anything with the word that  [lexicon-exempt]
+  means believable-about-management. Those are feasibility verdicts and this system does  [lexicon-exempt]
+  not make them. `orchestrator/lexicon.py` is the enforced list.  [lexicon-exempt]
+- A net-slip figure without saying how many revisions were not comparable. Five of seven  [lexicon-exempt]
+  trials in the snapshot report totals the record does not support.  [lexicon-exempt]
 - "No tool does this". A commercial screener covers the ranking layer and a judge will find
   it. The honest claim is the monitor.
