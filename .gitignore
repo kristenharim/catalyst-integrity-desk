@@ -19,3 +19,4 @@ node_modules/
 
 # Live demo state — written during the demo, not committed.
 data/decisions.jsonl
+data/ledger.anchor

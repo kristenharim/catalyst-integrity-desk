@@ -488,3 +488,72 @@ def test_badge_tampered_not_truncated_on_byte_edit(tmp_path, monkeypatch):
             "badge must not show amber 'truncated or replaced' styling on a byte-edit tamper"
         )
 
+
+# ---------------------------------------------------------------------------
+# Forged-receipt test (Prompt 3, the receipt: read it from the ledger)
+# ---------------------------------------------------------------------------
+# Written before the fix.  With the fix absent the confirm handler reads
+# receipt fields directly from the URL, so the page renders the forged author
+# and entry_hash instead of the real ledger values.  Expected failure:
+#
+#   AssertionError: confirm page must show real author 'human:demo', not
+#   forged 'nobody:forged'
+#
+# After the fix, redline_confirm ignores the receipt query parameter and
+# builds the receipt from the ledger's last entry, so forged values never
+# reach the rendered page.
+
+def test_confirm_ignores_forged_receipt(tmp_path, monkeypatch):
+    """POST a real approve, then request confirm with a forged receipt param.
+
+    The page must show the ledger's real author and real entry_hash, not the
+    forged values.  A receipt carried in the URL is not evidence of anything.
+    """
+    decisions_file = str(tmp_path / "decisions.jsonl")
+    review_log_file = str(tmp_path / "review_log.jsonl")
+    anchor_file = str(tmp_path / "ledger.anchor")
+    monkeypatch.setattr("console.app.DECISIONS_PATH", decisions_file)
+    monkeypatch.setattr("console.app.REVIEW_LOG_PATH", review_log_file)
+    monkeypatch.setattr("console.app.ANCHOR_PATH", anchor_file)
+
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        # POST a real approve to populate the ledger.
+        resp = c.post("/redline/decide", data={"verdict": "approve", "reason": "test"})
+        assert resp.status_code == 302
+
+        # Read the real entry_hash from the ledger so we can assert against it.
+        import json as _json
+        with open(decisions_file) as f:
+            lines = [l for l in f if l.strip()]
+        real_entry = _json.loads(lines[-1])
+        real_hash = real_entry["entry_hash"]
+        real_author = real_entry["author"]
+
+        # Craft a confirm URL with completely forged receipt values.
+        forged_receipt = _json.dumps({
+            "author": "nobody:forged",
+            "ts_display": "1970-01-01 00:00:00 UTC",
+            "card_id": "FAKE-card",
+            "what_changed": "nothing",
+            "thesis_state": "funded to catalyst, no financing required",
+            "prev_hash": "deadbeef" * 8,
+            "entry_hash": "deadbeef" * 8,
+        })
+        resp = c.get(f"/redline/confirm?verdict=approve&receipt={forged_receipt}")
+        assert resp.status_code == 200
+        text = resp.data.decode()
+
+        # The page must show the real author and real hash, not the forged ones.
+        assert real_author in text, (
+            f"confirm page must show real author {real_author!r}, not forged 'nobody:forged'"
+        )
+        assert real_hash in text, (
+            f"confirm page must show real entry_hash from the ledger"
+        )
+        assert "nobody:forged" not in text, (
+            "confirm page must not render a forged author from the URL"
+        )
+        assert "deadbeef" * 8 not in text, (
+            "confirm page must not render a forged hash from the URL"
+        )

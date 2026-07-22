@@ -177,57 +177,52 @@ def redline_decide():
     if verdict == "approve":
         anchor_record(ledger, anchor_path=ANCHOR_PATH)
 
-    # Build receipt for the confirm page from the ledger entry.
-    # For reject, apply_decision returns a review-log record, not a ledger entry.
-    # The receipt is only available for approve (which returns a ledger entry with hashes).
-    receipt = None
-    if verdict == "approve" and entry and "entry_hash" in entry:
-        proposed = challenge_card.proposed_card
-        what_changed = challenge_card.breach.metric + ": " + challenge_card.classification.label
-        # thesis_state: derive from the proposed card's expected_low after the accept
-        thesis_state = (
-            "funded to catalyst" if proposed.expected_low >= 0
-            else "financing required before catalyst"
-        )
-        ts_display = datetime.datetime.fromtimestamp(entry["ts"]).strftime("%Y-%m-%d %H:%M:%S UTC")
-        receipt = {
-            "author": entry["author"],
-            "ts_display": ts_display,
-            "card_id": entry["card"]["card_id"],
-            "what_changed": what_changed,
-            "thesis_state": thesis_state,
-            "prev_hash": entry["prev_hash"],
-            "entry_hash": entry["entry_hash"],
-        }
-
-    # Store receipt in the session via the URL. The confirm handler loads the
-    # ledger fresh for verify(); it reads the receipt from the query string
-    # only for display, not for security decisions.
-    # Receipt is JSON-encoded and passed as URL param so no session dependency.
-    receipt_param = json.dumps(receipt) if receipt else ""
-
-    return redirect(url_for(
-        "redline_confirm",
-        verdict=verdict,
-        receipt=receipt_param,
-    ))
+    # Redirect with verdict only.  The confirm handler reads the receipt from
+    # the ledger at render time so no receipt data travels in the URL.
+    return redirect(url_for("redline_confirm", verdict=verdict))
 
 
 @app.get("/redline/confirm")
 def redline_confirm():
     verdict = request.args.get("verdict", "")
-    receipt_raw = request.args.get("receipt", "")
-    receipt = None
-    if receipt_raw:
-        try:
-            receipt = json.loads(receipt_raw)
-        except (ValueError, TypeError):
-            receipt = None
 
     # Check the ledger fresh at render time via the anchor so all three states
     # are detectable: intact, tampered (hash fails), truncated (anchor mismatch).
     ledger = BeliefLedger(DECISIONS_PATH)
     integrity_status = anchor_check(ledger, anchor_path=ANCHOR_PATH)
+
+    # Build receipt from the ledger's last entry at render time.
+    # Nothing from the URL contributes to the receipt -- a URL-carried receipt
+    # is not evidence of anything and must not be displayed as if it were.
+    receipt = None
+    last = ledger._last()
+    if last and verdict == "approve":
+        proposed_card = last.get("card", {})
+        expected_low = proposed_card.get("expected_low", 0)
+        thesis_state = (
+            "funded to catalyst" if expected_low >= 0
+            else "financing required before catalyst"
+        )
+        ts_display = datetime.datetime.fromtimestamp(last["ts"]).strftime(
+            "%Y-%m-%d %H:%M:%S UTC"
+        )
+        breach_metric = ""
+        classification_label = ""
+        snap_redline = SNAPSHOT.get("redline", {})
+        if snap_redline:
+            breach_metric = snap_redline.get("breach", {}).get("metric", "")
+            classification_label = snap_redline.get("classification", {}).get("label", "")
+        what_changed = (breach_metric + ": " + classification_label).strip(": ")
+        receipt = {
+            "author": last["author"],
+            "ts_display": ts_display,
+            "card_id": proposed_card.get("card_id", ""),
+            "what_changed": what_changed,
+            "thesis_state": thesis_state,
+            "prev_hash": last["prev_hash"],
+            "entry_hash": last["entry_hash"],
+        }
+
     return render_template("confirm.html", verdict=verdict,
                            integrity_status=integrity_status, receipt=receipt)
 
