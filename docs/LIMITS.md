@@ -165,10 +165,26 @@ What it deliberately does not have:
 
 One defect it shipped with, found by looking at the page rather than by a test: rows whose
 burn estimate is unreliable printed a gap figure beside "burn estimate unreliable". No
-column called it a rank, and the existing no-rank test passes on it, because that test
+column called it a rank, and the existing no-rank test passed on it, because that test
 looks for a plain-integer rank cell on `/contracts`. Printing `2.6 mo` next to a row the
-system says is not rankable ranks it in the reader's head anyway. Fixed, and the fix has
-its own test.
+system says is not rankable ranks it in the reader's head anyway.
+
+The interesting part is the test, not the bug. `test_srpt_has_no_rank_number` was checking
+one page for one shape of violation, so the rule it was supposed to protect could be broken
+somewhere else and stay green. Confirmed rather than assumed: adding a gap column to the
+flagged table on `/contracts` still passes it today. The rule is now stated once and
+checked over every page that lists contracts, and the narrow test is kept as defence in
+depth rather than replaced.
+
+A second check was hollow the same way. The number-provenance test ran over four routes,
+all of which render a negative funding gap, so the positive branch of the derivation
+partial was never on a tested page. A literal planted in that branch went undetected, and
+was briefly mistaken for a limit of the provenance check itself. It was not: the branch was
+simply never rendered. `/contract/BEAM` is now in the parametrize because BEAM is the only
+reliable contract with a positive gap, and the same planted literal now fails.
+
+Both are the same lesson, which is the lesson this whole file exists for: a check that has
+only ever been watched passing on the one case it was written for is not yet evidence.
 
 The threshold for "approaching breach" is six months. That is a judgement, not a finding:
 a quarter is too tight to act on and a year is not news. Nothing validates it.

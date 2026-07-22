@@ -269,7 +269,12 @@ def test_srpt_has_no_rank_number(client):
         )
 
 
-@pytest.mark.parametrize("route", ["/contract/RCKT", "/contracts", "/redline", "/queue"])
+# /contract/BEAM is here for its sign: BEAM is the only reliable contract with a
+# positive gap, so it is the only route that renders the "+" branch of
+# _derivation.html. A literal planted in that branch went undetected until this
+# route was added, because every other page takes the negative branch.
+@pytest.mark.parametrize("route", ["/contract/RCKT", "/contract/BEAM", "/contracts",
+                                   "/redline", "/queue"])
 def test_number_provenance(client, snapshot_raw, route):
     """Every number visible in the rendered HTML must appear in snapshot.json.
 
@@ -1095,3 +1100,69 @@ def test_queue_claims_no_comparison_it_cannot_make(client):
     assert "nothing here knows what was true yesterday" in text, (
         "the page must say why 'newly' is absent, or the absence reads as an oversight"
     )
+
+
+# ---------------------------------------------------------------------------
+# The no-rank rule, stated generally
+# ---------------------------------------------------------------------------
+# `test_srpt_has_no_rank_number` checks one page for one shape of violation: a
+# plain-integer rank cell in SRPT's row on /contracts. The queue then broke the
+# same rule a different way, printing "2.6 mo" beside "burn estimate
+# unreliable", and that test passed on it because a gap figure is not a rank
+# cell. A rule worth having is worth stating once, over every page.
+#
+# Verified failing before it was trusted: a gap column added to the flagged
+# table on /contracts passes `test_srpt_has_no_rank_number` and fails this.
+
+class _RowParser(HTMLParser):
+    """Collect the visible text of every <tr> on a page."""
+
+    def __init__(self):
+        super().__init__()
+        self._in_tr = False
+        self._cur: list[str] = []
+        self.rows: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self._in_tr, self._cur = True, []
+
+    def handle_endtag(self, tag):
+        if tag == "tr":
+            self.rows.append(" ".join("".join(self._cur).split()))
+            self._in_tr = False
+
+    def handle_data(self, data):
+        if self._in_tr:
+            self._cur.append(data)
+
+
+@pytest.mark.parametrize("route", ["/contracts", "/queue"])
+def test_unrankable_rows_carry_no_gap_figure(client, route):
+    """No page may print a gap figure in a row for a contract it calls unrankable.
+
+    An unreliable burn estimate makes the gap unusable. Showing it anyway ranks
+    the row in the reader's head whether or not a column is headed "rank", and
+    the project's rule is that such rows are shown and never ranked.
+    """
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+
+    unrankable = {
+        t: c["gap_months_1f"]
+        for t, c in snap["contracts"].items()
+        if not c["runway"]["reliable"] and c.get("gap_months_1f")
+    }
+    assert unrankable, "snapshot has no unreliable contract; this test proves nothing"
+
+    p = _RowParser()
+    p.feed(client.get(route).data.decode())
+
+    for ticker, gap in unrankable.items():
+        for row in p.rows:
+            if ticker not in row:
+                continue
+            assert gap not in row, (
+                f"{route} prints gap {gap!r} in a row for {ticker}, whose burn "
+                f"estimate is unreliable:\n  {row}"
+            )
