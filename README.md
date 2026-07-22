@@ -83,7 +83,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 133 passed, 1 skipped
+python3 -m pytest tests/ -q       # 137 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -93,7 +93,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 134 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 138 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -244,8 +244,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 134
-  passed; without them that one test skips and you see 133 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. With credentials the suite is 138
+  passed; without them that one test skips and you see 137 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.
@@ -274,17 +274,26 @@ catalyst is now `NCT06092034` at 2028-04, against which the same runway gives **
 months, financing required**. Anchored to the old date the thesis read +8.4 months, funded.
 No amendment was filed. The date simply arrived, and passed.
 
-**And a correction this project found in its own numbers.** Earlier versions of this
-section reported "1,008 days of net slip" on that trial and "a 943 day move" on its
-successor. Those figures summed every date movement without checking that the dates
-described the same commitment, and they do not. Of the 1,008 days, a single +1,430-day
-revision coincided with the primary endpoint changing from phenotypic correction of bone
-marrow colony forming units to Mitomycin-C resistance of bone marrow colony-forming cells.
-Different endpoint, different promise, not a delay. The supported figure is **-422 days
-across the two revisions where the commitment held its shape**, with one revision not
-comparable. `engine/promise.py` now refuses to state a movement it cannot establish, five
-of seven trials in the snapshot turn out to have been reporting unsupported totals, and
-`docs/LIMITS.md` has the table.
+**And a correction this project found in its own numbers, then corrected again.** Earlier
+versions of this section reported "1,008 days of net slip" on that trial and "a 943 day
+move" on its successor, summing every date movement without checking the dates described
+the same commitment. `engine/promise.py` now checks, and reports three totals rather than
+one:
+
+- **`NCT06092034`: 943 reported, 0 established.** Its revision changed the enrolment from
+  12 to 14. A count, not a wording, so no reading rescues it.
+- **`NCT04248439`: 1,008 reported, -422 established, +1,430 contingent, upper bound
+  1,008.** Its endpoint was reworded from phenotypic correction of bone marrow colony
+  forming units to Mitomycin-C resistance of bone marrow colony-forming cells. In Fanconi
+  anaemia those may be the same endpoint named more precisely. A reword and a redefinition
+  are indistinguishable from the text, so the movement is contingent on a human reading
+  both descriptions, and the original figure may have been right.
+
+The second row is the more useful one. A first pass treated the reword as a scope revision
+and reported 1,008 as unsupported, which overcorrected. It also meant a sponsor could
+delete a delay from the total by rewording an endpoint. A guard the subject can defeat by
+editing prose, in the direction that flatters them, is not a guard. `docs/LIMITS.md` has
+the full table.
 
 The 677-day result is untouched by this: it is one version carrying an already-passed
 date, not a comparison across two commitments. So is the funding gap, which compares the

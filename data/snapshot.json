@@ -143,7 +143,10 @@
         "slip_established_days": 122,
         "slip_refused_revisions": 0,
         "slip_reported_days": 122,
-        "slip_fully_established": true
+        "slip_fully_established": true,
+        "slip_contingent_days": 0,
+        "slip_contingent_revisions": 0,
+        "slip_upper_bound_days": 122
       },
       "gap_months": -35.58110882956879,
       "gap_months_1f": "-35.6",
@@ -329,9 +332,8 @@
             "enrollment": "14",
             "dimensions_established": true,
             "transition": "scope_revision",
-            "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+            "transition_reason": "the commitment changed shape: population. These are counts and enumerations, so the difference is not a matter of wording. A date difference across them is not slip.",
             "transition_changed": [
-              "endpoint",
               "population"
             ],
             "slip_days": null
@@ -345,7 +347,10 @@
         "slip_established_days": 0,
         "slip_refused_revisions": 1,
         "slip_reported_days": 943,
-        "slip_fully_established": false
+        "slip_fully_established": false,
+        "slip_contingent_days": 0,
+        "slip_contingent_revisions": 0,
+        "slip_upper_bound_days": 0
       },
       "gap_months": -14.521560574948666,
       "gap_months_1f": "-14.5",
@@ -428,8 +433,8 @@
               "primary_outcome": "Bone Marrow (BM) Colony-Forming Cell (CFC) Mitomycin-C (MMC) resistance",
               "enrollment": "5",
               "dimensions_established": true,
-              "transition": "scope_revision",
-              "transition_reason": "the commitment changed shape: endpoint. A date difference across a changed scope is not slip.",
+              "transition": "text_revised",
+              "transition_reason": "only free-text changed (endpoint). A reword and a redefinition are indistinguishable here, so the movement is contingent: it counts only if a human reads the two descriptions as the same commitment.",
               "transition_changed": [
                 "endpoint"
               ],
@@ -463,9 +468,12 @@
           "n_late_moves": 0,
           "dimensions_established": true,
           "slip_established_days": -422,
-          "slip_refused_revisions": 1,
+          "slip_refused_revisions": 0,
           "slip_reported_days": 1008,
-          "slip_fully_established": false
+          "slip_fully_established": false,
+          "slip_contingent_days": 1430,
+          "slip_contingent_revisions": 1,
+          "slip_upper_bound_days": 1008
         }
       ],
       "thesis_timeline": {
@@ -666,7 +674,10 @@
         "slip_established_days": -1826,
         "slip_refused_revisions": 0,
         "slip_reported_days": -1826,
-        "slip_fully_established": true
+        "slip_fully_established": true,
+        "slip_contingent_days": 0,
+        "slip_contingent_revisions": 0,
+        "slip_upper_bound_days": -1826
       },
       "gap_months": 20.205338809034906,
       "gap_months_1f": "20.2",
@@ -878,9 +889,8 @@
             "enrollment": "154",
             "dimensions_established": true,
             "transition": "scope_revision",
-            "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+            "transition_reason": "the commitment changed shape: population. These are counts and enumerations, so the difference is not a matter of wording. A date difference across them is not slip.",
             "transition_changed": [
-              "endpoint",
               "population"
             ],
             "slip_days": null
@@ -923,9 +933,8 @@
             "enrollment": "160",
             "dimensions_established": true,
             "transition": "scope_revision",
-            "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+            "transition_reason": "the commitment changed shape: population. These are counts and enumerations, so the difference is not a matter of wording. A date difference across them is not slip.",
             "transition_changed": [
-              "endpoint",
               "population"
             ],
             "slip_days": null
@@ -939,7 +948,10 @@
         "slip_established_days": 33,
         "slip_refused_revisions": 2,
         "slip_reported_days": 760,
-        "slip_fully_established": false
+        "slip_fully_established": false,
+        "slip_contingent_days": 0,
+        "slip_contingent_revisions": 0,
+        "slip_upper_bound_days": 33
       },
       "gap_months": 2.628336755646817,
       "gap_months_1f": "2.6",
@@ -1013,9 +1025,8 @@
               "enrollment": "17",
               "dimensions_established": true,
               "transition": "scope_revision",
-              "transition_reason": "the commitment changed shape: endpoint, population. A date difference across a changed scope is not slip.",
+              "transition_reason": "the commitment changed shape: population. These are counts and enumerations, so the difference is not a matter of wording. A date difference across them is not slip.",
               "transition_changed": [
-                "endpoint",
                 "population"
               ],
               "slip_days": null
@@ -1050,7 +1061,10 @@
           "slip_established_days": -27,
           "slip_refused_revisions": 1,
           "slip_reported_days": 32,
-          "slip_fully_established": false
+          "slip_fully_established": false,
+          "slip_contingent_days": 0,
+          "slip_contingent_revisions": 0,
+          "slip_upper_bound_days": -27
         },
         {
           "nct": "NCT06128564",
@@ -1137,7 +1151,7 @@
               "enrollment": "13",
               "dimensions_established": true,
               "transition": "scope_revision",
-              "transition_reason": "the commitment changed shape: population. A date difference across a changed scope is not slip.",
+              "transition_reason": "the commitment changed shape: population. These are counts and enumerations, so the difference is not a matter of wording. A date difference across them is not slip.",
               "transition_changed": [
                 "population"
               ],
@@ -1173,7 +1187,10 @@
           "slip_established_days": -1031,
           "slip_refused_revisions": 1,
           "slip_reported_days": -2463,
-          "slip_fully_established": false
+          "slip_fully_established": false,
+          "slip_contingent_days": 0,
+          "slip_contingent_revisions": 0,
+          "slip_upper_bound_days": -1031
         }
       ],
       "thesis_timeline": {

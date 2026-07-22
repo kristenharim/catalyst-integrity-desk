@@ -470,7 +470,7 @@ def _classify_history(hist: dict, actor: str) -> dict:
     between its dates describe two different commitments.
     """
     from engine.dimensions import enrich
-    from engine.promise import Promise, net_slip_days, walk
+    from engine.promise import Promise, slip_breakdown, walk
 
     enriched = enrich(hist)
     revs = enriched.get("revisions") or []
@@ -496,11 +496,18 @@ def _classify_history(hist: dict, actor: str) -> dict:
     if revs:
         revs[0]["transition"] = None
 
-    established, refused = net_slip_days(transitions)
-    enriched["slip_established_days"] = established
-    enriched["slip_refused_revisions"] = refused
+    b = slip_breakdown(transitions)
+    enriched["slip_established_days"] = b["established"]
+    enriched["slip_contingent_days"] = b["contingent"]
+    enriched["slip_contingent_revisions"] = b["contingent_revisions"]
+    enriched["slip_upper_bound_days"] = b["upper_bound"]
+    enriched["slip_refused_revisions"] = b["refused"]
     enriched["slip_reported_days"] = hist.get("total_slip_days")
-    enriched["slip_fully_established"] = refused == 0
+    # Fully established only when nothing was refused AND nothing is waiting on
+    # a human reading two endpoint descriptions.
+    enriched["slip_fully_established"] = (
+        b["refused"] == 0 and b["contingent_revisions"] == 0
+    )
     return enriched
 
 
@@ -966,11 +973,20 @@ def refresh_transitions() -> None:
         for h in [c.get("history")] + list(c.get("lapsed_history") or []):
             if not h:
                 continue
-            rep, est = h.get("slip_reported_days"), h.get("slip_established_days")
+            rep = h.get("slip_reported_days")
+            est = h.get("slip_established_days")
+            con = h.get("slip_contingent_days")
+            ub = h.get("slip_upper_bound_days")
             ref = h.get("slip_refused_revisions")
-            flag = "" if rep == est else "   <- reported figure is not fully supported"
+            if h.get("slip_fully_established"):
+                flag = ""
+            elif ref:
+                flag = "   <- refused: a count or enumeration changed"
+            else:
+                flag = "   <- contingent on a human reading two endpoint texts"
             print(f"  {ticker:5} {h['nct']:12} reported {rep!s:>6}  "
-                  f"established {est!s:>6}  refused {ref}{flag}")
+                  f"established {est!s:>6}  contingent {con!s:>6}  "
+                  f"upper {ub!s:>6}  refused {ref}{flag}")
     print(f"Transitions written: {SNAPSHOT_PATH}")
 
 

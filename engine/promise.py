@@ -23,14 +23,24 @@ classified into one of five transitions, and only two of them are ever allowed
 to produce a slip number. The rest return "requires human adjudication", which
 is a worse product and a true one.
 
-    unchanged           nothing material moved
-    date_only           the date moved; scope, endpoint and population did not
-    scope_revision      the commitment itself changed shape
+    unchanged           nothing moved
+    date_only           the date moved; nothing else did
+    text_revised        only free prose changed, so a reword and a redefinition
+                        are indistinguishable. Movement is CONTINGENT.
+    scope_revision      a count or enumeration changed. Unambiguous.
     supersession        this commitment was replaced or withdrawn
     uncertain           cannot be established from the record
 
-              slip arithmetic allowed:  unchanged, date_only
-              slip arithmetic refused:  everything else
+        statable:    unchanged, date_only
+        contingent:  text_revised, reported in its own total
+        refused:     scope_revision, supersession, uncertain
+
+`text_revised` exists because of a correction. An earlier version treated any
+endpoint difference as a scope revision, which had two failure modes: a real
+delay was excluded because the sponsor happened to reword the endpoint, and,
+worse, a sponsor could remove a delay from the total by rewording deliberately.
+A guard that a subject can defeat by editing prose, in the direction that
+flatters them, is not a guard.
 
 The classification is deterministic and reads only structured registry fields.
 No model participates. A model deciding "is this the same promise" is exactly
@@ -46,13 +56,41 @@ from engine.ctgov_history import _parse_date
 # The five transitions, worst-understood last.
 UNCHANGED = "unchanged"
 DATE_ONLY = "date_only"
+TEXT_REVISED = "text_revised"
 SCOPE_REVISION = "scope_revision"
 SUPERSESSION = "supersession"
 UNCERTAIN = "uncertain"
 
-# Only these two describe a commitment whose shape held, so only these two
-# permit "the date moved by N days" to be stated as a fact about one promise.
+# Only these two describe a commitment whose shape provably held, so only these
+# two permit "the date moved by N days" to be stated as a fact about one promise.
 COMPARABLE = frozenset({UNCHANGED, DATE_ONLY})
+
+# Dimensions that are counts or enumerations. A difference here is unambiguous:
+# an enrolment of 12 is not an enrolment of 14, and no rewording makes it so.
+STRUCTURED_DIMENSIONS = ("actor", "subject", "milestone", "scope", "population")
+
+# Dimensions that are free prose. A difference here is NOT a finding, and this
+# is the correction to an earlier version of this module that treated it as one.
+#
+# "Phenotypic correction of bone marrow colony forming units after infusion of
+# RP-L102" became "Bone Marrow (BM) Colony-Forming Cell (CFC) Mitomycin-C (MMC)
+# resistance". In Fanconi anaemia gene therapy, MMC resistance of bone marrow
+# colony-forming cells is how phenotypic correction is measured. Those two
+# strings may name the same endpoint, described more precisely the second time.
+# An exact comparison cannot tell, a normalised one cannot either, and a model
+# deciding it is the judgement this whole module exists to exclude.
+#
+# Treating a prose difference as a scope revision had two failure modes pointing
+# in opposite directions, and the second is worse:
+#
+#   false refusal  a real delay is excluded from the total because the sponsor
+#                  reworded the endpoint at the same time
+#   laundering     a sponsor who wants a delay to disappear from the comparable
+#                  total need only reword the endpoint, and the guard obliges
+#
+# So a prose-only change now produces its own state: the movement is CONTINGENT,
+# reported separately, and never silently folded into either total.
+FREE_TEXT_DIMENSIONS = ("endpoint",)
 
 # Registry statuses that end a commitment rather than revise it. A terminated
 # trial's completion date is not a catalyst that slipped; it is a promise that
@@ -117,27 +155,37 @@ class Transition:
         """
         return self.moved_days if self.comparable else None
 
+    @property
+    def contingent_days(self) -> int | None:
+        """Days that count only if a human rules the reword cosmetic.
 
-def _dim_changes(a: Promise, b: Promise) -> list[str]:
-    """Named dimensions that differ, treating unknown as a difference.
+        Kept separate from `slip_days` on purpose. Folding it in would restate
+        the bug this state was created to fix; dropping it would let a sponsor
+        launder a delay out of the total by rewording an endpoint.
+        """
+        return self.moved_days if self.kind == TEXT_REVISED else None
+
+
+def _dim_changes(a: Promise, b: Promise) -> tuple[list[str], list[str], list[str]]:
+    """(structured changes, free-text changes, unreadable dimensions).
 
     `None != None` is enforced deliberately: if a dimension could not be read
     from either version, the honest answer is that continuity was not
     established, not that it was.
     """
-    names = ("actor", "subject", "milestone", "scope", "endpoint", "population")
-    out = []
-    for name in names:
+    structured, freetext, unknown = [], [], []
+    for name in STRUCTURED_DIMENSIONS + FREE_TEXT_DIMENSIONS:
+        bucket = structured if name in STRUCTURED_DIMENSIONS else freetext
         av, bv = getattr(a, name), getattr(b, name)
         if av is None or bv is None:
             if not (av is None and bv is None):
-                out.append(name)
+                bucket.append(name)
             elif name in ("endpoint", "population", "scope"):
                 # Both unknown on a dimension that decides comparability.
-                out.append(f"{name}:unknown")
+                unknown.append(name)
         elif av != bv:
-            out.append(name)
-    return out
+            bucket.append(name)
+    return structured, freetext, unknown
 
 
 def classify(before: Promise, after: Promise) -> Transition:
@@ -171,23 +219,39 @@ def classify(before: Promise, after: Promise) -> Transition:
             changed=["status"],
         )
 
-    changed = _dim_changes(before, after)
-    unknown = [c for c in changed if c.endswith(":unknown")]
-    real = [c for c in changed if not c.endswith(":unknown")]
+    structured, freetext, unknown = _dim_changes(before, after)
 
-    if real:
+    if structured:
         return Transition(
             SCOPE_REVISION,
-            "the commitment changed shape: " + ", ".join(real)
-            + ". A date difference across a changed scope is not slip.",
-            changed=real,
+            "the commitment changed shape: " + ", ".join(structured)
+            + ". These are counts and enumerations, so the difference is not a "
+              "matter of wording. A date difference across them is not slip.",
+            changed=structured,
+        )
+
+    if freetext:
+        # The correction. A prose difference is not evidence the commitment
+        # changed, and it is not evidence it held. The movement is reported as
+        # contingent on a human reading the two descriptions, and counted in its
+        # own total so that rewording cannot make a delay disappear.
+        moved = (None if before.due is None or after.due is None
+                 else (after.due - before.due).days)
+        return Transition(
+            TEXT_REVISED,
+            "only free-text changed (" + ", ".join(freetext) + "). A reword and a "
+            "redefinition are indistinguishable here, so the movement is "
+            "contingent: it counts only if a human reads the two descriptions as "
+            "the same commitment.",
+            moved_days=moved,
+            changed=freetext,
         )
 
     if unknown:
         return Transition(
             UNCERTAIN,
             "continuity could not be established; "
-            + ", ".join(u.split(":")[0] for u in unknown)
+            + ", ".join(unknown)
             + " unreadable in both versions",
             changed=unknown,
         )
@@ -247,16 +311,40 @@ def walk(promises: list[Promise]) -> list[Transition]:
 
 
 def net_slip_days(transitions: list[Transition]) -> tuple[int, int]:
-    """(days of slip that may be stated, count of revisions that may not).
+    """(days that may be stated, count of revisions that may not).
 
-    The second number is the honest part and must be shown wherever the first
-    is. A net slip computed over four comparable revisions while three others
-    were refused is not "1,008 days of slip"; it is "1,008 days across the
-    revisions where the commitment held its shape, with three not comparable".
+    Kept two-valued for callers that predate the contingent state. Prefer
+    `slip_breakdown`, which does not hide the contingent days inside "refused".
     """
-    total = sum(t.slip_days or 0 for t in transitions if t.comparable)
-    refused = sum(1 for t in transitions if not t.comparable)
-    return total, refused
+    b = slip_breakdown(transitions)
+    return b["established"], b["refused"] + b["contingent_revisions"]
+
+
+def slip_breakdown(transitions: list[Transition]) -> dict:
+    """Established, contingent, and refused, reported separately.
+
+    Three numbers because there are three situations, and collapsing them is how
+    both failure modes happen:
+
+      established   the commitment provably held its shape. Statable.
+      contingent    only free text changed. Counts if and only if a human reads
+                    the descriptions as the same commitment. Reporting it as
+                    zero lets a sponsor launder a delay by rewording; reporting
+                    it as established restates the original bug.
+      refused       a count or enumeration changed, or the commitment ended, or
+                    continuity was unreadable. Not statable at any confidence.
+    """
+    established = sum(t.slip_days or 0 for t in transitions if t.comparable)
+    contingent = sum(t.contingent_days or 0 for t in transitions
+                     if t.kind == TEXT_REVISED)
+    return {
+        "established": established,
+        "contingent": contingent,
+        "contingent_revisions": sum(1 for t in transitions if t.kind == TEXT_REVISED),
+        "refused": sum(1 for t in transitions
+                       if not t.comparable and t.kind != TEXT_REVISED),
+        "upper_bound": established + contingent,
+    }
 
 
 def demo() -> None:
@@ -276,12 +364,20 @@ def demo() -> None:
                  Promise(**base, due=date(2028, 4, 1)))
     assert t.kind == UNCHANGED and t.slip_days == 0
 
-    # scope_revision: the endpoint changed, so the date difference is not slip.
-    after = dict(base, endpoint="overall survival")
+    # scope_revision: a COUNT changed, which no rewording can explain away.
+    after = dict(base, population="120")
     t = classify(Promise(**base, due=date(2025, 9, 1)),
                  Promise(**after, due=date(2028, 4, 1)))
     assert t.kind == SCOPE_REVISION, t
-    assert t.slip_days is None, "a changed endpoint must not produce a slip number"
+    assert t.slip_days is None, "a changed enrolment must not produce a slip number"
+
+    # text_revised: only prose changed. Not statable, not zero, CONTINGENT.
+    after = dict(base, endpoint="overall survival")
+    t = classify(Promise(**base, due=date(2025, 9, 1)),
+                 Promise(**after, due=date(2028, 4, 1)))
+    assert t.kind == TEXT_REVISED, t
+    assert t.slip_days is None, "a reworded endpoint is not established movement"
+    assert t.contingent_days == 943, "and it must not vanish either"
 
     # supersession: the commitment ended.
     t = classify(Promise(**base, due=date(2025, 9, 1)),
@@ -308,6 +404,18 @@ def demo() -> None:
         Transition(DATE_ONLY, "", 8),
     ])
     assert (total, refused) == (108, 1), (total, refused)
+
+    # The laundering attack, stated as a test: a sponsor pushes the date out and
+    # rewords the endpoint in the same filing. The days must NOT disappear.
+    b = slip_breakdown([
+        Transition(DATE_ONLY, "", 100),
+        Transition(TEXT_REVISED, "", 1430),
+        Transition(SCOPE_REVISION, "", 900),
+    ])
+    assert b["established"] == 100
+    assert b["contingent"] == 1430, "a reworded endpoint must not launder a delay"
+    assert b["refused"] == 1
+    assert b["upper_bound"] == 1530
     print("ok")
 
 

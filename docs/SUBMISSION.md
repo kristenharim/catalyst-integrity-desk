@@ -109,25 +109,34 @@ Two supporting rules: every displayed number names the XBRL tag or registry vers
 from, and a lapsed completion date is never treated as a catalyst, because you cannot run
 out of money before an event that already happened.
 
-## What it found in its own numbers
+## What it found in its own numbers, twice
 
-The most useful result this project produced is a correction to itself.
+The most useful result this project produced is a correction to itself, and then a
+correction to that correction.
 
-`total_slip_days` subtracts registered completion dates across successive registry
-versions. That is a delay only if both dates describe the same commitment, and nothing
-checked. `engine/promise.py` now classifies every revision and refuses to state a movement
-it cannot establish. Five of the seven trials in the snapshot turn out to have been
-reporting figures the record does not support.
+`total_slip_days` subtracts registered dates across registry versions. That is a delay only
+if both dates describe the same commitment, and nothing checked. `engine/promise.py` now
+does, and reports three totals rather than one: **established** where the commitment
+provably held, **contingent** where only free prose changed, **refused** where a count or
+enumeration changed.
 
-The clearest case: `NCT04248439` reported 1,008 days. A single +1,430-day revision
-coincided with the primary endpoint changing from phenotypic correction of bone marrow
-colony forming units to Mitomycin-C resistance of bone marrow colony-forming cells.
-Different endpoint, different promise, not a delay. The supported figure is -422 days
-across the two revisions where the commitment held its shape.
+Two Rocket trials, failing differently:
 
-Unaffected, and stated so the finding is not read as bigger than it is: the 677-day
-expired-date result is one version carrying an already-passed date, not a comparison
-across two commitments. So is the funding gap. `docs/LIMITS.md` has the table.
+- `NCT06092034`: reported 943 days, established 0. Its enrolment moved from 12 to 14. A
+  count, so no reading of any text rescues it.
+- `NCT04248439`: reported 1,008, established -422, contingent +1,430, upper bound **1,008**.
+  Its endpoint was reworded from phenotypic correction of bone marrow colony forming units
+  to Mitomycin-C resistance of bone marrow colony-forming cells. In Fanconi anaemia those
+  may name the same endpoint more precisely, so the movement waits on a human reading both.
+
+A first version of this audit called the second one unsupported and stopped. That
+overstated it, and worse, it meant a sponsor could remove a delay from the comparable total
+by rewording an endpoint in the same filing. A guard a subject can defeat by editing prose,
+in the direction that flatters them, is not a guard.
+
+Unaffected, and stated so neither correction is read as bigger than it is: the 677-day
+expired-date result is one version carrying an already-passed date, with no comparison
+between commitments. So is the funding gap. `docs/LIMITS.md` has the table.
 
 ## Theme fit: intelligent systems for the future of work
 
@@ -192,7 +201,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 133 passed, 1 skipped (134 passed with watsonx credentials)
+python3 -m pytest tests/ -q   # 137 passed, 1 skipped (138 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a

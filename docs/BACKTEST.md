@@ -128,6 +128,15 @@ was left standing through four successive filings: the sponsor updated the recor
 This is a description of registry behaviour. It is not a claim about those sponsors,
 those programmes, or what happens next, and the lexicon is what stops it becoming one.
 
+**On the denominator, because "six of fourteen" is not a rate.** Fourteen is the number of
+trials whose version history happens to be cached, and the cache is whatever the demo
+fetched: five companies chosen by hand, plus their lapsed trials. It is a convenience
+sample of exactly the companies picked to illustrate the problem, so it cannot be read as a
+base rate for anything. The right denominator is a randomly drawn cohort of clinical-stage
+sponsors, which does not exist here and is the next piece of work. Until it does, six of
+fourteen is a direction, not a result, and the honest form of the sentence is "in the
+fourteen trials examined", never "in N percent of trials".
+
 ## What would have to be true to reach further
 
 Ranked by how much has to hold, least first.

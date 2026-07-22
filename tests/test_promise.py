@@ -20,8 +20,8 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from engine.promise import (  # noqa: E402
-    DATE_ONLY, SCOPE_REVISION, SUPERSESSION, UNCERTAIN, UNCHANGED,
-    Promise, Transition, classify, net_slip_days, walk,
+    DATE_ONLY, SCOPE_REVISION, SUPERSESSION, TEXT_REVISED, UNCERTAIN, UNCHANGED,
+    Promise, Transition, classify, net_slip_days, slip_breakdown, walk,
 )
 
 BASE = dict(actor="Rocket Pharmaceuticals Inc.", subject="NCT06092034",
@@ -63,7 +63,6 @@ def test_unchanged_is_zero_not_none():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("dimension,new_value", [
-    ("endpoint", "overall survival"),
     ("population", "120"),
     ("scope", "PHASE3"),
     ("milestone", "study_completion"),
@@ -165,7 +164,7 @@ def test_net_slip_reports_what_it_refused():
 
 def test_walk_classifies_every_consecutive_pair():
     ps = [p(due=date(2025, 9, 1)), p(due=date(2026, 9, 1)),
-          p(due=date(2028, 4, 1), endpoint="overall survival")]
+          p(due=date(2028, 4, 1), population="120")]
     ts = walk(ps)
     assert len(ts) == 2
     assert ts[0].kind == DATE_ONLY
@@ -274,12 +273,15 @@ def test_established_slip_never_exceeds_what_was_classified():
 def test_refused_count_matches_the_revisions_marked_uncomparable():
     for ticker, h in _histories():
         revs = h.get("revisions") or []
-        marked = sum(1 for r in revs
-                     if r.get("transition") and r.get("slip_days") is None)
-        assert h["slip_refused_revisions"] == marked, (
+        refused = sum(1 for r in revs
+                      if r.get("transition") not in (None, "unchanged", "date_only",
+                                                     "text_revised"))
+        contingent = sum(1 for r in revs if r.get("transition") == "text_revised")
+        assert h["slip_refused_revisions"] == refused, (
             f"{ticker} {h['nct']}: says {h['slip_refused_revisions']} refused, "
-            f"{marked} revisions are marked non-comparable"
+            f"{refused} revisions are marked so"
         )
+        assert h["slip_contingent_revisions"] == contingent
 
 
 def test_the_finding_itself_is_still_true():
@@ -305,12 +307,35 @@ def test_the_finding_itself_is_still_true():
 def test_rocket_lapsed_trial_is_the_documented_case():
     """The specific numbers quoted in LIMITS.md and the log, pinned.
 
-    A doc that quotes a figure the code no longer produces is the failure this
-    project has already had twice with test counts.
+    These changed once already. An earlier version of this module treated the
+    endpoint reword on this trial as a scope revision and reported the 1,008-day
+    figure as unsupported. That overstated the correction: only prose changed, so
+    the movement is contingent rather than refused, and the upper bound comes
+    back to exactly the reported figure.
     """
     h = next(h for _t, h in _histories() if h["nct"] == "NCT04248439")
     assert h["slip_reported_days"] == 1008
     assert h["slip_established_days"] == -422
+    assert h["slip_contingent_days"] == 1430
+    assert h["slip_upper_bound_days"] == 1008, (
+        "established plus contingent must return the reported figure; if it does "
+        "not, one of the three numbers is wrong"
+    )
+    assert h["slip_refused_revisions"] == 0, (
+        "nothing on this trial is refused outright; a reword is not a redefinition"
+    )
+
+
+def test_rocket_binding_trial_is_genuinely_refused():
+    """The other correction, which stands, and for a different reason.
+
+    NCT06092034's revision changed the enrolment from 12 to 14. That is a count,
+    not a wording, so no human reading of two endpoint texts can rescue it.
+    """
+    h = next(h for _t, h in _histories() if h["nct"] == "NCT06092034")
+    assert h["slip_reported_days"] == 943
+    assert h["slip_established_days"] == 0
+    assert h["slip_contingent_days"] == 0
     assert h["slip_refused_revisions"] == 1
 
 
@@ -324,3 +349,54 @@ def test_the_677_day_finding_is_untouched():
     expired = [r for _t, h in _histories()
                for r in (h.get("revisions") or []) if r.get("carried_expired")]
     assert max(r["days_expired"] for r in expired) == 677
+
+
+# ---------------------------------------------------------------------------
+# The laundering attack
+# ---------------------------------------------------------------------------
+# The failure mode of the fix. Treating any endpoint difference as a scope
+# revision meant a sponsor could remove a delay from the comparable total by
+# rewording the endpoint in the same filing -- a guard the subject can defeat by
+# editing prose, in the direction that flatters them.
+
+def test_a_reworded_endpoint_cannot_launder_a_delay():
+    """The days must not disappear. They move to a separate total, not to zero."""
+    before = p(due=date(2024, 1, 1))
+    after = p(due=date(2027, 12, 1), endpoint="an identical study, described anew")
+    t = classify(before, after)
+    assert t.kind == TEXT_REVISED
+    assert t.slip_days is None, "a reword does not establish movement"
+    assert t.contingent_days == 1430, "and it must not erase it either"
+
+
+def test_a_changed_count_cannot_be_rescued_by_wording():
+    """The other direction: an enrolment change is refused outright, and no
+    human reading of two endpoint texts brings it back."""
+    t = classify(p(due=date(2024, 1, 1)),
+                 p(due=date(2027, 12, 1), population="999"))
+    assert t.kind == SCOPE_REVISION
+    assert t.slip_days is None and t.contingent_days is None
+
+
+def test_the_three_totals_are_reported_separately():
+    b = slip_breakdown([
+        Transition(DATE_ONLY, "", 100),
+        Transition(TEXT_REVISED, "", 1430),
+        Transition(SCOPE_REVISION, "", 900),
+        Transition(SUPERSESSION, "", 50),
+    ])
+    assert b["established"] == 100
+    assert b["contingent"] == 1430
+    assert b["upper_bound"] == 1530
+    assert b["refused"] == 2
+    assert b["contingent_revisions"] == 1
+
+
+def test_upper_bound_returns_the_reported_figure_when_nothing_is_refused():
+    """A sanity identity worth asserting: if every revision is either comparable
+    or a pure reword, established + contingent must equal the naive total. When
+    it does not, one of the three numbers is wrong.
+    """
+    for _t, h in _histories():
+        if h["slip_refused_revisions"] == 0:
+            assert h["slip_upper_bound_days"] == h["slip_reported_days"], h["nct"]

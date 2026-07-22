@@ -182,12 +182,17 @@
          difference across it describes two promises, so it is not slip. #}
       <circle cx="{{ r.svg_x }}" cy="110" r="8"
               fill="#6b7280"
-              stroke="{% if r.transition and r.slip_days is none %}#d29922{% else %}#9ca3af{% endif %}"
+              stroke="{% if r.transition == 'text_revised' %}#d29922{% elif r.transition and r.slip_days is none %}#f85149{% else %}#9ca3af{% endif %}"
               stroke-width="{% if r.transition and r.slip_days is none %}2.5{% else %}1{% endif %}"
               class="revision-node{% if r.transition and r.slip_days is none %} not-comparable{% endif %}"/>
-      {% if r.transition and r.slip_days is none %}
+      {% if r.transition == 'text_revised' %}
       <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="9" fill="#d29922">
+        wording only
+      </text>
+      {% elif r.transition and r.slip_days is none %}
+      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="9" fill="#f85149">
         not comparable
       </text>
       {% endif %}
@@ -215,14 +220,25 @@
 </p>
 <p style="font-size:11px; margin:0 0 20px; max-width:940px;">
   <span style="color:#8b949e;">Net date movement, across revisions where the
-  commitment held its shape:</span>
+  commitment provably held its shape:</span>
   <strong style="color:#c9d1d9;">{{ c.history.slip_established_days }} days</strong>
+  {% if c.history.slip_contingent_revisions %}
+  <br>
+  <span style="color:#d29922;">&#9888;
+    a further {{ c.history.slip_contingent_days }} days are contingent</span>
+  <span style="color:#8b949e;">
+    on {{ c.history.slip_contingent_revisions }} revision(s) where only the endpoint
+    wording changed. A reword and a redefinition are indistinguishable from the
+    text, so a human has to read the two descriptions. If they name the same
+    commitment the total is {{ c.history.slip_upper_bound_days }} days; if not, it stays
+    at {{ c.history.slip_established_days }}.</span>
+  {% endif %}
   {% if c.history.slip_refused_revisions %}
   <br>
   <span class="verdict-alert">&#9888;
-    {{ c.history.slip_refused_revisions }} revision(s) are not comparable</span>
+    {{ c.history.slip_refused_revisions }} revision(s) are not comparable at all</span>
   <span style="color:#8b949e;">
-    because the primary endpoint or the enrolment changed at the same time.
+    because a count or an enumeration changed, which no rewording explains.
     Subtracting those dates would describe two different commitments. The
     unaudited total across every revision is
     {{ c.history.slip_reported_days }} days.</span>
@@ -274,12 +290,17 @@
          difference across it describes two promises, so it is not slip. #}
       <circle cx="{{ r.svg_x }}" cy="110" r="8"
               fill="#6b7280"
-              stroke="{% if r.transition and r.slip_days is none %}#d29922{% else %}#9ca3af{% endif %}"
+              stroke="{% if r.transition == 'text_revised' %}#d29922{% elif r.transition and r.slip_days is none %}#f85149{% else %}#9ca3af{% endif %}"
               stroke-width="{% if r.transition and r.slip_days is none %}2.5{% else %}1{% endif %}"
               class="revision-node{% if r.transition and r.slip_days is none %} not-comparable{% endif %}"/>
-      {% if r.transition and r.slip_days is none %}
+      {% if r.transition == 'text_revised' %}
       <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="9" fill="#d29922">
+        wording only
+      </text>
+      {% elif r.transition and r.slip_days is none %}
+      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="9" fill="#f85149">
         not comparable
       </text>
       {% endif %}
@@ -307,14 +328,25 @@
 </p>
 <p style="font-size:11px; margin:0 0 20px; max-width:940px;">
   <span style="color:#8b949e;">Net date movement, across revisions where the
-  commitment held its shape:</span>
+  commitment provably held its shape:</span>
   <strong style="color:#c9d1d9;">{{ lh.slip_established_days }} days</strong>
+  {% if lh.slip_contingent_revisions %}
+  <br>
+  <span style="color:#d29922;">&#9888;
+    a further {{ lh.slip_contingent_days }} days are contingent</span>
+  <span style="color:#8b949e;">
+    on {{ lh.slip_contingent_revisions }} revision(s) where only the endpoint
+    wording changed. A reword and a redefinition are indistinguishable from the
+    text, so a human has to read the two descriptions. If they name the same
+    commitment the total is {{ lh.slip_upper_bound_days }} days; if not, it stays
+    at {{ lh.slip_established_days }}.</span>
+  {% endif %}
   {% if lh.slip_refused_revisions %}
   <br>
   <span class="verdict-alert">&#9888;
-    {{ lh.slip_refused_revisions }} revision(s) are not comparable</span>
+    {{ lh.slip_refused_revisions }} revision(s) are not comparable at all</span>
   <span style="color:#8b949e;">
-    because the primary endpoint or the enrolment changed at the same time.
+    because a count or an enumeration changed, which no rewording explains.
     Subtracting those dates would describe two different commitments. The
     unaudited total across every revision is
     {{ lh.slip_reported_days }} days.</span>
