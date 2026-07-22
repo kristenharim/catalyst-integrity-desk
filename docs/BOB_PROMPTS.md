@@ -299,6 +299,65 @@ sourced, and the snapshot binds no lapsed catalyst.
 
 ---
 
+### Prompt 3, the real breach: delete the scripted amendment
+
+The engine fix made the scripted amendment obsolete and slightly dishonest. `DEMO.md`
+promises "an amendment lands and the funding gap flips negative", but Rocket now sits at
+-14.5 months before any amendment, so the scripted +9 month shift moves it from -14.5 to
+-23.5. It shows an already-broken thesis getting worse, and the approved band collapsed to
+`[0.0, 2.0]` as a side effect.
+
+There is a real breach available, and it is better than the invented one. Nobody filed
+anything. The date simply arrived, and passed.
+
+- The thesis was written against `NCT04248439`, registered primary completion 2026-05-05,
+  which gave a funding gap of **+8.4 months, funded to catalyst**, on the same Q1-2026
+  liquidity the engine uses today.
+- That date lapsed. The binding catalyst became `NCT06092034` at 2028-04, and the same
+  runway now gives **-14.5 months, financing required**.
+
+That is an observed event in public data, not a hypothetical, and it removes the only
+invented element in the system.
+
+> **1.** In `console/make_snapshot.py`, replace `_build_rckt_redline`'s scripted +9 month
+> shift. Build the **approved** contract from the lapsed trial the engine already carries:
+> `CatalystContract(runway=c.runway, trial=c.lapsed[0], history=c.lapsed_history[0])`,
+> which recomputes to +8.4. Build the **recomputed** contract as the real current contract,
+> which is -14.5. Pass both to `ContractDelta` and run the existing redline loop unchanged.
+>
+> The `BeliefCard` should describe the thesis as it stood: band anchored to the approved
+> gap the way the current code already derives it, `as_of` the runway's own date. Do not
+> hand Granite any figure it should not have; `as_directions()` already handles that and
+> must not be bypassed.
+>
+> **2.** Serialize what changed so the console can tell the story without arithmetic in a
+> template: the prior trial and its lapsed date, the current trial and its date, both gaps
+> as display strings, and a flag saying no amendment was filed. The date lapsing is the
+> event.
+>
+> **3.** Update `/redline`'s three columns to the real story. The left column is the thesis
+> as approved against the now-lapsed date. The middle is what changed, and it is not an
+> amendment: the registered completion passed and the binding catalyst moved to the next
+> registered date. The right stays the thesis status. Keep the struck-through before and
+> after treatment, it works.
+>
+> **4.** Two small fixes while you are in there. The left column labels the scope as
+> `Trial: company:RCKT`; it should show the NCT id of the binding trial. And removing em
+> dashes left literal `--` in rendered headings, so the page reads `RCKT -- ROCKET
+> PHARMACEUTICALS` and `carried expired -- 677 days`, which looks like unrendered markdown
+> on camera. Use a middot or restructure. Still no em dashes.
+>
+> This rebuilds the snapshot and does call Granite: `set -a; . ./.env; set +a; python3
+> console/make_snapshot.py`. Keep every existing assertion, including the 677 row and the
+> no-lapsed-catalyst check.
+
+**Accept when:** `/redline` describes a real lapse rather than a scripted amendment, the
+approved side reads +8.4 and the current side -14.5, no figure is computed in a template,
+`pytest tests/` is green with `.env` sourced, and the memo still carries
+`source == "granite"`.
+
+---
+
 ### Prompt 4, reduced: the panel the demo actually needs
 
 `docs/SPEC.md` Phase 4 specifies a 60 to 100 company panel assembled from SEC DERA
