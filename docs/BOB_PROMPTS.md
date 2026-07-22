@@ -409,6 +409,37 @@ the UI overstates what the anchor proves.
 
 ---
 
+### Prompt 3, the receipt: read it from the ledger, not the URL
+
+The anchor works. The receipt beside it does not, and it is the same defect the badge had.
+
+`redline_decide` redirects to
+`/redline/confirm?verdict=approve&receipt={"author":...,"prev_hash":...,"entry_hash":...}`,
+so every field on the receipt is carried in the query string rather than read from the
+ledger. Verified by hand-crafting a URL: the page rendered author `nobody:forged`, thesis
+state "funded to catalyst, no financing required", and entry hash `deadbeef...` repeated,
+all presented as cryptographic evidence, beside a badge reading intact.
+
+A receipt that can be typed into the address bar is not evidence of anything, and this one
+sits next to a badge that lends it credibility.
+
+> Build the receipt in `redline_confirm` by reading the ledger's last entry at render time,
+> exactly as the badge already does. The redirect should carry the verdict and nothing
+> else. Every displayed field, including both hashes, must come from that entry.
+>
+> Write the test first and watch it fail: request the confirm page with a `receipt` query
+> parameter full of forged values and assert the page shows the ledger's real hashes and
+> real author, not the forged ones. Then delete the parameter handling.
+>
+> While you are there, add `data/ledger.anchor` to `.gitignore`. It is live demo state
+> written during a decision, like `data/decisions.jsonl`, and it should not be committed.
+
+**Accept when:** the forged-receipt test fails before the fix, the receipt renders from the
+ledger, no receipt data travels in the URL, `data/ledger.anchor` is gitignored, and
+`pytest tests/` is green with `.env` sourced.
+
+---
+
 ### Prompt 4, reduced: the panel the demo actually needs
 
 `docs/SPEC.md` Phase 4 specifies a 60 to 100 company panel assembled from SEC DERA

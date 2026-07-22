@@ -8,30 +8,36 @@ This file exists because the project's pitch is that it does not flatter itself.
 who finds one of these unaided has found a hole. A judge who reads them here has found a
 team that already looked.
 
-## The ledger detects modification, not deletion
+## The ledger detects modification, and now deletion, with one caveat
 
 `verify()` walks the hash chain and recomputes each link. It catches any edit to a byte
-inside a hashed payload, which is the demo, and that demo is real.
+inside a hashed payload. On its own that is all it catches: a bare hash chain proves the
+**presented** chain is self-consistent, never that it is the **original** chain.
 
-It does not catch these, all three verified by running them:
+Verified before the anchor existed: deleting the newest entry left `verify()` returning
+`True`, and replacing the whole file with a freshly built valid chain whose claim read
+"Rocket is comfortably funded and no financing is required" also returned `True`.
 
-| Attack | Result |
+`orchestrator/anchor.py` closes that by recording the head hash and entry count outside
+the chain and comparing on render. Verified by running each attack:
+
+| Attack | Badge |
 |---|---|
-| Delete the newest entry, leave the rest untouched | `verify()` returns `True`, badge stays green |
-| Delete a middle entry and rehash its descendants | undetectable by construction |
-| Replace the whole file with a fresh, internally valid chain | `verify()` returns `True` |
+| clean ledger | intact |
+| edit one byte inside a hashed payload | tampered |
+| delete the newest entry | truncated or replaced |
+| replace the file with a valid chain | truncated or replaced |
+| delete the anchor file itself | truncated or replaced |
 
-The third one is the sharpest. A chain was built whose belief claim read "Rocket is
-comfortably funded and no financing is required", and `verify()` accepted it.
+The last row matters: a missing anchor fails closed rather than green.
 
-The reason is structural: a bare hash chain proves the **presented** chain is
-self-consistent. It cannot prove that it is the **original** chain, because nothing
-outside the file pins what the head should be. Nothing in the repo currently records an
-expected head hash or entry count.
-
-The fix is an external anchor: record the head hash and entry count somewhere the ledger
-writer does not own, and have `verify()` compare against it. Until that exists, say
-"detects tampering with recorded decisions", never "append-only" and never "immutable".
+**The residual limit, and it is real.** The anchor lives in `data/ledger.anchor`, which the
+same process writes. An attacker who rewrites the ledger and the anchor together defeats
+it. This raises the bar from "edit one file" to "edit two consistently"; it does not make
+the record immutable. Say "detects tampering, deletion and replacement of recorded
+decisions, given the anchor was not also rewritten". Never say "immutable" or
+"append-only". Closing this properly needs the anchor somewhere the writer does not own:
+a commit, a signature, or a second machine.
 
 ## The fabrication guard catches invented magnitudes, not wrong units
 
