@@ -344,7 +344,8 @@ What closing it required, in case any of it recurs:
 the registry-level result: **reconciliation is indistinguishable from filing frequency, and the
 sponsors who stop filing are the ones carrying expired commitments.** NIH files a median of
 106.5 versions per trial and carries zero expired commitments; OTHER_GOV files a median of 2
-and 27 of its 29 open commitments have expired. Monotone across all four strata.
+and 27 of its 29 open commitments have expired. Monotone across all four strata, which is an ordering across four points rather than a
+tested relationship.
 
 The supporting mechanism, among sponsors still filing, is that 26.2% of industry revisions
 replace an already-expired estimate (33 of 126). A draft published 52.4% for this, which

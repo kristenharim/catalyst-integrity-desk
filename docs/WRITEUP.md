@@ -28,25 +28,41 @@ completion date is in the past and still typed as an estimate. A past date typed
 reconciled case, a completed trial recording when it completed, and does not count. Measured as
 of 2026-07-22, against two denominators, beside how often each stratum files at all:
 
-| Stratum | carrying an expired estimate | of trials whose commitment is still open | median registry versions |
-|---|---:|---:|---:|
-| NIH | 0 of 60 (0.0%) | 0 of 18 (**0.0%**) | 106.5 |
-| INDUSTRY | 5 of 60 (8.3%) | 5 of 15 (33.3%) | 9 |
-| OTHER | 19 of 60 (31.7%) | 19 of 28 (67.9%) | 4 |
-| OTHER_GOV | 27 of 60 (45.0%) | 27 of 29 (**93.1%**) | 2 |
+| Stratum | carrying an expired estimate | of trials whose commitment is still open | invisible to the stretch measure | median registry versions | median date revisions |
+|---|---:|---:|---:|---:|---:|
+| NIH | 0 of 60 (0.0%) | 0 of 18 (**0.0%**) | 0 | 106.5 | 4 |
+| INDUSTRY | 5 of 60 (8.3%) | 5 of 15 (33.3%) | **4 of 5** | 9 | 3 |
+| OTHER | 19 of 60 (31.7%) | 19 of 28 (67.9%) | 15 of 19 | 4 | 2 |
+| OTHER_GOV | 27 of 60 (45.0%) | 27 of 29 (**93.1%**) | 20 of 27 | 2 | 1 |
 
 Both denominators are reported because they answer different questions. Out of all 60 trials
 the rate is small and should be: most trials in this frame have finished and recorded an actual
 completion date, which is the system working. But 45 of the 60 industry trials are in that
 state and cannot be carrying an expired estimate by construction. Among those whose commitment
 is still open, one in three industry trials is already past its stated date, and for OTHER_GOV
-it is 27 of 29.
+it is 27 of 29. **Four of the five industry trials currently carrying an expired estimate are
+invisible to the measure this project started with**, which is the industry instance of the
+finding below.
+
+Five trials is five events. No interval is computed anywhere in this document, and the
+conditional column's denominators are smaller still: one trial is 6.7 percentage points at
+n=15 and 5.6 at n=18, so the bolded 0.0% for NIH is a zero out of eighteen.
 
 NIH sponsors file a median of 106.5 registry versions per trial and have **no** trial currently
 carrying an expired estimate. OTHER_GOV sponsors file a median of 2 and nearly all of their
 open commitments are expired. The ordering is monotone in filing frequency across all four
 strata. That is an association across four points, not a tested mechanism, and nothing here
 separates filing frequency from any other property that varies alongside it.
+
+**A registry version is any record edit, not a completion-date edit**, and the 53x spread
+between NIH and OTHER_GOV is mostly edits to fields nobody here is discussing. On date
+revisions alone the medians are 4, 3, 2 and 1: the same ordering over a far smaller range. The
+last column above carries both so the spread is not read as fifty times more date maintenance.
+
+**The converse does not hold, and the study can say so.** Of the 32 OTHER_GOV trials that never
+revised a date, 18 carry an expired estimate and 14 do not; for industry it is 4 of 8, for
+OTHER 15 of 22, and none of the 5 NIH non-revisers carry one. Going quiet is common among the
+trials carrying an expired commitment; it does not follow that a quiet trial is carrying one.
 
 ### The measure that misses them, and why it inverts
 
@@ -67,8 +83,8 @@ The two measures therefore rank the four strata in **exactly opposite order**:
 
 Read alone, the stretch measure would have said government and academic sponsors lapse and file
 again least often. They are the most likely to be carrying an expired date now. A measure that
-needs its subject to keep talking cannot see the subject that stops, and every frequency
-statistic in this literature that is built from observed corrections has the same blind spot.
+needs its subject to keep talking cannot see the subject that stops, and any frequency
+statistic built from observed corrections has the same blind spot.
 
 ## The mechanism, among sponsors that are still filing
 
@@ -183,8 +199,10 @@ one number regardless of how often its sponsor happened to file afterwards.
 Days. NIH/industry ratio at the median: **1.5x**.
 
 **Every duration in this section is measured on completed spells**, meaning lapses that were
-eventually ended by a later filing. That is length-biased and it describes lapses that are
-over. The open cases, which are the ones a monitor would actually alert on, contribute no
+eventually ended by a later filing. Excluding open lapses biases every duration **downward**,
+and the exclusion is unequal across strata: no NIH trial is excluded on this ground, against 5
+industry, 19 OTHER and 27 OTHER_GOV. The 1.5x cross-stratum ratio is therefore between
+differently censored distributions and should be read with that. The open cases, which are the ones a monitor would actually alert on, contribute no
 duration at all: this study counts them and does not say how long they run or where the
 replacement date lands. Recorded in `docs/PARKING.md` as the next measurement rather than
 estimated here.
@@ -217,7 +235,7 @@ Three independent differences, none of which rests on the duration ratio alone:
    estimate, against 20.4% of NIH and 37.5% of OTHER_GOV ones.
 2. **Point prevalence.** 45.0% of OTHER_GOV trials are carrying an expired estimate now
    against 0.0% of NIH trials.
-3. **Filing frequency**, which drives both, at a median of 2 versions per trial against 106.
+3. **Filing frequency**, which drives both, at a median of 2 versions per trial against 106.5.
 
 `stats()` raises rather than returning a pooled rate, so the figure cannot be computed by
 accident.
@@ -352,11 +370,14 @@ behaviour was unlicensed while that regulation licensed half the numerator, and 
 same filing "the system working" in one section and a failure in another. Every number was
 arithmetically correct; the sentence they supported was not, so no numeric check could have
 caught it. The surviving figure is 26.2%, and it is a supporting mechanism here rather than
-the headline. Found by an adversarial reviewer on its second pass over the same document.
+the headline. The same draft published the trial-level companion, 43 of 52 industry trials
+(82.7%), from the same undivided numerator; under the split it is 24 of 52 (46.2%). **Both
+figures are retracted.** Found by an adversarial reviewer on its second pass over the same
+document.
 
 **A note on what the corrections have in common.** Six of the eight were found by breaking
 something or by an outside reader, and two of those (6 and 8) were found only on a second pass
-over material the same reviewer had already approved. One round of review would have shipped
+over material the same reviewer had already read without catching it. One round of review would have shipped
 both.
 
 ## What this does not license
@@ -369,7 +390,8 @@ both.
 - **No time series.** Every rate is one look at the registry. Whether this is getting better or
   worse is a different study.
 - **No uncertainty quantification.** With 60 trials per stratum the trial-level resolution is
-  1.7 percentage points and no interval is computed anywhere. The equal 80.0% frequencies for
+  1.7 percentage points, and the conditional-prevalence column is far coarser: 6.7 points per
+  trial at n=15 and 5.6 at n=18 and no interval is computed anywhere. The equal 80.0% frequencies for
   industry and NIH should not be read as an estimate of equality. The revision-level rates are
   worse: they are computed over revisions, not trials, and revisions within a trial are not
   independent, since 126 industry revisions come from 52 trials. No clustered interval is

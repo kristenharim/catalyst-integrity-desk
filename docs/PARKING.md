@@ -30,6 +30,14 @@ draw is uniform over the registry's own ordering within a stratum rather than ov
 stratum. Currently disclosed as a limitation and untested. The cheap check is to draw a
 second sample under a different ordering and see whether the rates move.
 
+**How long does an OPEN lapse run, and where does the replacement date land?** Every duration
+this study publishes is measured on completed spells, meaning lapses a later filing ended. That
+is length-biased downward and the censoring is wildly unequal: no NIH trial is excluded on this
+ground, against 5 industry, 19 OTHER and 27 OTHER_GOV. The trials a monitor would actually
+alert on are precisely the ones contributing no duration. This is the measurement `docs/LIMITS.md`
+and `docs/WRITEUP.md` both point at, and it is the next one worth doing: a survival estimate
+rather than a mean over the spells that happened to close.
+
 **No time series.** Every rate is one look at the registry. Whether lapse duration is
 growing or shrinking is a genuinely different study and the more interesting one, and it
 needs the frame rebuilt as of several historical dates. Out of scope here, and the single

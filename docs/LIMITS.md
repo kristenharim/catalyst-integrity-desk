@@ -340,7 +340,7 @@ and still typed ESTIMATED, as of the snapshot date 2026-07-22:
 | Stratum | carried at some point (stretch measure) | carrying one now | invisible to the stretch measure | median versions |
 |---|---:|---:|---:|---:|
 | INDUSTRY | 80.0% | 8.3% | 4 | 9 |
-| NIH | 80.0% | 0.0% | 0 | 106 |
+| NIH | 80.0% | 0.0% | 0 | 106.5 |
 | OTHER | 61.7% | 31.7% | 15 | 4 |
 | OTHER_GOV | **53.3%** | **45.0%** | **20** | 2 |
 
@@ -362,7 +362,7 @@ to the stretch measure because they lapsed and never filed again. `docs/COHORT.m
 evidence they do it more, and the measure could not see it.
 
 The mechanism is filing frequency, and it is large: median registry versions per trial is 2
-for OTHER_GOV, 4 for OTHER, 9 for INDUSTRY and **106** for NIH.
+for OTHER_GOV, 4 for OTHER, 9 for INDUSTRY and **106.5** for NIH.
 
 **What survives.** The Rocket 677-day case is untouched, because it is one version carrying
 one already-passed date against one clock and needs no later filing to exist. **Resolved

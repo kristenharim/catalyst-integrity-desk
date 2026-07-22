@@ -77,7 +77,7 @@ The primary figures are point prevalence and per-trial longest carry:
 | Stratum | carrying an expired estimate now | invisible to the stretch measure | longest carry p50 | median versions |
 |---|---:|---:|---:|---:|
 | INDUSTRY | 5 of 60 (8.3%) | 4 | 390 | 9 |
-| NIH | 0 of 60 (0.0%) | 0 | 590 | 106 |
+| NIH | 0 of 60 (0.0%) | 0 | 590 | 106.5 |
 | OTHER | 19 of 60 (31.7%) | 15 | 439 | 4 |
 | OTHER_GOV | 27 of 60 (45.0%) | 20 | 336 | 2 |
 
@@ -151,7 +151,7 @@ rather than on any single ratio:
 2. **Point prevalence.** 45.0% of OTHER_GOV trials carry an expired estimate now, against
    0.0% of NIH trials.
 3. **Filing frequency**, which drives both: a median of 2 registry versions per trial for
-   OTHER_GOV against 106 for NIH.
+   OTHER_GOV against 106.5 for NIH.
 
 On the primary duration measure NIH carries **1.5 times as long** as industry, median 590 days
 against 390. On the per-stretch sensitivity the same comparison reads 2.4x, and the gap

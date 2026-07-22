@@ -14,7 +14,8 @@ frequency: the sponsors who stop filing are the ones carrying expired commitment
 sponsors file a median of 106.5 registry versions per trial and have **zero** trials currently
 carrying an expired completion date. Government and academic sponsors file a median of 2, and
 **27 of their 29 still-open commitments have already expired**. The ordering is monotone in
-filing frequency across all four strata.
+filing frequency across all four strata, which is an ordering across four strata rather
+than a tested relationship.
 
 That inverts the measure this project started with. Counting lapses that a later filing
 corrected, government sponsors look like the *best* reconcilers, because a lapse only becomes
@@ -23,7 +24,7 @@ see the subject that stops.
 
 The supporting mechanism, among sponsors still filing: **26.2% of industry completion-date
 revisions replace an estimate that had already expired** (33 of 126), and 24 of the 52 industry
-trials that revised a date at all did it once. That is narrower than running late, which is
+trials that revised a date at all did it at least once. That is narrower than running late, which is
 well documented, and narrower than the raw after-lapse count, because a revision recording an
 *actual* completion is the update the regulation requires rather than a failure to file it.
 
