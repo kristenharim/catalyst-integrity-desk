@@ -160,8 +160,27 @@ def test_live_provider_does_not_import_the_network_stack_at_module_load():
     A frozen-only deployment loads this module and must stay credential-free and
     network-free; a module-level engine import would drag urllib and the API
     clients in behind it.
+
+    Checked by reading the source rather than by reloading the module. An
+    earlier version called `importlib.reload` here, which rebound
+    `provider.Incomplete` to a NEW class object while `console.app` still held a
+    reference to the old one -- so `except Incomplete` silently stopped matching
+    and a 404 route started returning a 500. It passed alone and failed in the
+    full suite, which is the signature of a test mutating global state. A test
+    that breaks the thing it is inspecting is worse than no test.
     """
-    import importlib
-    import evidence.provider as p
-    importlib.reload(p)
-    assert "engine" not in [m.split(".")[0] for m in dir(p)]
+    import ast
+
+    path = os.path.join(REPO, "evidence", "provider.py")
+    with open(path) as f:
+        tree = ast.parse(f.read())
+    top_level = set()
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            top_level.update(a.name.split(".")[0] for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            top_level.add(node.module.split(".")[0])
+    assert "engine" not in top_level, (
+        "evidence/provider.py imports the engine at module level; loading it "
+        "would pull in the network stack for a frozen-only deployment"
+    )

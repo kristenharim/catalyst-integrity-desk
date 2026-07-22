@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% block title %}Workspace &middot; Catalyst Integrity Desk{% endblock %}
+{% block content %}
+
+<h1>Workspace</h1>
+<p class="note">
+  A ticker, and the desk finds the rest. Two steps are yours and are not inferrable from a
+  ticker: which trial underwrites the thesis, and whether the proposed contract is right.
+  Nothing is written until you confirm it.
+</p>
+
+{% if errors %}
+<div style="background:#3d1414; border:1px solid #f85149; border-radius:6px;
+            padding:12px 16px; margin-bottom:18px; max-width:940px;">
+  {% for e in errors %}
+  <p style="color:#f85149; font-size:12px; margin:3px 0;">&#9888; {{ e }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- Step 1 #}
+{% if stage == "ticker" %}
+<form method="post" action="/workspace/discover" style="max-width:760px;">
+  <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                letter-spacing:0.07em; margin-bottom:5px;">Company ticker</label>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <input type="text" name="ticker" required placeholder="RCKT" list="tickers"
+           value="{{ (form.ticker if form else '') or '' }}"
+           style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                  padding:8px 12px; border-radius:3px; font-family:inherit;
+                  font-size:14px; width:200px; text-transform:uppercase;">
+    <datalist id="tickers">
+      {% for t in available %}<option value="{{ t }}">{% endfor %}
+    </datalist>
+    <button type="submit"
+            style="background:#0d2033; color:#60a5fa; border:1px solid #60a5fa;
+                   padding:8px 22px; border-radius:4px; cursor:pointer;
+                   font-family:inherit; font-size:12px; font-weight:bold;">
+      Analyse &rarr;
+    </button>
+  </div>
+  <p style="font-size:11px; color:#6e7681; margin-top:8px;">
+    The only required input. Everything below it is discovered: the CIK and legal name from
+    SEC XBRL, the liquidity and burn band from the same filing, the pivotal trials from
+    ClinicalTrials.gov by sponsor name, and each trial's full registered-date history.
+  </p>
+</form>
+
+<h2 style="margin-top:26px;">Evidence available offline</h2>
+<p class="note">
+  This console reads frozen evidence bundles, so the flow runs with no credentials and no
+  network. A live fetch writes the identical schema, which is why the demo is evidence
+  about the product rather than a mock of it.
+</p>
+<p style="font-size:12px;">
+  {% for t in available %}<code style="background:#0d1117; border:1px solid #30363d;
+    border-radius:3px; padding:2px 8px; margin-right:6px;">{{ t }}</code>{% endfor %}
+</p>
+{% endif %}
+
+{# ---------------------------------------------------------------- Step 2 #}
+{% if stage == "discover" %}
+
+<h2>What was looked at</h2>
+<table style="max-width:940px; margin-bottom:8px;">
+  <tbody>
+    <tr><td style="color:#8b949e; width:200px;">Subject</td><td>{{ summary.subject }}</td></tr>
+    <tr><td style="color:#8b949e;">Evidence as of</td><td>{{ summary.as_of }}</td></tr>
+    <tr><td style="color:#8b949e;">Origin</td><td>{{ summary.origin }}</td></tr>
+    <tr><td style="color:#8b949e;">Sources reached</td>
+        <td>{% for s in summary.sources %}<span class="tag">{{ s }}</span> {% endfor %}
+            {% if not summary.sources %}<span class="verdict-alert">none</span>{% endif %}</td></tr>
+    <tr><td style="color:#8b949e;">Evidence digest</td>
+        <td style="word-break:break-all; font-size:11px; color:#8b949e;">{{ summary.digest }}</td></tr>
+  </tbody>
+</table>
+
+{# A source queried and empty is a different fact from a source never queried,
+   and both render as nothing if only findings are shown. #}
+{% if summary.negatives %}
+<div style="background:#2d1f00; border:1px solid #d29922; border-radius:6px;
+            padding:12px 16px; margin-bottom:14px; max-width:940px;">
+  <div style="color:#d29922; font-size:11px; text-transform:uppercase;
+              letter-spacing:0.07em; margin-bottom:8px;">Queried, and empty</div>
+  {% for n in summary.negatives %}
+  <p style="font-size:12px; color:#c9d1d9; margin:4px 0;">
+    <span class="tag">{{ n.source }}</span>
+    {{ n.reason }}
+    <span style="color:#6e7681;">&nbsp;{{ n.locator }} &middot; {{ n.fetched_at }}</span>
+  </p>
+  {% endfor %}
+  <p style="font-size:11px; color:#8b949e; margin-top:8px;">
+    Recorded rather than left blank. A source that returned nothing and a source nobody
+    asked are different facts, and this desk is not entitled to state the stronger one.
+  </p>
+</div>
+{% endif %}
+
+{% if not summary.complete %}
+<div style="background:#3d1414; border:1px solid #f85149; border-radius:6px;
+            padding:12px 16px; margin-bottom:14px; max-width:940px;">
+  <p style="color:#f85149; font-size:12px;">
+    &#9888; This evidence bundle is incomplete, so no contract can be proposed from it.
+  </p>
+  {% for m in summary.missing %}
+  <p style="font-size:11px; color:#fca5a5; margin-top:4px;">{{ m }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2>Company identity</h2>
+<div style="max-width:940px; background:#161b22; border:1px solid
+     {% if entity.state == 'exact' %}#30363d{% else %}#d29922{% endif %};
+     border-radius:6px; padding:16px; margin-bottom:8px;">
+  <table>
+    <tbody>
+      <tr><td style="color:#8b949e; width:200px;">SEC legal name</td>
+          <td>{{ entity.sec_legal_name }}</td></tr>
+      <tr><td style="color:#8b949e;">CIK</td>
+          <td><span class="tag">{{ entity.cik }}</span></td></tr>
+      <tr><td style="color:#8b949e;">Registry searched for</td>
+          <td>{{ entity.registry_query }}</td></tr>
+      <tr><td style="color:#8b949e;">Join</td>
+          <td>
+            {% if entity.state == "exact" %}
+              <span class="verdict-ok">{{ entity.state }}</span>
+            {% else %}
+              <span class="verdict-alert">{{ entity.state }}</span>
+            {% endif %}
+            <span style="color:#8b949e;">&mdash; {{ entity.explained }}</span>
+          </td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="note">
+  There is no CIK in the clinical registry, so this join is a string match and it is the
+  largest source of silent wrongness in the system. It is shown before any trial, because
+  if the wrong company's trials came back nothing below this line means anything.
+</p>
+
+<h2>Candidate catalysts</h2>
+<p class="note">
+  A ticker does not determine a thesis. Pick the trial your belief actually rests on. The
+  nearest registered completion still in the future is listed first; a lapsed date is shown
+  and cannot be selected, because you cannot run out of money before an event that has
+  already happened.
+</p>
+
+<table style="max-width:1120px;">
+  <thead>
+    <tr>
+      <th>Trial</th><th>Registered completion</th><th>Status</th>
+      <th>Revisions</th><th>Date movement</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in candidates %}
+    <tr>
+      <td>
+        <span class="tag">{{ c.nct }}</span>
+        <div style="color:#8b949e; font-size:11px; margin-top:4px; max-width:340px;">
+          {{ c.title }}
+        </div>
+      </td>
+      <td>
+        {{ c.pcd }}
+        {% if c.lapsed %}<br><span class="verdict-alert">LAPSED</span>{% endif %}
+      </td>
+      <td style="color:#8b949e;">{{ c.status }}</td>
+      <td>{{ c.n_revisions }}</td>
+      <td>
+        {% if c.slip_days is none %}
+          <span style="color:#8b949e;">none established</span>
+        {% else %}
+          {{ c.slip_days }} days
+        {% endif %}
+        {% if c.refused_revisions %}
+        <div style="color:#d29922; font-size:11px; margin-top:3px;">
+          {{ c.refused_revisions }} revision(s) not comparable
+        </div>
+        {% endif %}
+      </td>
+      <td>
+        {% if c.selectable %}
+        <form method="post" action="/workspace/select" style="margin:0;">
+          <input type="hidden" name="ticker" value="{{ form.ticker }}">
+          <input type="hidden" name="nct" value="{{ c.nct }}">
+          <button type="submit"
+                  style="background:#0d2033; color:#60a5fa; border:1px solid #60a5fa;
+                         padding:5px 14px; border-radius:4px; cursor:pointer;
+                         font-family:inherit; font-size:11px;">Select</button>
+        </form>
+        {% else %}
+        <span style="color:#6e7681; font-size:11px;">not a catalyst</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if not candidates %}
+<p class="note" style="color:#d29922;">
+  No pivotal trial was found for this sponsor string. That is a matching result, not a
+  finding about the company.
+</p>
+{% endif %}
+{% endif %}
+
+{# ---------------------------------------------------------------- Step 3 #}
+{% if stage == "review" %}
+<h2>Proposed contract</h2>
+<p class="note">
+  Assembled from the record, not generated. Edit anything before approving: the claim text
+  is what Granite reads when a change contradicts it, so it should be your wording.
+</p>
+
+<form method="post" action="/workspace/approve" style="max-width:940px;">
+  <input type="hidden" name="ticker" value="{{ form.ticker }}">
+  <input type="hidden" name="nct" value="{{ form.nct }}">
+
+  <table style="margin-bottom:16px;">
+    <tbody>
+      <tr><td style="color:#8b949e; width:210px;">Card id</td>
+          <td><code>{{ card.card_id }}</code></td></tr>
+      <tr><td style="color:#8b949e;">Company</td>
+          <td>{{ entity.sec_legal_name }} <span class="tag">{{ entity.cik }}</span></td></tr>
+      <tr><td style="color:#8b949e;">Trial</td>
+          <td><span class="tag">{{ trial.nct }}</span>
+              <span style="color:#8b949e;">&nbsp;{{ trial.title }}</span></td></tr>
+      <tr><td style="color:#8b949e;">Registered completion</td>
+          <td>{{ trial.pcd }}</td></tr>
+      <tr><td style="color:#8b949e;">Metric</td>
+          <td><span class="tag">{{ card.metric }}</span></td></tr>
+      <tr><td style="color:#8b949e;">Evidence digest</td>
+          <td style="word-break:break-all; font-size:11px; color:#8b949e;">{{ evidence_digest }}</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-bottom:16px;">
+    <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                  letter-spacing:0.07em; margin-bottom:5px;">Claim</label>
+    <textarea name="claim" rows="4" required
+              style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                     padding:8px 10px; border-radius:3px; font-family:inherit;
+                     font-size:12px; width:100%; line-height:1.6;">{{ card.claim }}</textarea>
+  </div>
+
+  <div style="margin-bottom:18px;">
+    <label style="display:block; font-size:11px; color:#8b949e; text-transform:uppercase;
+                  letter-spacing:0.07em; margin-bottom:5px;">
+      Minimum acceptable funding gap, in months</label>
+    <input type="number" name="min_gap" step="0.1" value="0" required
+           style="background:#0d1117; border:1px solid #30363d; color:#c9d1d9;
+                  padding:6px 10px; border-radius:3px; font-family:inherit;
+                  font-size:12px; width:160px;">
+    <span style="color:#6e7681; font-size:11px; margin-left:8px;">
+      unbounded above; being better funded than assumed is not a breach
+    </span>
+  </div>
+
+  <h2>What this can be watched for</h2>
+  <p class="note">
+    The unavailable rows are the point. Offering a condition the desk cannot evaluate would
+    tell you it is being watched.
+  </p>
+  <table style="margin-bottom:18px;">
+    <tbody>
+      {% for m in monitors %}
+      <tr>
+        <td style="width:34px;">
+          {% if m.available %}<span class="verdict-ok">&#10003;</span>
+          {% else %}<span style="color:#6e7681;">&#8212;</span>{% endif %}
+        </td>
+        <td>{% if m.available %}{{ m.label }}
+            {% else %}<span style="color:#6e7681;">{{ m.label }}</span>{% endif %}</td>
+        <td style="color:#8b949e; font-size:11px;">{{ m.why }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="font-size:12px; color:#8b949e; margin-bottom:12px;">
+    Approving appends a CREATE entry to the hash-chained ledger and re-records the anchor.
+    The contract is recorded; the redline loop picks it up on the next run rather than
+    immediately.
+  </p>
+  <div style="display:flex; gap:12px; align-items:center;">
+    <button type="submit"
+            style="background:#1a4731; color:#10b981; border:1px solid #10b981;
+                   padding:7px 20px; border-radius:4px; cursor:pointer;
+                   font-family:inherit; font-size:12px; font-weight:bold;">
+      &#10003; Approve and record
+    </button>
+    <a href="/workspace" style="font-size:12px;">&larr; Start over</a>
+  </div>
+</form>
+{% endif %}
+
+{# ---------------------------------------------------------------- Step 4 #}
+{% if stage == "done" %}
+<div style="background:#0f2e21; border:1px solid #10b981; border-radius:6px;
+            padding:20px; max-width:940px; margin-bottom:18px;">
+  <div style="color:#10b981; font-weight:bold; font-size:13px; margin-bottom:12px;">
+    &#10003; Recorded. {{ form.ticker }} is bound to {{ form.nct }} in the ledger.
+  </div>
+  <table>
+    <tbody>
+      <tr><td style="color:#8b949e; width:180px;">Card id</td>
+          <td><code>{{ card.card_id }}</code></td></tr>
+      <tr><td style="color:#8b949e;">Author</td><td>{{ entry.author }}</td></tr>
+      <tr><td style="color:#8b949e;">Event</td><td>{{ entry.event }}</td></tr>
+      <tr><td style="color:#8b949e;">Evidence digest</td>
+          <td style="word-break:break-all; font-size:11px; color:#8b949e;">{{ evidence_digest }}</td></tr>
+      <tr><td style="color:#8b949e;">Previous hash</td>
+          <td style="word-break:break-all; font-size:11px; color:#8b949e;">{{ entry.prev_hash }}</td></tr>
+      <tr><td style="color:#8b949e;">Entry hash</td>
+          <td style="word-break:break-all; font-size:11px;">{{ entry.entry_hash }}</td></tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-size:12px;">
+  <a href="/queue">See the queue &rarr;</a>
+  &nbsp;&middot;&nbsp;
+  <a href="/workspace">Add another company</a>
+</p>
+{% endif %}
+
+{% endblock %}

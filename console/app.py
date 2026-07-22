@@ -24,7 +24,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from flask import Flask, redirect, render_template, request, url_for
 
+from console import intake
 from engine.ledger import BeliefCard, BeliefLedger, Breach
+from evidence import FrozenSnapshotProvider, Incomplete
 from orchestrator.anchor import check as anchor_check, record as anchor_record
 from orchestrator.challenge import (
     ChallengeCard, Decision, ReviewLog, apply_decision, build_challenge,
@@ -41,6 +43,13 @@ SNAPSHOT_PATH = os.path.join(_REPO, "data", "snapshot.json")
 DECISIONS_PATH = os.path.join(_REPO, "data", "decisions.jsonl")
 REVIEW_LOG_PATH = os.path.join(_REPO, "data", "review_log.jsonl")
 ANCHOR_PATH = os.path.join(_REPO, "data", "ledger.anchor")
+EVIDENCE_DIR = os.path.join(_REPO, "data", "evidence")
+
+# Workspace mode reads through the seam. The frozen provider is the default so a
+# judge with no credentials walks the real flow rather than a mock of it;
+# swapping in LiveSnapshotProvider changes the data source and nothing else,
+# which is the entire argument for the seam existing.
+EVIDENCE = FrozenSnapshotProvider(EVIDENCE_DIR)
 
 # ---------------------------------------------------------------------------
 # Load snapshot at startup
@@ -229,6 +238,127 @@ def belief_submit():
     return render_template("belief_new.html", stage="done",
                            contracts=SNAPSHOT["contracts"], form=f, errors=[],
                            card=card, c=contract, entry=entry)
+
+
+# ---------------------------------------------------------------------------
+# Workspace mode: ticker in, monitored contract out.
+#
+# Four steps, two of them human. The machine resolves the company, reads the
+# evidence and ranks the candidates; a human says which trial underwrites the
+# thesis and whether the proposed contract is right. Neither is inferrable from
+# a ticker, and guessing them is how a monitor ends up watching something nobody
+# actually believes.
+# ---------------------------------------------------------------------------
+
+@app.get("/workspace")
+def workspace_new():
+    return render_template("workspace.html", stage="ticker",
+                           available=EVIDENCE.available(), errors=[])
+
+
+@app.post("/workspace/discover")
+def workspace_discover():
+    """Resolve the company and show what the evidence supports.
+
+    Shows the negative results and the identity join BEFORE any candidate. A
+    sponsor-name match nobody checked is the largest source of silent wrongness
+    here, and if the wrong company's trials came back, nothing below that line
+    means anything.
+    """
+    ticker = (request.form.get("ticker") or "").strip().upper()
+    if not ticker:
+        return render_template("workspace.html", stage="ticker",
+                               available=EVIDENCE.available(),
+                               errors=["Enter a ticker."]), 400
+    try:
+        snap = EVIDENCE.get(ticker)
+    except Incomplete as exc:
+        return render_template("workspace.html", stage="ticker",
+                               available=EVIDENCE.available(),
+                               errors=[str(exc)], form={"ticker": ticker}), 404
+
+    return render_template(
+        "workspace.html", stage="discover", available=EVIDENCE.available(),
+        errors=[], form={"ticker": ticker},
+        summary=intake.summary(snap), entity=intake.entity(snap),
+        candidates=intake.candidates(snap),
+    )
+
+
+@app.post("/workspace/select")
+def workspace_select():
+    """The analyst has named the trial. Propose a contract against it."""
+    ticker = (request.form.get("ticker") or "").strip().upper()
+    nct = (request.form.get("nct") or "").strip().upper()
+    try:
+        snap = EVIDENCE.get(ticker)
+    except Incomplete as exc:
+        return render_template("workspace.html", stage="ticker",
+                               available=EVIDENCE.available(),
+                               errors=[str(exc)]), 404
+    try:
+        proposal = intake.propose(snap, nct)
+    except ValueError as exc:
+        # The commonest case is a lapsed date, refused at the intake layer so a
+        # hand-posted form cannot bypass what the template merely declines to offer.
+        return render_template(
+            "workspace.html", stage="discover", available=EVIDENCE.available(),
+            errors=[str(exc)], form={"ticker": ticker},
+            summary=intake.summary(snap), entity=intake.entity(snap),
+            candidates=intake.candidates(snap),
+        ), 400
+
+    return render_template(
+        "workspace.html", stage="review", available=EVIDENCE.available(),
+        errors=[], form={"ticker": ticker, "nct": nct},
+        summary=intake.summary(snap), **proposal,
+    )
+
+
+@app.post("/workspace/approve")
+def workspace_approve():
+    """Write the analyst's belief into the hash-chained ledger."""
+    ticker = (request.form.get("ticker") or "").strip().upper()
+    nct = (request.form.get("nct") or "").strip().upper()
+    claim = (request.form.get("claim") or "").strip()
+    raw_gap = (request.form.get("min_gap") or "0").strip()
+
+    try:
+        min_gap = float(raw_gap)
+    except ValueError:
+        return "Minimum acceptable funding gap must be a number.", 400
+    if len(claim) < 20:
+        return "The claim must be written out; Granite reads this text.", 400
+
+    try:
+        snap = EVIDENCE.get(ticker)
+        proposal = intake.propose(snap, nct, min_gap=min_gap)
+    except (Incomplete, ValueError) as exc:
+        return str(exc), 400
+
+    # The analyst's edited wording wins. The proposal is a starting point, and a
+    # belief the analyst did not write is not their belief -- it is also the
+    # text Granite is later given as their rationale.
+    card = proposal["card"]
+    card.claim = claim
+    card.expected_low = min_gap
+
+    ledger = BeliefLedger(DECISIONS_PATH)
+    try:
+        entry = ledger.create(card, author="human:analyst")
+    except ValueError:
+        return render_template(
+            "workspace.html", stage="review", available=EVIDENCE.available(),
+            errors=[f"A belief for {ticker} on {nct} already exists in the "
+                    f"ledger. Retire it before writing a new one."],
+            form={"ticker": ticker, "nct": nct},
+            summary=intake.summary(snap), **proposal), 409
+    anchor_record(ledger, anchor_path=ANCHOR_PATH)
+
+    return render_template(
+        "workspace.html", stage="done", available=EVIDENCE.available(),
+        errors=[], form={"ticker": ticker, "nct": nct},
+        summary=intake.summary(snap), entry=entry, **proposal)
 
 
 @app.post("/redline/decide")
