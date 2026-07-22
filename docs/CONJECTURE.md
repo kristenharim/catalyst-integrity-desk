@@ -18,6 +18,16 @@ Rocket is the demonstration because it is unarguable: a completion date sat expi
 federal registry for 677 days, and the thesis that depended on it never moved. No
 amendment was filed. The date simply arrived, and passed.
 
+## Rung 0: the same monitor, driven by an analyst instead of by `TICKERS`
+
+Before any of the rungs below, the thing has to be usable by someone who did not write
+`TICKERS`. That is a product design rather than a research direction, so it lives in its
+own file: `docs/WORKSPACE.md`. The short version is that the console is a frozen exhibit
+by design, and the same engine can run live from a ticker without forking the arithmetic.
+
+It is Rung 0 because it is the only rung that does not need a new idea, and because it
+makes two queue states computable that one committed snapshot cannot support.
+
 ## Rung 1: the same monitor, more contracts
 
 What it takes: the sponsor-to-issuer join, which is the real engineering tax. Names drift
