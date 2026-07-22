@@ -132,7 +132,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 22 tests
+python3 -m pytest tests/ -q   # 21 passed, 1 skipped (22 passed with watsonx credentials)
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a

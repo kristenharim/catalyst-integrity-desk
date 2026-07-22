@@ -34,7 +34,7 @@ No credentials, no API keys, no network. The demo runs from a committed snapshot
 ```bash
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 16 passed, 1 skipped
+python3 -m pytest tests/ -q       # 21 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -44,8 +44,8 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 17 passed. That test is verified not to pass on the
-stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+credentials. With them the suite is 22 passed, no skips. That test is verified not to pass
+on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
 
@@ -163,8 +163,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it lied. With credentials the suite is 14
-  passed; without them that one test skips and you see 13 passed, 1 skipped.
+  precise way an earlier version of it lied. With credentials the suite is 22
+  passed; without them that one test skips and you see 21 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.

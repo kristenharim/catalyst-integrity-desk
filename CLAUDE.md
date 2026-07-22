@@ -3,30 +3,31 @@
 Rules for any Claude session in this repo. These are standing constraints, not
 suggestions, and they hold whether or not anyone invokes anything.
 
-Read `HANDOFF.md` first. Then `docs/FINDINGS.md` before writing extraction code.
+Read `README.md` first for the current state, then `docs/STATUS.md`. Read
+`docs/FINDINGS.md` before writing extraction code. `HANDOFF.md` describes the pre-Bob
+repo and is kept as a record only. Do not plan work from it.
 
-## Your role: verify, do not build
+## Your role: you may build, and every build is logged as yours
 
 This project is an entry in the IBM AI Builders Challenge, which requires **IBM Bob as
-the primary development tool** and a README section describing that use. That is a
-compliance requirement with no partial credit, so the division of labour is fixed:
+the primary development tool** and a README section describing that use. Bob's build is
+already on the record: eleven logged tasks and seven session transcripts in
+`docs/bob-sessions/`. That requirement is met by work already done, so you are no longer
+restricted to verification.
 
-| Bob owns | You own |
-|---|---|
-| new builds (the prompts in `docs/BOB_PROMPTS.md`) | kill gates and acceptance criteria |
-| the governance port, redline loop, console, panel | adversarial verification of Bob's output |
-| | defect fixes in pre-Bob engine code |
-| | docs, `docs/BOB_LOG.md`, prior-art checks |
+You may write new code, including in areas Bob built. You still own kill gates,
+acceptance criteria, adversarial verification, docs, and prior-art checks.
 
-**The prompts in `docs/BOB_PROMPTS.md` are addressed to Bob, not to you.** Do not execute
-them. If asked to, say so and stop.
+**The prompts in `docs/BOB_PROMPTS.md` are addressed to Bob, not to you.** They are a
+historical record of how Bob was driven. Do not execute them as if you were Bob.
 
-If you find yourself writing substantial new code because it would be faster, stop and
-say so. That tradeoff is Kristen's, not yours. Small fixes to code that predates Bob are
-yours and do not need asking.
-
-Log what Bob built versus what was changed by hand, in `docs/BOB_LOG.md`, as it happens.
-The README's Bob section is written from that file, not from memory.
+**The logging requirement is not optional and does not change.** Every line you write
+goes into `docs/BOB_LOG.md` as hand work, attributed to Claude Code, on the same commit
+that writes the code. The README's Bob section is written from that file, not from
+memory, and it currently states that other AI tools "wrote no product code". The moment
+you write product code, that sentence is updated in the same pass. A submission that
+describes its own authorship inaccurately is a worse failure than one that admits a
+second tool touched it.
 
 ## Never break these
 

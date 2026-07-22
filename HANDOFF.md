@@ -1,4 +1,11 @@
-# Handoff: start here
+# Handoff: superseded, kept as a record
+
+> **Status as of 2026-07-21: this document is out of date and describes the pre-Bob
+> state of the repo.** Everything it calls unbuilt has since been built. The governance
+> port, redline loop, console, ledger and research panel all exist and are on disk.
+> For the current state read `README.md`, then `docs/STATUS.md` and `docs/BOB_LOG.md`.
+> This file is retained because it records the original framing and the eight-gotcha
+> warning, not because its task list is live. Do not plan work from it.
 
 This repo is a de-risked starting point, not a finished project. Three engine modules
 are built and verified against live SEC and ClinicalTrials.gov data. Everything else is
