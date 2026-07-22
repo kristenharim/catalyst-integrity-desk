@@ -352,7 +352,7 @@ one. The filter never fired. It is the same defect shape as the `status` bug thr
 down and as everything else in this file: a check that silently does not apply is
 indistinguishable from a check that passes, and this one produced a more dramatic number in
 the flattering direction and survived a manual review. Corrected 2026-07-22 under snapshot
-`cohort-c2de38f09698`; a test now asserts a past ACTUAL date does not count.
+`cohort-8326c1c1e964`; a test now asserts a past ACTUAL date does not count.
 
 **The cross-stratum comparison is inverted by this**, and on the corrected figures the two
 measures rank the four strata in exactly opposite order. OTHER_GOV is lowest on the stretch
@@ -411,7 +411,7 @@ frequency measure and per-trial longest carry the primary duration measure, with
 stretch-based figures retained as a labelled sensitivity. "2.4x" is removed as a headline
 everywhere and the no-pooling rule is re-justified on three independent differences:
 reconciliation behaviour, point prevalence, and filing frequency. The store was re-measured
-and the snapshot re-frozen as `cohort-c2de38f09698`.
+and the snapshot re-frozen as `cohort-8326c1c1e964`.
 
 **Why this is the same lesson as everything else in this file.** The cohort deliberately
 measures with the product's own code, on the argument that a study measured by a
@@ -419,6 +419,40 @@ reimplementation measures the reimplementation. That argument is sound and it ha
 nobody stated: a defect in `carried_until_corrected()` is shared by the product and the
 study, so the study cannot act as an independent check on the product. It did not catch
 this. An adversarial reader did.
+
+## The reconciliation split conditions on a revision existing
+
+**Found 2026-07-22 by the second council round, confirmed, and disclosed rather than fixed.**
+
+The `held_days` split counts revisions, so a trial that lets a date lapse and never files
+again contributes to neither the numerator nor the denominator. The measure of
+non-reconciliation is therefore computed only over sponsors that reconciled at some point,
+which is Correction 6's defect one level up.
+
+It is not small. Trials that never revised a date at all: 8 of 60 for INDUSTRY, 5 of 60 for
+NIH, 22 of 60 for OTHER, and **32 of 60 for OTHER_GOV**. The worst-reconciled trials in the
+frame are structurally excluded from the reconciliation statistic, which is why point
+prevalence is reported beside it and why the two must be read together.
+
+## A revision filed after a lapse is not automatically a failure to reconcile
+
+**Found 2026-07-22 by the second council round. It halved a published headline.**
+
+An earlier draft reported that 52.4% of industry date revisions were filed after the date had
+already passed, and presented that as non-reconciliation. Half of those revisions, 33 of 66,
+set the date to ACTUAL: the sponsor recording when the trial finished. For a trial that ran
+late that filing necessarily lands after the earlier estimate expired, and it is the update
+42 CFR 11.64(a)(1)(ii) requires within 30 days of actual completion.
+
+So the draft quoted a regulation to argue the behaviour was unlicensed while that regulation
+licenses half the observations, and it called the same filing "the system working" in one
+section and a failure in another, a hundred lines apart. The arithmetic was correct
+throughout; the sentence it supported was not, and no numeric check could have caught it.
+
+The surviving claim is the estimate-to-estimate subset: 33 of 126 industry revisions, 26.2%,
+and 24 of the 52 industry trials that revised at all. Both are snapshot fields now
+(`revisions_after_lapse_to_estimate`, `trials_with_lapse_to_estimate`) rather than derived in
+prose, because a figure that is not a snapshot field is a figure no test can check.
 
 ## No pooled all-strata rate, and the report used to print one
 
@@ -440,7 +474,7 @@ strata are exactly the four measured ones.
 
 A rate with no version is a claim about whatever the store happened to contain the day
 somebody read it. `data/cohort/snapshot.json` freezes the measurement under a
-content-addressed id (currently `cohort-c2de38f09698`, 240 trials, 60 per stratum), hashed
+content-addressed id (currently `cohort-8326c1c1e964`, 240 trials, 60 per stratum), hashed
 over the measured rows and the frame together, because a rate means nothing without the
 denominator that produced it.
 

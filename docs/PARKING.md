@@ -18,7 +18,7 @@ amendment to make it tidier is exactly what `AMENDING_PROTECTED_MODULES.md` forb
 only if crash-loops start filling the cache directory.
 
 **NIH trials carry far more revision episodes than industry ones.** 493 dead-date stretches
-across 60 NIH trials against 188 across 60 industry trials, from `cohort-c2de38f09698`.
+across 60 NIH trials against 188 across 60 industry trials, from `cohort-8326c1c1e964`.
 That is 2.6x the episodes on top of 2.4x the duration, and nothing in this study explains
 it. Plausibly it is just version count, since NIH trials in the sample carry many more
 protocol versions, two of them over 300. Worth one afternoon to check whether normalising by

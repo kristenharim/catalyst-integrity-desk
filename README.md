@@ -9,26 +9,27 @@ carrying a primary completion date of June 2022. **That date had already been ex
 Nobody was watching, because nobody's job is to watch.
 
 **And Rocket is not unusual, which is the actual finding.** In a random sample of
-industry-sponsored phase 2/3 trials, **52.4% of registered completion-date revisions were
-filed only after the date had already passed** (66 of 126). At the trial level, 43 of the 52
-industry trials that revised a date at all let at least one lapse before touching it. That is
-not the same as running late, which is well documented: a sponsor who revises the date while
-it is still in the future is forecasting, and the public record stays honest. A sponsor who
-revises only afterwards left a commitment standing that it had already stopped believing.
+industry-sponsored phase 2/3 trials, **26.2% of registered completion-date revisions replaced
+an estimate that had already expired** (33 of 126), and 24 of the 52 industry trials that
+revised a date at all did it at least once. That is narrower than running late, which is well
+documented. A sponsor who revises while the date is still in the future never shows an expired
+date at all. A sponsor who records an *actual* completion date afterwards is filing the update
+the regulation requires. What is left is the sponsor who let an estimate expire and then
+replaced it with another estimate.
 
 Rocket's 677 days sits at the **85th percentile** of 188 such stretches: long, but not the
 tail. That is a correction to how this project used to open, and it makes the claim bigger
 rather than smaller.
 
-The boring explanation was checked and is not fully ruled out: 42 CFR 11.64(a)(1)(ii) requires
-the primary completion date to be updated "not later than 30 calendar days" after a trial
-reaches actual primary completion, so annual housekeeping would not be compliant. That is a
-statement about the duty rather than a refutation of the cadence, and the clustering test that
-would settle it has not been run.
+Two frequency measures are reported side by side because they disagree, and the disagreement
+is the result: 8.3% of industry trials are carrying an expired estimate now (33.3% of those
+whose commitment is still open), while 80.0% carried one at some point and then filed again.
+The second cannot see a sponsor that lapses and stops filing, which is 32 of 60 for government
+and academic sponsors.
 
 `docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the working record. Every
-figure cites cohort snapshot `cohort-c2de38f09698`: 240 trials, 60 in each of four sponsor
-strata, all measured, point prevalence as of 2026-07-22.
+cohort figure is a field of snapshot `cohort-8326c1c1e964`: 240 trials, 60 in each of four
+sponsor strata, all measured, point prevalence as of 2026-07-22.
 
 ## The claim, in one sentence
 

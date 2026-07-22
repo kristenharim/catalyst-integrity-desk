@@ -6,7 +6,7 @@ A sample selected on the outcome cannot produce a base rate. This is the first a
 one.
 
 **Status: complete and frozen.** All 240 drawn trials are measured, 60 in every stratum,
-none failed. Frozen as snapshot **`cohort-c2de38f09698`** on 2026-07-22, with point prevalence
+none failed. Frozen as snapshot **`cohort-8326c1c1e964`** on 2026-07-22, with point prevalence
 computed as of that same pinned date. Every number below is a statement about that snapshot
 and nothing else, and the id is content-addressed, so changing one measured row changes it.
 
@@ -88,7 +88,7 @@ filing frequency.
 
 An adversarial review on 2026-07-22 found two measurement problems, both confirmed against the
 store. The owner resolved them the same day and the study was re-measured and re-frozen as
-`cohort-c2de38f09698`.
+`cohort-8326c1c1e964`.
 
 1. **A stretch needs a later filing to close it**, so a sponsor that lets a date lapse and
    then files nothing scored as never having carried one. **Point prevalence is now the
@@ -110,26 +110,36 @@ revision. The true figures are 8.3% and 45.0%. See `docs/LIMITS.md`.
 
 ## The finding the study now leads on
 
-Registered dates are revised, and **when** they are revised is the whole distinction:
+Registered dates are revised, and **when** and **to what** they are revised is the distinction:
 
-| Stratum | dated revisions | filed after the date had lapsed | trials revising, at least one after a lapse |
-|---|---:|---:|---:|
-| INDUSTRY | 126 | 66 (**52.4%**) | 43 of 52 (82.7%) |
-| NIH | 181 | 57 (31.5%) | 32 of 55 (58.2%) |
-| OTHER_GOV | 48 | 32 (66.7%) | 23 of 28 (82.1%) |
-| OTHER | 91 | 49 (53.8%) | 27 of 38 (71.1%) |
+| Stratum | dated revisions | after a lapse | of those, recorded ACTUAL | **estimate → estimate** | rate |
+|---|---:|---:|---:|---:|---:|
+| INDUSTRY | 126 | 66 | 33 | **33** | **26.2%** |
+| NIH | 181 | 57 | 20 | 37 | 20.4% |
+| OTHER_GOV | 48 | 32 | 14 | 18 | 37.5% |
+| OTHER | 91 | 49 | 14 | 35 | 38.5% |
 
-A sponsor revising while the date is still in the future is forecasting, and the trial may be
-very late with the record still honest. That is the delay literature. A sponsor revising only
-afterwards carried a commitment it had stopped believing, and that is this project's claim.
+A revision filed after the old date lapsed is not automatically a failure to reconcile. If it
+records an ACTUAL completion date it is the update 42 CFR 11.64(a)(1)(ii) requires, and for a
+late trial it necessarily arrives after the estimate expired. Half the industry after-lapse
+revisions are that. The claim is the remainder: an expired estimate replaced by another
+estimate.
+
+An earlier revision of this file published the undifferentiated 52.4% as the headline. That
+was wrong, and it was wrong in a way arithmetic could not catch: the regulation quoted two
+sections above to argue the behaviour was unlicensed is what licenses half the numerator.
+
+**The measure is conditional on a revision existing.** A trial that lapses and never files
+again is in neither column: 8 of 60 industry trials and 32 of 60 OTHER_GOV trials never
+revised a date at all. Read it with point prevalence, which is the measure that sees them.
 
 ## The strata differ, so every rate stays labelled
 
 The strata differ on three independent things, and the no-pooling rule rests on all three
 rather than on any single ratio:
 
-1. **Reconciliation behaviour.** 52.4% of industry revisions are filed after a lapse, against
-   31.5% of NIH ones.
+1. **Reconciliation behaviour.** 26.2% of industry revisions replace an already-expired
+   estimate, against 20.4% of NIH and 37.5% of OTHER_GOV ones.
 2. **Point prevalence.** 45.0% of OTHER_GOV trials carry an expired estimate now, against
    0.0% of NIH trials.
 3. **Filing frequency**, which drives both: a median of 2 registry versions per trial for

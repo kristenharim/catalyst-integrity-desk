@@ -195,10 +195,26 @@ def measure(nct: str, sponsor_class: str) -> dict:
     #
     # Lateness is documented in the literature. Non-reconciliation is the claim
     # this project makes, and without this split the two are the same number.
-    held = [r.get("held_days") for r in revs if r.get("held_days") is not None]
-    row["held_days"] = held
-    row["revisions_prospective"] = sum(1 for h in held if h >= 0)
-    row["revisions_after_lapse"] = sum(1 for h in held if h < 0)
+    # And the split that survives scrutiny. A revision filed after the old date
+    # passed is NOT automatically a failure to reconcile: if it sets the date to
+    # ACTUAL it is the sponsor recording when the trial finished, which for a late
+    # trial necessarily lands after the earlier estimate lapsed and is the update
+    # 42 CFR 11.64(a)(1)(ii) requires. That is the reconciliation event, not its
+    # absence. Half of the industry after-lapse revisions are exactly that.
+    #
+    # The behaviour this project claims to measure is narrower: an expired
+    # ESTIMATE replaced by another ESTIMATE. The sponsor let the date pass and
+    # then pushed it, without the trial having completed.
+    pairs = [(r.get("held_days"), (r.get("pcd_type") or "").upper())
+             for r in revs if r.get("held_days") is not None]
+    row["held_days"] = [h for h, _ in pairs]
+    row["revisions_prospective"] = sum(1 for h, _ in pairs if h >= 0)
+    row["revisions_on_the_day"] = sum(1 for h, _ in pairs if h == 0)
+    row["revisions_after_lapse"] = sum(1 for h, _ in pairs if h < 0)
+    row["revisions_after_lapse_to_actual"] = sum(
+        1 for h, t in pairs if h < 0 and t == "ACTUAL")
+    row["revisions_after_lapse_to_estimate"] = sum(
+        1 for h, t in pairs if h < 0 and t != "ACTUAL")
 
     # Comparability, via the product's own classifier.
     dims = from_cache(nct)
@@ -268,7 +284,9 @@ def load_results() -> list[dict]:
     resumable, so a trial measured twice -- by an interrupted run resuming, or by
     two passes overlapping -- appends twice. Counting both inflates n and every
     rate computed from it, silently, in the direction of more data. That happened:
-    a report of n=169 was really 131 distinct trials.
+    a store of 179 rows held 131 distinct trials, 48 counted twice, and a figure
+    published mid-run as "169 trials measured" was a row count covering 123. See
+    Correction 1 in `docs/WRITEUP.md`.
 
     Last row wins, so a re-measure supersedes an earlier one without deleting it.
     A row carrying refusal reasons beats one that predates them regardless of
@@ -425,10 +443,29 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
     # more of them. Kept below as a labelled sensitivity, not as the headline.
     per_trial = [max(r["dead_date_days"]) for r in sub if r["dead_date_days"]]
 
-    # The lateness/non-reconciliation split.
+    # The lateness/non-reconciliation split, at revision and at trial level. Trial
+    # level is here rather than derived in prose because a figure that is not a
+    # snapshot field is a figure no test can check.
     pro = sum(r.get("revisions_prospective", 0) for r in sub)
     late = sum(r.get("revisions_after_lapse", 0) for r in sub)
+    late_act = sum(r.get("revisions_after_lapse_to_actual", 0) for r in sub)
+    late_est = sum(r.get("revisions_after_lapse_to_estimate", 0) for r in sub)
     versions = sorted(r.get("n_versions") or 0 for r in sub)
+
+    revising = [r for r in sub
+                if (r.get("revisions_prospective", 0)
+                    + r.get("revisions_after_lapse", 0)) > 0]
+    t_late = [r for r in revising if r.get("revisions_after_lapse", 0)]
+    t_late_est = [r for r in revising
+                  if r.get("revisions_after_lapse_to_estimate", 0)]
+
+    # Trials still carrying an open commitment: the last registered date is an
+    # estimate rather than an actual. The denominator a reader who only looks at
+    # unreported trials actually wants, since a completed trial cannot be carrying
+    # an expired estimate by construction.
+    open_est = [r for r in sub
+                if r.get("last_pcd")
+                and (r.get("last_pcd_type") or "").upper() != "ACTUAL"]
 
     return {
         "n": n,
@@ -436,15 +473,29 @@ def stats(rows: list[dict], cls: str, as_of: date | None = None) -> dict:
         "carrying_now": carrying_now,
         "carrying_now_rate": carrying_now / n,
         "carrying_now_invisible_to_stretches": silent,
+        # Conditional on the commitment still being open, which is the denominator
+        # a reader looking only at unreported trials wants.
+        "open_estimates": len(open_est),
+        "carrying_now_of_open_rate": (carrying_now / len(open_est)) if open_est else None,
         "trial_days_p50": _pct(per_trial, .5),
         "trial_days_p90": _pct(per_trial, .9),
         "trial_days_max": max(per_trial) if per_trial else None,
         "n_trials_with_a_carry": len(per_trial),
         # --- the lateness split ---
         "revisions_prospective": pro,
+        "revisions_on_the_day": sum(r.get("revisions_on_the_day", 0) for r in sub),
         "revisions_after_lapse": late,
+        "revisions_after_lapse_to_actual": late_act,
+        "revisions_after_lapse_to_estimate": late_est,
         "revisions_dated": pro + late,
         "revised_after_lapse_rate": (late / (pro + late)) if (pro + late) else None,
+        # The claim that survives review: an expired estimate replaced by another
+        # estimate. The rate above includes the mandated update-to-actual filing.
+        "lapse_to_estimate_rate": (late_est / (pro + late)) if (pro + late) else None,
+        "trials_revising": len(revising),
+        "trials_with_a_lapse": len(t_late),
+        "trials_with_lapse_to_estimate": len(t_late_est),
+        "trials_never_revising": n - len(revising),
         "median_versions": _pct(versions, .5),
         # --- secondary, stretch-based: "lapsed and subsequently filed again" ---
         "carried_dead_date": len(with_dead),

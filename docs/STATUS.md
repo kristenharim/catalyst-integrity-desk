@@ -310,7 +310,7 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 ## The cohort study, closed 2026-07-22
 
 The random cohort is finished and frozen. 240 trials drawn, 60 in each of four sponsor
-strata, all 240 measured, none failed. Snapshot **`cohort-c2de38f09698`**, and every
+strata, all 240 measured, none failed. Snapshot **`cohort-8326c1c1e964`**, and every
 published figure now cites it. `docs/WRITEUP.md` is the publishable write-up;
 `docs/COHORT.md` is the working record with the full correction history.
 
@@ -340,18 +340,21 @@ What closing it required, in case any of it recurs:
   silently does not apply looks exactly like a check that passes, and this one was in the
   flattering direction.
 
-**Where the study now stands.** The headline is the reconciliation split, which is the
-distinction the whole thesis turns on and which separates this from the documented delay
-literature: **52.4% of industry completion-date revisions were filed only after the date had
-already passed** (66 of 126), and 43 of the 52 industry trials that revised a date at all let
-at least one lapse first. A revision filed while the date is still in the future is
-forecasting and the record stays honest; one filed afterwards means the registry carried a
-commitment its author had stopped believing.
+**Where the study now stands, after a second council round that blocked again.** The headline
+is the reconciliation split, which separates this from the documented delay literature:
+**26.2% of industry completion-date revisions replaced an estimate that had already expired**
+(33 of 126), and 24 of the 52 industry trials that revised a date at all did it at least once.
+A first draft published 52.4% for this, which conflated the mandated update-to-actual filing
+with the behaviour being claimed; half the after-lapse revisions record an actual completion
+date and are the reconciliation event rather than its absence.
 
-Primary frequency is point prevalence: 8.3% of industry trials carry an expired estimate as
-of 2026-07-22, against 45.0% of OTHER_GOV. Primary duration is per-trial longest carry, NIH
-590 days against industry 390, a ratio of 1.5x. The stretch-based figures (80.0%, median 240,
-2.4x) are retained as a labelled secondary and sensitivity. **No all-strata average exists
+Primary frequency is point prevalence: 8.3% of industry trials carry an expired estimate as of
+2026-07-22, and 33.3% of those whose commitment is still open. OTHER_GOV is 45.0% and 93.1%.
+Primary duration is per-trial longest carry, NIH 590 days against industry 390, 1.5x. The
+stretch-based figures (80.0%, median 240, 2.4x) are a labelled secondary and sensitivity, and
+they cannot see a sponsor that lapses and stops filing.
+
+**No all-strata average exists
 anywhere**, and the no-pooling rule now rests on three differences rather than one ratio.
 
 ## Still open

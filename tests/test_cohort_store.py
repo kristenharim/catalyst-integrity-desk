@@ -2,9 +2,15 @@
 
 An append-only store that only ever grows will eventually be read as though growth
 were evidence. It happened here: a background pass and a manual merge appended
-concurrently, 49 rows of 180 were duplicates, and a published n=169 was really 131
-distinct trials. Every rate computed from it was wrong in the flattering direction
-and nothing looked broken, because more rows reads as more data.
+concurrently, and the store held 179 rows for 131 distinct trials with 48 counted
+twice. A figure published mid-run as "169 trials measured" was a row count covering
+123 distinct trials. Every rate computed from it was wrong in the flattering
+direction and nothing looked broken, because more rows reads as more data.
+
+(An earlier version of this docstring said "49 rows of 180" and "n=169 was really
+131". Both were wrong, and they are corrected here rather than left standing,
+because a project whose thesis is that an uncorrected record is the defect cannot
+leave a retracted figure asserted as fact in its own source.)
 
 `load_results()` deduplicating on read closed that for the readers this project
 owns. These tests close the rest:
