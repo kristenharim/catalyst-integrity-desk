@@ -1,4 +1,4 @@
-# The sponsors that stop filing are the ones carrying expired commitments
+# The sponsors carrying expired commitments are the ones that stopped filing
 
 **Every cohort figure in this document is a field of snapshot `cohort-8326c1c1e964`, frozen
 2026-07-22, with point prevalence computed as of that same date: 240 drawn trials, 60 in each
@@ -6,11 +6,14 @@ of four sponsor strata, all measured.** The id is content-addressed over the mea
 and the frame together, so it cannot be re-cut under the same name, and a test recomputes
 every field from the store and fails if the two disagree.
 
-Two classes of figure here are **not** snapshot fields, and are named rather than implied.
+Three classes of figure here are **not** snapshot fields, and are named rather than implied.
 The 677-day case is `NCT04248439`, expired 2022-06-01 and corrected 2024-04-08, derived in
 `docs/BACKTEST.md` and asserted by `tests/test_backtest.py`. The correction history in the
 methods section is sourced from `docs/BOB_LOG.md`, `docs/LIMITS.md` and the git history, and
-none of its figures are in the snapshot.
+none of its figures are in the snapshot. The two percentile ranks for the 677-day case,
+159 of 188 stretches and 32 of 48 trials, are computed from the store rather than read from a
+snapshot field and no test asserts them; they are traceable because the snapshot id is
+content-addressed over that store, and they are not pinned.
 
 **Nothing checks that a figure was copied from the snapshot into this prose correctly**, so
 the audit that verifies this document is a person, and a person does not rerun on commit.
@@ -18,10 +21,10 @@ the audit that verifies this document is a person, and a person does not rerun o
 The draw is uniform over the first 3,000 trials in the registry's own ordering within each
 stratum, not over the whole stratum. "Randomly drawn" throughout means that and not more.
 
-## The finding: reconciliation is indistinguishable from filing frequency
+## The finding: this study cannot separate reconciliation from filing frequency
 
-The sponsors who stop filing are the ones carrying expired commitments, and the measure that
-was going to be this study's headline cannot see them.
+The trials carrying an expired commitment are overwhelmingly the ones whose sponsors stopped
+filing, and the measure that was going to be this study's headline cannot see them.
 
 A trial is **carrying an expired commitment** when its most recent registered primary
 completion date is in the past and still typed as an estimate. A past date typed ACTUAL is the
@@ -235,7 +238,8 @@ Three independent differences, none of which rests on the duration ratio alone:
    estimate, against 20.4% of NIH and 37.5% of OTHER_GOV ones.
 2. **Point prevalence.** 45.0% of OTHER_GOV trials are carrying an expired estimate now
    against 0.0% of NIH trials.
-3. **Filing frequency**, which drives both, at a median of 2 versions per trial against 106.5.
+3. **Filing frequency**, which orders both and is not separable from either here, at a median
+   of 2 registry versions per trial against 106.5, or 1 date revision against 4.
 
 `stats()` raises rather than returning a pooled rate, so the figure cannot be computed by
 accident.
@@ -279,8 +283,18 @@ consistent with the durations observed here. Testing it properly means looking f
 of update intervals near a year, which this study has not done, so batching is **not** ruled
 out as a description of the cadence.
 
-What the 52.4% figure does bear on is different and stronger: whatever the cadence, a majority
-of industry revisions arrive after the date they replace has already expired.
+An earlier draft claimed the revision timing settled this, on the grounds that a majority of
+industry revisions arrive after the date they replace has already expired. That argument does
+not work, for two separate reasons. The majority figure was 52.4%, which counted the mandated
+update-to-actual filing and is retracted as Correction 8. And the surviving 26.2%
+estimate-to-estimate subset does not rebut batching either: a sponsor on a yearly cycle would
+replace an expired estimate with a fresh one at the next pass, which is exactly what that
+subset counts. **A cadence hypothesis is not refuted by evidence that the cadence is slow.**
+
+So this section does not deliver a result. What would settle it is in the data and has not
+been run: if batching were operating, update intervals would cluster near multiples of a year.
+Until someone looks, the honest position is that annual housekeeping remains a live
+explanation for the durations here, and that it would not be a compliant one.
 
 **What the regulation does and does not license, precisely.** The rule concerns updating the
 date to *actual* once a trial reaches its actual primary completion. Much of what is observed

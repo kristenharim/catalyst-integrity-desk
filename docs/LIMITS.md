@@ -361,7 +361,7 @@ to the stretch measure because they lapsed and never filed again. `docs/COHORT.m
 `docs/WRITEUP.md` both said government and academic sponsors "did it less often". On this
 evidence they do it more, and the measure could not see it.
 
-The mechanism is filing frequency, and it is large: median registry versions per trial is 2
+The ordering follows filing frequency, across four strata and untested as a relationship. The spread is large: median registry versions per trial is 2
 for OTHER_GOV, 4 for OTHER, 9 for INDUSTRY and **106.5** for NIH.
 
 **What survives.** The Rocket 677-day case is untouched, because it is one version carrying

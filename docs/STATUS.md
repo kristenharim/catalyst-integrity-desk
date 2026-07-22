@@ -341,8 +341,9 @@ What closing it required, in case any of it recurs:
   flattering direction.
 
 **Where the study now stands, after two council rounds that both blocked.** The headline is
-the registry-level result: **reconciliation is indistinguishable from filing frequency, and the
-sponsors who stop filing are the ones carrying expired commitments.** NIH files a median of
+the registry-level result: **this study cannot separate reconciliation from filing frequency,
+and the trials carrying expired commitments are overwhelmingly the ones whose sponsors stopped
+filing.** NIH files a median of
 106.5 versions per trial and carries zero expired commitments; OTHER_GOV files a median of 2
 and 27 of its 29 open commitments have expired. Monotone across all four strata, which is an ordering across four points rather than a
 tested relationship.

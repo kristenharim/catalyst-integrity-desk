@@ -110,8 +110,8 @@ revision. The true figures are 8.3% and 45.0%. See `docs/LIMITS.md`.
 
 ## The finding the study now leads on: reconciliation tracks filing frequency
 
-The registry-level result is that the sponsors who stop filing are the ones carrying expired
-commitments. NIH files a median of 106.5 versions per trial and carries zero expired
+The registry-level result is that the trials carrying expired commitments are overwhelmingly
+the ones whose sponsors stopped filing. NIH files a median of 106.5 versions per trial and carries zero expired
 commitments; OTHER_GOV files a median of 2 and 27 of its 29 open commitments have expired,
 monotone across all four strata. The revision-level split below is the supporting mechanism
 among sponsors that are still filing, not the headline.
@@ -150,7 +150,7 @@ rather than on any single ratio:
    estimate, against 20.4% of NIH and 37.5% of OTHER_GOV ones.
 2. **Point prevalence.** 45.0% of OTHER_GOV trials carry an expired estimate now, against
    0.0% of NIH trials.
-3. **Filing frequency**, which drives both: a median of 2 registry versions per trial for
+3. **Filing frequency**, which orders both and is not separable from either here: a median of 2 registry versions per trial for
    OTHER_GOV against 106.5 for NIH.
 
 On the primary duration measure NIH carries **1.5 times as long** as industry, median 590 days

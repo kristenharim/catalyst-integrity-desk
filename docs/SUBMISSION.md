@@ -74,8 +74,8 @@ minus 14.5 months, financing required. Nobody filed an amendment. The date simpl
 and passed.
 
 **Rocket is ordinary, and the actual finding is about the registry.** In a random sample of
-240 phase 2/3 trials, reconciliation orders with filing frequency across the four strata, untested as a
-relationship: NIH sponsors file a median of
+240 phase 2/3 trials, this study cannot separate reconciliation from filing frequency, and the trials carrying
+expired commitments are overwhelmingly the ones whose sponsors stopped filing: NIH sponsors file a median of
 106.5 registry versions per trial and have zero trials carrying an expired completion date,
 while government and academic sponsors file a median of 2 and **27 of their 29 still-open
 commitments have already expired**. Counting only lapses that a later filing corrected inverts

@@ -9,8 +9,9 @@ carrying a primary completion date of June 2022. **That date had already been ex
 Nobody was watching, because nobody's job is to watch.
 
 **And Rocket is not unusual. The actual finding is about the registry, not the sponsor.**
-In a random sample of 240 phase 2/3 trials, **reconciliation is indistinguishable from filing
-frequency: the sponsors who stop filing are the ones carrying expired commitments.** NIH
+In a random sample of 240 phase 2/3 trials, **this study cannot separate reconciliation from
+filing frequency: the trials carrying expired commitments are overwhelmingly the ones whose
+sponsors stopped filing.** NIH
 sponsors file a median of 106.5 registry versions per trial and have **zero** trials currently
 carrying an expired completion date. Government and academic sponsors file a median of 2, and
 **27 of their 29 still-open commitments have already expired**. The ordering is monotone in
