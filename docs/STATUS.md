@@ -309,18 +309,19 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## Still open
 
-- `python3 console/app.py` traceback. Prompt 3 hardening in `docs/BOB_PROMPTS.md`,
-  two lines plus the subprocess test that would have caught it. `python3 -m
-  console.app` works meanwhile, so this is robustness, not a blocker.
+- `python3 console/app.py` traceback, plus the display-drift test. Both are in
+  `docs/BOB_PROMPTS.md` under Prompt 3 hardening. Bob has 4.73 coins left and these
+  are not worth spending them on, so they go by hand and get logged as by hand.
+  `python3 -m console.app` works meanwhile, so neither is a blocker.
+- The breach-moment Bob task is the one row in `docs/BOB_LOG.md` with no transcript.
+  Export it, or mark the row as unexported. A row that reads "pending" forever
+  becomes a lie in a README written from this file.
 - **Publish the repo on GitHub.** Submission requires a public repository with a
   README, and there is currently no remote at all. History is clean of
   credentials, checked across every commit, so no rewrite is needed first.
 - ~~The SkillsBuild certificate.~~ Obtained 2026-07-21. Still has to be *uploaded* with
   the submission, so it is not done until it is attached to the Project Page.
 - The Project Page on the platform, all sections marked complete.
-- The contract list has only two rows: SANA has no live pivotal trial. Thin for a
-  view about ranking, but the list is not the demo beat. Revisit only if cheap.
-- The README, written from `docs/BOB_LOG.md` rather than from memory
 - The 3 minute video, cut from `docs/DEMO.md`
 - **The fourth kill gate is still untested**: say the Rocket fact out loud to a
   real person in twenty seconds and watch whether it lands. `SPEC.md` calls it the
