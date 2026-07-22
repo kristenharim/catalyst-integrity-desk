@@ -483,6 +483,25 @@ def _source() -> str:
 # Tests
 # ---------------------------------------------------------------------------
 
+def test_check_reports_nothing_on_the_committed_tree():
+    """The whole of `check()`, asserted. This is the gate the other tests were
+    not.
+
+    `check()` recomputes every table cell from the store, names a wrong-field
+    binding in plain English, and returns it. Every other test in this file then
+    filtered that list by substring or took a before/after delta over the
+    corpus, so a finding on the live tree that matched none of those filters was
+    computed, formatted, and thrown away. A reviewer bound a real column to a
+    different real field, re-rendered, and watched the suite stay green while
+    `check()` printed the mismatch. That is the eighth instance in this project
+    of a correct check that nothing consults, and it is closed by reading the
+    whole return value once.
+    """
+    findings = check(_live_docs(), _source())
+    assert not findings, (f"{len(findings)} finding(s) on the committed tree:\n  "
+                          + "\n  ".join(findings[:25]))
+
+
 def test_the_prose_templates_contain_no_numerals():
     """Total scope: the whole generator, not selected lines of the output."""
     findings = [f for f in check(_live_docs(), _source())
