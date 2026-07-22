@@ -230,7 +230,17 @@ literals and computed values, which is what it exists for, but it is not proof t
 no template formats anything. Do not describe it as more than it is.
 
 The app now reads `PORT` and defaults to 8050, because 5000 is held by macOS
-ControlCenter. `python3 console/app.py` works again.
+ControlCenter.
+
+Correction, found afterwards: I claimed in the same breath that `python3
+console/app.py` works again. It does not, and never has. That file imports
+`engine.ledger` but has no `sys.path` guard, unlike `make_snapshot.py` and
+`tests/test_console.py`, which both insert the repo root. Run as a file, `console/`
+is `sys.path[0]` and the import fails. Every check missed it because the tests and
+the preview launcher both insert the root themselves, so nothing ever exercised the
+documented command. Same defect pattern as everything else here: the check did not
+touch the path it claimed to cover. `python3 -m console.app` works today and is what
+the README now says.
 
 ## Attribution, resolved 2026-07-21
 
@@ -254,6 +264,9 @@ grep -oE '(WATSONX_[A-Z_]+)=[^.<"\ ]{6,}' docs/bob-sessions/*.json
 
 ## Still open
 
+- `python3 console/app.py` traceback. Prompt 3 hardening in `docs/BOB_PROMPTS.md`,
+  two lines plus the subprocess test that would have caught it. `python3 -m
+  console.app` works meanwhile, so this is robustness, not a blocker.
 - **Publish the repo on GitHub.** Submission requires a public repository with a
   README, and there is currently no remote at all. History is clean of
   credentials, checked across every commit, so no rewrite is needed first.

@@ -157,6 +157,27 @@ leaves the demo intact.
 **Accept when:** the badge test fails before the fix and passes after, `pytest tests/`
 is green, `--displays` is idempotent, and `/redline` is in the provenance parametrize.
 
+### Prompt 3, hardening: the documented entry point
+
+Small and optional. `python3 -m console.app` already works, so this is robustness for
+someone who types the file path instead, plus the check that would have caught it.
+
+> `python3 console/app.py` fails with `ModuleNotFoundError: No module named 'engine'`.
+> Run as a file, `console/` becomes `sys.path[0]` and the repo root is not importable.
+> `console/make_snapshot.py` and `tests/test_console.py` both already solve this the
+> same way, with a `sys.path.insert` of the parent directory. Do it the way they do
+> it rather than inventing a second pattern.
+>
+> Then write the check that would have caught this, in `tests/test_console.py`. It has
+> to launch the documented command in a subprocess, not import the app: every existing
+> test inserts the repo root itself, which is exactly why this survived. Spawn
+> `[sys.executable, "console/app.py"]` from the repo root with `PORT` set to a free
+> port, poll until it answers or time out, assert `GET /` returns 302, then terminate
+> it. Watch it fail before you add the `sys.path` line.
+
+**Accept when:** `python3 console/app.py` serves, `python3 -m console.app` still serves,
+the new test fails without the fix, and `pytest tests/` is green.
+
 ---
 
 ## Prompt 4: the panel
