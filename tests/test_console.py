@@ -922,7 +922,15 @@ def test_documented_test_counts_match_a_real_run():
         pytest.skip("child run of the clean-checkout guard")
 
     repo = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    ls = subprocess.run(["git", "ls-files", "-z"], cwd=repo, capture_output=True)
+    # Tracked AND untracked-but-not-ignored, because a new test file that has not
+    # been staged yet is still going to be in the next commit. Listing only
+    # tracked paths made this guard blind to exactly the file that changes the
+    # counts, so it certified a stale pair and would have failed only after the
+    # commit that broke it. Found by adding a test and watching this pass.
+    ls = subprocess.run(
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+        cwd=repo, capture_output=True,
+    )
     if ls.returncode != 0:
         pytest.skip("not a git checkout; the clean-clone tier cannot be measured")
     tracked = [p for p in ls.stdout.decode().split("\0") if p]
@@ -945,7 +953,11 @@ def test_documented_test_counts_match_a_real_run():
         child = subprocess.run(
             [sys.executable, "-m", "pytest", "tests/", "-q", "--deselect", me],
             cwd=tmp, capture_output=True, text=True,
-            env={**os.environ, _CLEAN_CHECKOUT_MARKER: "1"},
+            env={**os.environ, _CLEAN_CHECKOUT_MARKER: "1",
+                 # A clone installs requirements.txt and nothing else. Development
+                 # extras live in the environment rather than the repo, so without
+                 # this the tier measured here is one no judge can reproduce.
+                 "CID_BASE_DEPS_ONLY": "1"},
         ).stdout
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

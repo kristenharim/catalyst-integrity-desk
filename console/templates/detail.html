@@ -8,6 +8,123 @@
 </p>
 
 {# ------------------------------------------------------------------
+   Lapsed registered expectations: date-integrity signals, not catalysts.
+   Each lapsed trial gets its own timeline, identical treatment to binding.
+   ------------------------------------------------------------------ #}
+{% if c.lapsed_history %}
+{% for lh in c.lapsed_history %}
+{% if lh and lh.revisions %}
+<h2 style="color:#f87171;">{{ lh.nct }} &middot; LAPSED registered completion ({{ c.lapsed[loop.index0].pcd }}) &middot; date-integrity signal</h2>
+<p style="font-size:12px; color:#f87171; margin-bottom:8px;">
+  This trial's registered primary completion has already passed. It is not treated as
+  a catalyst date. The revision history below is shown because a sponsor that carries
+  an expired date is the integrity signal this project was built to surface.
+</p>
+<p style="font-size:11px; color:#8b949e; margin:-4px 0 8px;">
+  A registered completion date given only to the month is read as the first of that month,
+  the longer reading. Where the carried-expired figure below rests on a month-only date it is
+  that first-of-month reading; the end-of-month reading is shorter.
+</p>
+<div style="overflow-x:auto; background:#1a0c0c; border:1px solid #7f1d1d;
+            border-radius:6px; padding:12px 0 8px;">
+<svg width="1220" height="180" style="display:block;">
+  <line x1="40" y1="110" x2="1180" y2="110"
+        stroke="#7f1d1d" stroke-width="1"/>
+
+  {% for r in lh.revisions %}
+    {% if r.carried_expired %}
+      <circle cx="{{ r.svg_x }}" cy="72" r="11"
+              fill="#dc2626" stroke="#f87171" stroke-width="1.5"
+              class="revision-node carried-expired"/>
+      <text x="{{ r.svg_x }}" y="50" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10"
+            font-weight="bold" fill="#f87171">
+        carried expired &middot; {{ r.days_expired }} days
+      </text>
+      <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
+            stroke="#dc2626" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="{{ r.svg_x }}" y="126" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+        {{ r.submitted }}
+      </text>
+      <text x="{{ r.svg_x }}" y="140" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#f87171">
+        &#8594; {{ r.pcd }}
+      </text>
+    {% else %}
+      {# Amber ring when the commitment changed shape at this revision: the date
+         difference across it describes two promises, so it is not slip. #}
+      <circle cx="{{ r.svg_x }}" cy="110" r="8"
+              fill="#6b7280"
+              stroke="{% if r.transition == 'text_revised' %}#d29922{% elif r.transition and r.slip_days is none %}#f85149{% else %}#9ca3af{% endif %}"
+              stroke-width="{% if r.transition and r.slip_days is none %}2.5{% else %}1{% endif %}"
+              class="revision-node{% if r.transition and r.slip_days is none %} not-comparable{% endif %}"/>
+      {% if r.transition == 'text_revised' %}
+      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="9" fill="#d29922">
+        wording only
+      </text>
+      {% elif r.transition and r.slip_days is none %}
+      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="9" fill="#f85149">
+        not comparable
+      </text>
+      {% endif %}
+      <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
+        {{ r.submitted }}
+      </text>
+      <text x="{{ r.svg_x }}" y="144" text-anchor="middle"
+            font-family="ui-monospace,monospace" font-size="10" fill="#6b7280">
+        &#8594; {{ r.pcd }}
+      </text>
+    {% endif %}
+  {% endfor %}
+</svg>
+</div>
+
+{# Slip is only slip when the commitment held its shape.  A revision that also
+   changed the primary endpoint or the enrolment describes a different promise,
+   and the days between its dates are not a delay.  Both figures are shown
+   because showing only the larger one is the error this project exists to
+   catch, and showing only the smaller one hides that the date did move. #}
+<p style="font-size:11px; color:#8b949e; margin:6px 0 4px;">
+  {{ lh.revisions|length }} revisions across {{ lh.n_versions }} versions
+  &nbsp;|&nbsp; {{ lh.n_late_moves }} moved with &lt;90 days notice
+</p>
+<p style="font-size:11px; margin:0 0 20px; max-width:940px;">
+  <span style="color:#8b949e;">Net date movement, across revisions where the
+  commitment provably held its shape:</span>
+  <strong style="color:#c9d1d9;">{{ lh.slip_established_days }} days</strong>
+  {% if lh.slip_contingent_revisions %}
+  <br>
+  <span style="color:#d29922;">&#9888;
+    a further {{ lh.slip_contingent_days }} days are contingent</span>
+  <span style="color:#8b949e;">
+    on {{ lh.slip_contingent_revisions }} revision(s) where only the endpoint
+    wording changed. A reword and a redefinition are indistinguishable from the
+    text, so a human has to read the two descriptions. If they name the same
+    commitment the total is {{ lh.slip_upper_bound_days }} days; if not, it stays
+    at {{ lh.slip_established_days }}.</span>
+  {% endif %}
+  {% if lh.slip_refused_revisions %}
+  <br>
+  <span style="color:#e6edf3; font-weight:bold; font-size:12px;">&#9888;
+    Not comparable. Do not treat as delay.</span>
+  <br>
+  <span style="color:#6b7280;">Reported movement across all revisions:
+    {{ lh.slip_reported_days }} days, refused.</span>
+  <br>
+  <span style="color:#8b949e;">Reason: a count or an enumeration changed across
+    {{ lh.slip_refused_revisions }} revision(s), so subtracting the two dates
+    would describe two different commitments rather than a delay.</span>
+  {% endif %}
+</p>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{# ------------------------------------------------------------------
    Thesis break: money and registered dates on one axis.
    Every coordinate and every label string is precomputed in
    make_snapshot.py as c.thesis_timeline.  Nothing here is arithmetic.
@@ -248,122 +365,6 @@
 </p>
 {% endif %}
 
-{# ------------------------------------------------------------------
-   Lapsed registered expectations: date-integrity signals, not catalysts.
-   Each lapsed trial gets its own timeline, identical treatment to binding.
-   ------------------------------------------------------------------ #}
-{% if c.lapsed_history %}
-{% for lh in c.lapsed_history %}
-{% if lh and lh.revisions %}
-<h2 style="color:#f87171;">{{ lh.nct }} &middot; LAPSED registered completion ({{ c.lapsed[loop.index0].pcd }}) &middot; date-integrity signal</h2>
-<p style="font-size:12px; color:#f87171; margin-bottom:8px;">
-  This trial's registered primary completion has already passed. It is not treated as
-  a catalyst date. The revision history below is shown because a sponsor that carries
-  an expired date is the integrity signal this project was built to surface.
-</p>
-<p style="font-size:11px; color:#8b949e; margin:-4px 0 8px;">
-  A registered completion date given only to the month is read as the first of that month,
-  the longer reading. Where the carried-expired figure below rests on a month-only date it is
-  that first-of-month reading; the end-of-month reading is shorter.
-</p>
-<div style="overflow-x:auto; background:#1a0c0c; border:1px solid #7f1d1d;
-            border-radius:6px; padding:12px 0 8px;">
-<svg width="1220" height="180" style="display:block;">
-  <line x1="40" y1="110" x2="1180" y2="110"
-        stroke="#7f1d1d" stroke-width="1"/>
-
-  {% for r in lh.revisions %}
-    {% if r.carried_expired %}
-      <circle cx="{{ r.svg_x }}" cy="72" r="11"
-              fill="#dc2626" stroke="#f87171" stroke-width="1.5"
-              class="revision-node carried-expired"/>
-      <text x="{{ r.svg_x }}" y="50" text-anchor="middle"
-            font-family="ui-monospace,monospace" font-size="10"
-            font-weight="bold" fill="#f87171">
-        carried expired &middot; {{ r.days_expired }} days
-      </text>
-      <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
-            stroke="#dc2626" stroke-width="1" stroke-dasharray="3,3"/>
-      <text x="{{ r.svg_x }}" y="126" text-anchor="middle"
-            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
-        {{ r.submitted }}
-      </text>
-      <text x="{{ r.svg_x }}" y="140" text-anchor="middle"
-            font-family="ui-monospace,monospace" font-size="10" fill="#f87171">
-        &#8594; {{ r.pcd }}
-      </text>
-    {% else %}
-      {# Amber ring when the commitment changed shape at this revision: the date
-         difference across it describes two promises, so it is not slip. #}
-      <circle cx="{{ r.svg_x }}" cy="110" r="8"
-              fill="#6b7280"
-              stroke="{% if r.transition == 'text_revised' %}#d29922{% elif r.transition and r.slip_days is none %}#f85149{% else %}#9ca3af{% endif %}"
-              stroke-width="{% if r.transition and r.slip_days is none %}2.5{% else %}1{% endif %}"
-              class="revision-node{% if r.transition and r.slip_days is none %} not-comparable{% endif %}"/>
-      {% if r.transition == 'text_revised' %}
-      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
-            font-family="ui-monospace,monospace" font-size="9" fill="#d29922">
-        wording only
-      </text>
-      {% elif r.transition and r.slip_days is none %}
-      <text x="{{ r.svg_x }}" y="98" text-anchor="middle"
-            font-family="ui-monospace,monospace" font-size="9" fill="#f85149">
-        not comparable
-      </text>
-      {% endif %}
-      <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
-            font-family="ui-monospace,monospace" font-size="10" fill="#8b949e">
-        {{ r.submitted }}
-      </text>
-      <text x="{{ r.svg_x }}" y="144" text-anchor="middle"
-            font-family="ui-monospace,monospace" font-size="10" fill="#6b7280">
-        &#8594; {{ r.pcd }}
-      </text>
-    {% endif %}
-  {% endfor %}
-</svg>
-</div>
-
-{# Slip is only slip when the commitment held its shape.  A revision that also
-   changed the primary endpoint or the enrolment describes a different promise,
-   and the days between its dates are not a delay.  Both figures are shown
-   because showing only the larger one is the error this project exists to
-   catch, and showing only the smaller one hides that the date did move. #}
-<p style="font-size:11px; color:#8b949e; margin:6px 0 4px;">
-  {{ lh.revisions|length }} revisions across {{ lh.n_versions }} versions
-  &nbsp;|&nbsp; {{ lh.n_late_moves }} moved with &lt;90 days notice
-</p>
-<p style="font-size:11px; margin:0 0 20px; max-width:940px;">
-  <span style="color:#8b949e;">Net date movement, across revisions where the
-  commitment provably held its shape:</span>
-  <strong style="color:#c9d1d9;">{{ lh.slip_established_days }} days</strong>
-  {% if lh.slip_contingent_revisions %}
-  <br>
-  <span style="color:#d29922;">&#9888;
-    a further {{ lh.slip_contingent_days }} days are contingent</span>
-  <span style="color:#8b949e;">
-    on {{ lh.slip_contingent_revisions }} revision(s) where only the endpoint
-    wording changed. A reword and a redefinition are indistinguishable from the
-    text, so a human has to read the two descriptions. If they name the same
-    commitment the total is {{ lh.slip_upper_bound_days }} days; if not, it stays
-    at {{ lh.slip_established_days }}.</span>
-  {% endif %}
-  {% if lh.slip_refused_revisions %}
-  <br>
-  <span style="color:#e6edf3; font-weight:bold; font-size:12px;">&#9888;
-    Not comparable. Do not treat as delay.</span>
-  <br>
-  <span style="color:#6b7280;">Reported movement across all revisions:
-    {{ lh.slip_reported_days }} days, refused.</span>
-  <br>
-  <span style="color:#8b949e;">Reason: a count or an enumeration changed across
-    {{ lh.slip_refused_revisions }} revision(s), so subtracting the two dates
-    would describe two different commitments rather than a delay.</span>
-  {% endif %}
-</p>
-{% endif %}
-{% endfor %}
-{% endif %}
 
 {# ------------------------------------------------------------------
    Consequence sentence: built from snapshot fields, not hardcoded.

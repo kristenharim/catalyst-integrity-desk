@@ -144,6 +144,36 @@ collide, and every test stays green. On RCKT the filing and lapsed markers sit 3
 and are readable only because they were given different label rows by hand. A contract
 whose dates cluster differently will draw badly and say nothing about it.
 
+## The opening frame is now measured, at one viewport, in one browser
+
+**Added 2026-07-23 after the rule below was found broken.** `docs/STATUS.md` calls the
+carried-expired row the thing that outranks the rest: visible at 1280x800 without scrolling
+or clicking. That was measured true on 2026-07-21 and then stopped being true, because the
+thesis-break chart and the binding trial's revision panel were added above it and pushed the
+node to y=992 against an 800px fold. Nothing caught it, because the only checks that touched
+the page asserted the number appeared *somewhere in the HTML*. Presence is not position, and
+the narration would have been spoken over a different trial's smaller figure.
+
+`tests/test_demo_frame.py` now opens a real browser at exactly 1280x800 and reads real
+bounding boxes: the anchor row must sit above the fold, the binding trial's much smaller
+carried-expired figure must not sit above it, and the refusal label must precede the number
+it refuses and be rendered no more quietly.
+
+What it does not establish:
+
+- **One viewport, one engine.** 1280x800 in headless Chromium. A different window size, a
+  different browser, or a different default font can move every number here. The demo is
+  filmed at one size, which is why one size is pinned.
+- **Position, not legibility.** Nothing measures contrast, overlap, or whether two markers
+  collide. The section above still applies: markers a few days apart overlap and every test
+  stays green.
+- **It skips without Playwright**, which is a development extra rather than a
+  `requirements.txt` dependency. On a clean clone only the document-order check runs, and
+  document order is weaker: a section above could grow tall enough to push the anchor below
+  the fold without any reordering. The count guard measures the clean-checkout tier with
+  development extras disabled precisely so this skip is visible in the published numbers
+  rather than hidden by a developer machine.
+
 ## The queue is a second opinion, and shows only what one snapshot can say
 
 The monitoring queue is a second computation over the same contracts, so it can disagree

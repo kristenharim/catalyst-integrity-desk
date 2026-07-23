@@ -249,18 +249,20 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 176 passed, 16 skipped
+python3 -m pytest tests/ -q   # 178 passed, 17 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
 judge can clone and run it with no IBM account.
 
-The count depends on what the machine carries. A clone has no `data/cache/`, which is
-gitignored, so the fifteen tests that replay registry version history skip: **176 passed,
-16 skipped**. With that cache populated locally they run instead: **191 passed, 1
-skipped**. The last skip is the credential-gated live Granite check; that configuration has
-not been re-measured for this commit, so no count is quoted for it. The fifteen verify the
-cohort research, not the console, so nothing on the demo path depends on them.
+The count depends on what the machine carries. A clone installs `requirements.txt` and
+nothing else, so three groups skip: fifteen tests that replay registry version history out
+of the gitignored `data/cache/`, one credential-gated live Granite check, and one
+browser-geometry check needing Playwright. That is **178 passed, 17 skipped**. Add the cache
+and Playwright locally and sixteen of them run instead: **194 passed, 1 skipped**. The last
+skip is the credentialed Granite test; that configuration has not been re-measured for this
+commit, so no count is quoted for it. The fifteen verify the cohort research rather than the
+console, so nothing on the demo path depends on them.
 
 ## Links
 
