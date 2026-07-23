@@ -32,8 +32,50 @@ from orchestrator import lexicon  # noqa: E402
 REPO = os.path.join(os.path.dirname(__file__), "..")
 
 # Every page a human sees. A claim on any of these is a claim the product makes.
-PAGES = ["/contract/RCKT", "/contract/BEAM", "/contracts", "/redline", "/queue",
-         "/belief/new"]
+#
+# Derived from the app's own url_map rather than typed out. The list that stood
+# here was written once and never edited: /redline/confirm, the receipt the demo
+# script ends on, was never in it, and every /workspace stage was added two
+# commits later and never added. Forbidden language rendered on all of them with
+# the whole suite green. A hand-maintained list of pages fails open, and this one
+# did, for thirty-one commits.
+#
+# Every rule must be scanned or named here with a reason. Nothing falls through.
+NON_CLAIM_ROUTES = {
+    "/": "302 to the Rocket detail, renders no prose of its own",
+    "/demo": "302 to the Rocket detail, renders no prose of its own",
+    "/static/<path:filename>": "Flask builtin, serves files rather than claims",
+    # POST-only surfaces. They render templates rather than new prose, and the
+    # template scan below covers every stage of each, including the stages no
+    # GET can reach.
+    "/redline/decide": "POST only, redirects; template scan covers confirm.html",
+    "/workspace/discover": "POST only; template scan covers workspace.html",
+    "/workspace/select": "POST only; template scan covers workspace.html",
+    "/workspace/approve": "POST only; template scan covers workspace.html",
+}
+
+# Rules taking a parameter, given every value the frozen snapshot carries. The
+# old list scanned two of four tickers, so prose driven by the other two rows
+# was never read.
+PARAMETERISED = {
+    "/contract/<ticker>": ["/contract/RCKT", "/contract/BEAM",
+                           "/contract/PRME", "/contract/SRPT"],
+}
+
+TEMPLATE_DIR = os.path.join(REPO, "console", "templates")
+
+
+def _get_pages() -> list[str]:
+    pages: list[str] = []
+    for rule in flask_app.url_map.iter_rules():
+        r = str(rule.rule)
+        if r in NON_CLAIM_ROUTES or "GET" not in (rule.methods or set()):
+            continue
+        pages.extend(PARAMETERISED.get(r, [r]))
+    return sorted(set(pages))
+
+
+PAGES = _get_pages()
 
 # Documents that make claims on the project's behalf. LIMITS.md and this file's
 # own source are excluded: both quote banned phrases constantly, by design.
@@ -43,7 +85,10 @@ CLAIM_DOCS = ["README.md", "docs/SUBMISSION.md", "docs/DEMO.md",
               # one most likely to be read on its own, so it is enforced like a
               # rendered page rather than trusted like a working note. It caught
               # two violations in the first draft.
-              "docs/WRITEUP.md"]
+              "docs/WRITEUP.md",
+              # The UI contract states what each screen may and may not assert,
+              # so it makes claims on the product's behalf like any other.
+              "docs/UI.md"]
 
 
 @pytest.fixture(scope="module")
@@ -98,6 +143,122 @@ def test_no_page_makes_a_forbidden_claim(client, route):
         f"GET {route} makes a claim the evidence does not support:\n  "
         + "\n  ".join(str(v) for v in violations)
     )
+
+
+def test_every_route_is_scanned_or_named_as_exempt():
+    """The control that cannot silently omit a newly added page.
+
+    Keyed on the url_map, so adding a route without deciding whether it is
+    claim-bearing fails here rather than going unscanned. This is the check that
+    was missing while /redline/confirm and /workspace went unread.
+    """
+    rules = {str(r.rule) for r in flask_app.url_map.iter_rules()}
+    scanned = set()
+    for rule, expanded in PARAMETERISED.items():
+        if set(expanded) & set(PAGES):
+            scanned.add(rule)
+    scanned |= {p for p in PAGES if p in rules}
+    unaccounted = rules - scanned - set(NON_CLAIM_ROUTES)
+    assert not unaccounted, (
+        "these routes are neither scanned nor named in NON_CLAIM_ROUTES: "
+        f"{sorted(unaccounted)}"
+    )
+
+
+def test_no_template_makes_a_forbidden_claim():
+    """Keyed on files, not routes.
+
+    A template reachable only by POST, or only in one stage of a multi-stage
+    page, or not yet wired to a route at all, is still read. The receipt, every
+    workspace stage and the belief form's review and done stages were all
+    invisible to a route-keyed scan, and a planted 'immutable' rendered on each
+    of them with the suite green.
+    """
+    offenders = {}
+    for name in sorted(os.listdir(TEMPLATE_DIR)):
+        if not name.endswith(".html"):
+            continue
+        with open(os.path.join(TEMPLATE_DIR, name)) as f:
+            violations = lexicon.scan(f.read())
+        if violations:
+            offenders[name] = violations
+    assert not offenders, "templates make claims the evidence does not support:\n" + "\n".join(
+        f"  {n}: " + "; ".join(str(v) for v in vs) for n, vs in offenders.items()
+    )
+
+
+# ---------------------------------------------------------------------------
+# The stages no GET can reach
+# ---------------------------------------------------------------------------
+# Scanning routes reads whatever a GET renders. The receipt, the belief form's
+# review and done stages, and every workspace stage past the first are reachable
+# only by POST, so a route list reads the shell and never the page the analyst
+# actually decides on. Each one is driven here for real, against the rendered
+# body, because that is the text a human reads.
+
+_THESIS = ("Rocket Pharmaceuticals reaches the registered primary completion of "
+           "NCT06092034 before its runway is exhausted, with a non-negative gap.")
+
+
+def _scan_body(resp, label):
+    assert resp.status_code == 200, f"{label} returned {resp.status_code}"
+    violations = lexicon.scan(resp.data.decode())
+    assert not violations, (
+        f"{label} makes a claim the evidence does not support:\n  "
+        + "\n  ".join(str(v) for v in violations)
+    )
+
+
+def _isolated_client(tmp_path, monkeypatch):
+    """A client whose writes land in tmp_path, never in data/."""
+    monkeypatch.setattr("console.app.DECISIONS_PATH", str(tmp_path / "decisions.jsonl"))
+    monkeypatch.setattr("console.app.REVIEW_LOG_PATH", str(tmp_path / "review_log.jsonl"))
+    monkeypatch.setattr("console.app.ANCHOR_PATH", str(tmp_path / "ledger.anchor"))
+    flask_app.config["TESTING"] = True
+    return flask_app.test_client()
+
+
+def test_belief_review_stage_makes_no_forbidden_claim(client):
+    r = client.post("/belief/new", data={
+        "stage": "review", "ticker": "RCKT", "nct": "NCT06092034",
+        "thesis": _THESIS, "invalidation": "the gap falls below zero",
+        "min_gap": "0"})
+    _scan_body(r, "POST /belief/new stage=review")
+
+
+def test_belief_completion_stage_makes_no_forbidden_claim(tmp_path, monkeypatch):
+    c = _isolated_client(tmp_path, monkeypatch)
+    r = c.post("/belief/new", data={
+        "stage": "commit", "ticker": "RCKT", "nct": "NCT06092034",
+        "thesis": _THESIS, "invalidation": "the gap falls below zero",
+        "min_gap": "0"})
+    _scan_body(r, "POST /belief/new stage=commit")
+
+
+def test_workspace_discover_stage_makes_no_forbidden_claim(client):
+    r = client.post("/workspace/discover", data={"ticker": "RCKT"})
+    _scan_body(r, "POST /workspace/discover")
+
+
+def test_workspace_review_stage_makes_no_forbidden_claim(client):
+    r = client.post("/workspace/select",
+                    data={"ticker": "RCKT", "nct": "NCT06092034"})
+    _scan_body(r, "POST /workspace/select")
+
+
+def test_workspace_approval_stage_makes_no_forbidden_claim(tmp_path, monkeypatch):
+    c = _isolated_client(tmp_path, monkeypatch)
+    r = c.post("/workspace/approve", data={
+        "ticker": "RCKT", "nct": "NCT06092034", "claim": _THESIS, "min_gap": "0"})
+    _scan_body(r, "POST /workspace/approve")
+
+
+def test_the_receipt_makes_no_forbidden_claim(tmp_path, monkeypatch):
+    """The page the demo script ends on, and the one the old list never read."""
+    c = _isolated_client(tmp_path, monkeypatch)
+    c.post("/redline/decide", data={"verdict": "approve", "reason": "the date lapsed"})
+    _scan_body(c.get("/redline/confirm?verdict=approve"),
+               "GET /redline/confirm after an approval")
 
 
 # ---------------------------------------------------------------------------
