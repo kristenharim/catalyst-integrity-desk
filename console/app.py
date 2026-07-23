@@ -152,8 +152,9 @@ def redline_view():
 
 # ---------------------------------------------------------------------------
 # Analyst belief entry: write a contract, review what the desk computed against
-# it, then commit it to the ledger.  Monitoring starts from a human's written
-# belief, so there has to be a way for a human to write one.
+# it, then commit it to the ledger.  A challenge is judged against a belief a
+# human wrote, so there has to be a way for a human to write one.  Writing one
+# records it and nothing more: no rebuild reads the ledger.
 # ---------------------------------------------------------------------------
 
 # BeliefCard needs a numeric band and the analyst states a floor only ("the gap
@@ -178,7 +179,7 @@ def _form_errors(form) -> tuple[list[str], dict]:
     min_gap_raw = (form.get("min_gap") or "").strip()
 
     if ticker not in SNAPSHOT["contracts"]:
-        errors.append(f"Ticker {ticker or '(blank)'} is not monitored in this snapshot.")
+        errors.append(f"Ticker {ticker or '(blank)'} is not in this snapshot.")
     if not nct.startswith("NCT") or not nct[3:].isdigit():
         errors.append("Trial identifier must look like NCT06092034.")
     if len(thesis) < 20:
@@ -262,7 +263,7 @@ def belief_submit():
 
 
 # ---------------------------------------------------------------------------
-# Workspace mode: ticker in, monitored contract out.
+# Workspace mode: ticker in, recorded contract out.
 #
 # Four steps, two of them human. The machine resolves the company, reads the
 # evidence and ranks the candidates; a human says which trial underwrites the

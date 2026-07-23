@@ -110,9 +110,14 @@ Persisted: belief cards, human decisions, ledger events, receipts, rationales.
 Computed from the frozen snapshot: inbox rows, evidence states, triggers, current
 contract, provenance chain, dependency map.
 
-A belief written through the form is recorded and not yet watched. The redline loop runs
-off the committed snapshot and does not read the ledger's live cards, so a new card is
-picked up at the next rebuild rather than immediately, and the interface says so.
+A belief written through the form is recorded and not yet watched. Nothing rereads it.
+`console/make_snapshot.py` contains no reference to `BeliefLedger` or `decisions.jsonl`, so
+no rebuild picks a card up, and the one belief the system challenges is written in Python
+at `make_snapshot.py`. Acting on a recorded belief stays a human's job until the
+reconciliation loop is built, and the interface says exactly that.
+
+The precise capability today: **recorded** yes, **projected from the frozen snapshot** yes,
+**manually rebuildable** no for beliefs, **automatically monitored** no.
 
 ## Phase 2 direction
 

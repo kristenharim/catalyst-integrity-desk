@@ -1,4 +1,4 @@
-# Workspace mode: ticker in, monitored contract out
+# Workspace mode: ticker in, recorded contract out
 
 **Nothing in this file is built.** It is a design, written at the same discipline as the
 rest of the repo: what exists is marked as existing, what is proposed is marked as
@@ -277,7 +277,7 @@ POST  /contracts/discover      resolve, fetch, rank candidates       (slow: show
 POST  /contracts/select-trial  analyst picks the binding trial
 POST  /contracts/preview       proposed contract + full derivation
 POST  /contracts/approve       BeliefCard -> ledger, anchor recorded
-GET   /contract/<card_id>      the monitored contract over time
+GET   /contract/<card_id>      the recorded contract over time
 ```
 
 `/belief/new` becomes the manual path and stays, because an analyst who already knows the

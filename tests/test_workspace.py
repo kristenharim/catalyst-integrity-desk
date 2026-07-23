@@ -1,4 +1,4 @@
-"""Workspace mode: ticker in, monitored contract out.
+"""Workspace mode: ticker in, recorded contract out.
 
 The tests that matter here are the ones about what the flow REFUSES to do,
 because a discovery wizard's failure mode is confidently proceeding on evidence

@@ -259,9 +259,11 @@
     </span>
   </div>
 
-  <h2>What this can be watched for</h2>
+  <h2>Conditions this proposed contract would evaluate once activated</h2>
   <p class="note">
-    The unavailable rows are the point. Offering a condition the desk cannot evaluate would
+    Nothing evaluates these today, and approving does not activate them. A row marked
+    available is one the engine is able to compute, not one being watched on your behalf.
+    The unavailable rows are the point: offering a condition the desk cannot evaluate would
     tell you it is being watched.
   </p>
   <table style="margin-bottom:18px;">
@@ -282,8 +284,8 @@
 
   <p style="font-size:12px; color:#8b949e; margin-bottom:12px;">
     Approving appends a CREATE entry to the hash-chained ledger and re-records the anchor.
-    The contract is recorded; the redline loop picks it up on the next run rather than
-    immediately.
+    Recorded, not yet watched. Nothing rereads this contract, because no rebuild reads the
+    ledger, so acting on it stays a human's job until the reconciliation loop is built.
   </p>
   <div style="display:flex; gap:12px; align-items:center;">
     <button type="submit"

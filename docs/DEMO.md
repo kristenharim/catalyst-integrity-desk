@@ -102,7 +102,7 @@ Open `/belief/new`. Do not fill it in on camera, just show it and move.
 
 > One question this has been begging: judged against what? Against this. A human writes the
 > thesis, the trial it depends on, and the funding gap below which they would no longer
-> believe it. The desk does not invent beliefs, it monitors the ones someone signed.
+> believe it. The desk does not invent beliefs, it records the ones someone signed.
 >
 > The invalidation conditions go in the same field Granite reads, so the challenge is
 > judged against the conditions the analyst said would change their mind.

@@ -4,10 +4,10 @@
 
 <h1>Write a belief</h1>
 <p style="font-size:12px; color:#8b949e; max-width:760px; margin-bottom:20px; line-height:1.7;">
-  Monitoring starts from something a human wrote down. This is that form. The desk does not
-  invent a thesis, it holds the one you state and tells you when a filing or a registry
-  revision contradicts it. Nothing is written to the ledger until you confirm it on the
-  next screen.
+  A challenge is judged against something a human wrote down. This is that form. The desk
+  does not invent a thesis, it records the one you state so a later reading has something
+  to be judged against. Writing it down records it and starts nothing: no rebuild reads the
+  ledger. Nothing is written to the ledger until you confirm it on the next screen.
 </p>
 
 {% if errors %}
@@ -204,8 +204,9 @@
     &#10003; Belief recorded against {{ form.nct }}, hash-chained into the ledger.
   </div>
   <p style="font-size:11px; color:#8b949e; margin-bottom:12px;">
-    Recorded, not yet watched. The redline loop runs off the committed snapshot, so
-    this card is picked up at the next rebuild rather than immediately.
+    Recorded, not yet watched. Nothing rereads this card. The redline loop runs off the
+    committed snapshot, and no rebuild reads the ledger, so acting on it stays a human's
+    job until the reconciliation loop is built.
   </p>
   <table style="max-width:900px;">
     <tbody>

@@ -169,7 +169,7 @@ pip install playwright && python3 -m playwright install chromium
 | the table below it | every input with the XBRL tag it resolved through |
 | `/contracts` | the ranked list, unreliable rows shown below it and never ranked, and below those any ticker that produced no contract at all, with the reason |
 | `/redline` | the thesis breaking: approved against a date that then lapsed, and Granite's memo about it |
-| `/workspace` | ticker in, monitored contract out. Identity and the empty queries are shown before any candidate; a lapsed date is listed and cannot be chosen |
+| `/workspace` | ticker in, recorded contract out. Identity and the empty queries are shown before any candidate; a lapsed date is listed and cannot be chosen |
 | `/belief/new` | where a belief comes from. The analyst writes the thesis, the trial, and the gap below which they would stop believing it |
 | Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
 

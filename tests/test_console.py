@@ -830,7 +830,9 @@ def test_belief_commit_appends_to_ledger(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("bad,expect", [
-    ({"ticker": "ZZZZ"}, b"not monitored"),
+    # "not monitored" until the capability-language pass: an unknown ticker is
+    # absent from the snapshot, which is not a statement about what is watched.
+    ({"ticker": "ZZZZ"}, b"is not in this snapshot"),
     ({"nct": "not-a-trial"}, b"NCT06092034"),
     ({"thesis": "short"}, b"Write the thesis out"),
     ({"min_gap": "soon"}, b"must be a number"),
