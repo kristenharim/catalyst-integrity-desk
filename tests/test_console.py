@@ -888,65 +888,95 @@ def test_snapshot_pins_its_own_as_of():
             )
 
 
-def test_readme_test_count_matches_reality():
-    """The README's stated test count must match the suite it describes.
+_CLEAN_CHECKOUT_MARKER = "CID_CLEAN_CHECKOUT_CHILD"
 
-    This has drifted twice. The README quoted 16 and then 21 passing while the
-    suite had moved on, which is a small lie sitting in the first thing a judge
-    reads, in a project whose entire claim is that its numbers are checkable.
-    Counting is cheap, so the count is asserted rather than maintained by hand.
 
-    The README states two figures, and the first version of this guard only
-    checked one of them. The credential-free result is "N passed, 1 skipped";
-    the with-credentials result is "N+1 passed", written three different ways
-    across two files. Checking only the first let the second go stale in the
-    same commit that fixed the first, which is the same bug wearing a hat.
+def test_documented_test_counts_match_a_real_run():
+    """The documented results must come from running the suite, not counting it.
 
-    Both files are checked, because `docs/SUBMISSION.md` is what gets pasted
-    into the project page and a judge reads that figure before running anything.
+    The previous guard ran `pytest --collect-only` and asserted the README figure
+    equalled collected - 1. That is true by construction: it sees how many tests
+    EXIST and never how many SKIP. A tracked-files-only checkout carries no
+    `data/cache/`, so the fifteen registry-replay tests skip and the real result
+    is "176 passed, 16 skipped" while the README said "191 passed, 1 skipped".
+    The guard certified the wrong number instead of catching it, and then a later
+    commit edited the number up and the guard certified that too. It is the defect
+    shape docs/LIMITS.md keeps recording -- a check that cannot fail on the thing
+    it names -- sitting on the first command a judge runs.
+
+    So this exports every tracked path at its current content into a temporary
+    directory, which is what a clone yields minus the gitignored cache, and runs
+    the documented command there. The child deselects this test because it would
+    otherwise recurse; the environment marker is a second stop in case the node id
+    drifts, and the git check is a third for a source download with no history.
+
+    Two tiers are measured or checked and a third deliberately states no number.
+    The clean-checkout tier is measured here. The cache-present tier cannot be
+    measured from a clean tree, so it is held to the same total. The credentialed
+    tier quotes nothing, because nothing has been measured for it.
     """
-    import re
+    import shutil
     import subprocess
 
-    repo = os.path.join(os.path.dirname(__file__), "..")
+    if os.environ.get(_CLEAN_CHECKOUT_MARKER):
+        pytest.skip("child run of the clean-checkout guard")
 
-    out = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/", "--collect-only", "-q"],
-        cwd=repo, capture_output=True, text=True,
-    ).stdout
-    collected = int(re.search(r"(\d+) tests? collected", out).group(1))
+    repo = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    ls = subprocess.run(["git", "ls-files", "-z"], cwd=repo, capture_output=True)
+    if ls.returncode != 0:
+        pytest.skip("not a git checkout; the clean-clone tier cannot be measured")
+    tracked = [p for p in ls.stdout.decode().split("\0") if p]
+    assert tracked, "git ls-files returned nothing; cannot build a clean checkout"
 
-    checked = 0
+    tmp = tempfile.mkdtemp(prefix="cid-clean-")
+    try:
+        for rel in tracked:
+            src = os.path.join(repo, rel)
+            if not os.path.isfile(src):
+                continue
+            dst = os.path.join(tmp, rel)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
+        assert not os.path.isdir(os.path.join(tmp, "data", "cache")), (
+            "the exported checkout carries data/cache/, so it is not a clean clone"
+        )
+        me = ("tests/test_console.py::"
+              + test_documented_test_counts_match_a_real_run.__name__)
+        child = subprocess.run(
+            [sys.executable, "-m", "pytest", "tests/", "-q", "--deselect", me],
+            cwd=tmp, capture_output=True, text=True,
+            env={**os.environ, _CLEAN_CHECKOUT_MARKER: "1"},
+        ).stdout
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    runs = re.findall(r"(\d+) passed(?:, (\d+) skipped)?", child)
+    assert runs, f"no pytest summary in the clean-checkout run:\n{child[-800:]}"
+    # Deselected in the child and passing here, so it is added back.
+    clean_passed = int(runs[-1][0]) + 1
+    clean_skipped = int(runs[-1][1] or 0)
+    total = clean_passed + clean_skipped
+
     for name in ("README.md", "docs/SUBMISSION.md"):
         text = open(os.path.join(repo, name)).read()
-
-        # Credential-free: one test skips, so it is collected - 1.
-        for c in set(re.findall(r"(\d+) passed, 1 skipped", text)):
-            checked += 1
-            assert int(c) == collected - 1, (
-                f"{name} says {c} passed, 1 skipped, but the suite collects "
-                f"{collected} tests, so it should say {collected - 1}"
-            )
-
-        # With credentials: nothing skips, so it is the full collected count.
-        with_creds = re.findall(
-            r"(?:suite is\s+(\d+)\s*\n?\s*passed, no skips"
-            r"|suite is\s+(\d+)\s*\n?\s*passed;"
-            r"|\((\d+) passed with watsonx credentials\))",
-            text,
+        # Whitespace-tolerant: prose wraps, and a guard that a line break can
+        # switch off is the hollow kind this one exists to replace.
+        pairs = {(int(p), int(s)) for p, s in
+                 re.findall(r"(\d+)\s+passed,\s+(\d+)\s+skipped", text)}
+        assert len(pairs) >= 2, (
+            f"{name} must document the clean-checkout tier and the cache-present "
+            f"tier separately; it states {sorted(pairs)}"
         )
-        for groups in with_creds:
-            c = next(g for g in groups if g)
-            checked += 1
-            assert int(c) == collected, (
-                f"{name} claims {c} passing with credentials, but the suite "
-                f"collects {collected} tests"
+        assert (clean_passed, clean_skipped) in pairs, (
+            f"{name} does not state the clean-checkout result this suite actually "
+            f"produces, {clean_passed} passed and {clean_skipped} skipped; it "
+            f"states {sorted(pairs)}"
+        )
+        for p, s in sorted(pairs):
+            assert p + s == total, (
+                f"{name} states {p} passed, {s} skipped, accounting for {p + s} "
+                f"tests; the suite has {total}"
             )
-
-    assert checked >= 4, (
-        f"only found {checked} stated test counts across the two files; the "
-        "patterns this guard matches have drifted and it is no longer guarding"
-    )
 
 
 # ---------------------------------------------------------------------------

@@ -77,6 +77,23 @@ someone runs it. That is intentional: a store that silently self-compacts is a s
 can silently discard, and a failing test is a better prompt than a cron job. Noted so the
 failure is recognised as the design rather than as a bug.
 
+## A replay fixture, so a clone can check the research
+
+**Parked 2026-07-23, and it is the preferred route rather than committing the cache.**
+Fifteen tests skip on a tracked-files-only checkout because `data/cache/` is gitignored, so
+a clone verifies the console and takes the cohort research on trust. Among the fifteen is
+`test_month_convention_reconstructs_the_first_of_month`, which is the only independent check
+of the end-of-month figures the prose guard reads from the snapshot rather than recomputes.
+On a clone that check does not run, so the `*_eom` half of every published bound rests on
+`figures_hash` alone, which proves the file is self-consistent and not that it is right.
+
+The fix is **not** to commit the cache: it is 12,043 files and would be committed evidence
+nobody reads. It is a small fixture, a handful of trials with their version histories,
+covering the anchor case and a few per stratum, enough to run the month-convention
+reconstruction and a slice of the backtest replay in a clean clone. Sized in the hundreds of
+kilobytes, not the tens of megabytes. Until it exists, the honest statement is the one the
+README now makes: three tiers, and the clean-checkout tier is the one a judge sees.
+
 ## Guarded but not written
 
 **The AI/absorption domain content.** `orchestrator/lexicon.py` now rejects roadmap

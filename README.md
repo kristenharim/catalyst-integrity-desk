@@ -132,7 +132,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 191 passed, 1 skipped
+python3 -m pytest tests/ -q       # 176 passed, 16 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -141,9 +141,18 @@ Run it as a module, from the repo root. Set `PORT` to move it off 8050.
 it renders comes from `data/snapshot.json`, which is committed. Clone, install Flask, run.
 Nothing else.
 
-**The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 192 passed, no skips. That test is verified not to pass
-on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+**Three tiers, because the result depends on what your machine carries.** A clone gets
+tracked files only, so `data/cache/` is absent and the fifteen tests that replay registry
+version history skip: **176 passed, 16 skipped**. That is the number above, and it is the
+one a judge sees. Populate that cache locally and those fifteen run instead, giving **191
+passed, 1 skipped**. The single remaining skip is the live Granite fabrication check, which
+needs watsonx credentials; with them it runs rather than skips, and that configuration has
+not been re-measured for this commit, so no count is quoted for it. That test is verified
+not to pass on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+
+The fifteen cache-dependent tests verify the cohort research, not the console. Nothing on
+the demo path depends on them, which is why a clone can run the whole product with sixteen
+tests skipped and still be running the real thing.
 
 **The 90 second tour:**
 
@@ -298,8 +307,9 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 192
-  passed; without them that one test skips and you see 191 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. Without credentials that one
+  test skips; with them it runs. No count is quoted for the credentialed configuration,
+  because none has been measured for this commit.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.
