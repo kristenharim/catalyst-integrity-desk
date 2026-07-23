@@ -419,6 +419,10 @@ def _expected_rows() -> dict:
         "| median of per-trial longest carry | ",
         "| p90 over all stretches | ",
         "| p90 of per-trial longest carry | ",
+        # And the unit table's own column header. The cell recomputation compares
+        # tokens positionally, so a swap of the INDUSTRY and NIH column labels
+        # leaves the cells matching while mislabeling every one of them.
+        "| INDUSTRY | NIH | ratio |",
     ]
 
     # Sentences whose figure is a relation between strata, which is where a

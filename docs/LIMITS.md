@@ -534,6 +534,21 @@ found that everything in the snapshot outside `strata` was a trusted root, and a
 `anchor_case.days_carried` published a fabricated headline; `figures_hash` closes that. And it
 confirmed the residuals below rather than refuting them.
 
+**Ninth and tenth rounds hardened the recompute and the freeze.** Round nine's recompute layer
+covered the write-up's tables but not the four block tables in the other documents, nor their
+headers, nor the column-oriented unit table; a wrong-field binding in any of those shipped
+green. All are recomputed now, and every generated table header is pinned to an independent
+literal so a swap fails against the literal rather than a copy of itself. Round nine also
+surfaced a real latent bug, found by the wall clock rolling over mid-session: `freeze()` read
+the clock each time, so a re-freeze walked every days-since-expiry figure forward by a day. It
+now preserves an existing snapshot's `as_of`, which is a study parameter and not the freeze
+moment, and because no data check can tell a right point-prevalence date from a wrong one the
+date itself is pinned in a test. The end-of-month bound gained an independent recomputation in
+the test rather than a comparison against a re-run of the function that produced it, extended
+in round ten to the duration medians it first missed. Round ten also caught the unit table's
+own column header still unpinned and the hand-edit test tampering only half the hashed keys;
+both closed.
+
 **What is still open, and it is the honest residual.** A number spelled in words is invisible
 to every rule here, and one shipped on the seventh pass: a count of strata written as "three
 of the four" was wrong in three documents. A digit assembled at runtime, `ord("~")` or
@@ -541,9 +556,12 @@ of the four" was wrong in three documents. A digit assembled at runtime, `ord("~
 in a sentence the recomputation does not cover would pass, and the covered set is the tables
 and a named list of sentences, not every sentence. And the recomputation is a second
 implementation, so a shared misunderstanding of what a field means is invisible to both, which
-is the hole the "by construction" retraction went through. The rule this file keeps recording
-applies to the guard as much as to the product: a check watched passing only on the case it
-was written for is not yet evidence.
+is the hole the "by construction" retraction went through. `research/sponsor_profile.py` is a
+product module scanned only in its module docstring, so a cohort figure in a comment or a
+function docstring there would not be caught; it carries no figure today. And the `N of M`
+denylist catches "of the" but not "out of", "of those" or a slash, none of which are live. The
+rule this file keeps recording applies to the guard as much as to the product: a check watched
+passing only on the case it was written for is not yet evidence.
 
 Also guarded mechanically, because it failed once: a hedge present in four claim documents and
 absent from the fifth. One fix pass deleted the only qualifier in `docs/SUBMISSION.md`, the
@@ -567,10 +585,13 @@ the registry facts stand without any regulatory claim.
 
 The registry has a separate lead-sponsor class, `FED`, for U.S. federal agencies other than
 NIH, the VA, DoD and CDC among them. That is the stratum where the duty applies most directly,
-and this study never drew it. It is recorded in `docs/PARKING.md` as the follow-up. The
-finding does not weaken: where the U.S. duty plainly applies, industry still carries an expired
-estimate at the rate the mechanism table reports, and where no such duty exists reconciliation
-is rarer still.
+and this study never drew it. It is recorded in `docs/PARKING.md` as the follow-up. What
+survives is a registry fact and not a compliance one: where the U.S. duty plainly applies,
+industry still carries an expired estimate at the rate the mechanism table reports; the strata
+where no such duty exists carry expired dates more often, not less. That the two facts sit
+either side of a jurisdictional line is not evidence the line explains them, and it is not
+offered as such, because filing frequency confounds the comparison and this study cannot
+separate the two. The write-up states it the same way.
 
 ## A month-only date has two readings, and the figures it touches are bounds
 

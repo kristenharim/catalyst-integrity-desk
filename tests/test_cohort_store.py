@@ -104,6 +104,24 @@ def test_month_convention_reconstructs_the_first_of_month():
         for p, n in zip(revs(cohort.ANCHOR_NCT), revs(cohort.ANCHOR_NCT)[1:])
         if eom(p.get("pcd")) and cohort._parse_date(n.get("submitted"))
         and eom(p.get("pcd")) < cohort._parse_date(n.get("submitted"))), "anchor eom"
+    def pct(xs, q):
+        if not xs:
+            return None
+        v = sorted(xs)
+        k = (len(v) - 1) * q
+        lo = int(k)
+        return v[lo] + (v[min(lo + 1, len(v) - 1)] - v[lo]) * (k - lo)
+
+    def eom_stretches(nct):
+        vs = cohort._cached_versions(nct)
+        out = []
+        for a, b in zip(vs, vs[1:]):
+            p = eom(a.get("pcd"))
+            s = cohort._parse_date(b.get("submitted"))
+            if p is not None and s is not None and p < s:
+                out.append((s - p).days)
+        return out
+
     for cls in cohort.STRATA:
         sub = [r for r in rows if r["sponsor_class"] == cls]
         lapse = est = pro = 0
@@ -123,6 +141,15 @@ def test_month_convention_reconstructs_the_first_of_month():
         assert m["revisions_after_lapse_eom"] == lapse, f"{cls} eom lapse"
         assert m["revisions_after_lapse_to_estimate_eom"] == est, f"{cls} eom est"
         assert abs(m["lapse_to_estimate_rate_eom"] - est / (pro + lapse)) < 1e-9, cls
+        # The end-of-month DURATION medians the direction-corrected prose renders
+        # ("rises from 336 to 388.5"). The circular check this replaced covered
+        # these; the first independent walk did not, so a corrupted eom duration
+        # passed. Recomputed here from the same last-day resolution.
+        strs = [d for r in sub for d in eom_stretches(r["nct"])]
+        per = [max(eom_stretches(r["nct"])) for r in sub if eom_stretches(r["nct"])]
+        assert m["n_stretches_eom"] == len(strs), f"{cls} eom n_stretches"
+        assert m["dead_days_p50_eom"] == pct(strs, .5), f"{cls} eom stretch p50"
+        assert m["trial_days_p50_eom"] == pct(per, .5), f"{cls} eom trial p50"
 
     assert snap["silent_carrier_audit"] == cohort.silent_carrier_audit(
         rows, cohort._parse_date(snap["as_of"]))
@@ -215,6 +242,32 @@ def test_stats_refuses_a_pooled_all_strata_rate():
             cohort.stats(rows, bad)
 
 
+STUDY_AS_OF = "2026-07-22"
+
+
+def test_the_study_as_of_is_the_pinned_date():
+    """Point prevalence is as of a fixed study date, and its value is pinned.
+
+    `freeze()` preserves an existing snapshot's `as_of` so a re-freeze cannot walk
+    every days-since-expiry figure forward as the wall clock advances -- a real
+    drift that shifted every median by a day once. But preservation means a wrong
+    `as_of`, hand-edited or drift-adopted before this guard existed, would also
+    persist, and `figures_hash` recomputes over it so the snapshot stays
+    internally consistent. No data check can tell a right point-prevalence date
+    from a wrong one, because any date is a valid reference. So the date itself is
+    pinned here. A new draw is a different study: it sets its own `as_of` and this
+    line changes with it, deliberately.
+    """
+    snap = cohort.load_snapshot()
+    if snap is None:
+        pytest.skip("no snapshot frozen yet")
+    assert snap["as_of"] == STUDY_AS_OF, (
+        f"the snapshot's point-prevalence date is {snap['as_of']}, not the pinned "
+        f"study date {STUDY_AS_OF}. If this is a new draw, update STUDY_AS_OF; if it "
+        f"is a re-freeze that adopted the wall clock, restore the study date.")
+    assert snap["frozen_at"] == STUDY_AS_OF
+
+
 def test_report_prints_no_pooled_section(capsys):
     if not cohort.load_results():
         pytest.skip("no cohort measured yet")
@@ -293,23 +346,45 @@ def test_a_hand_edit_to_any_published_figure_is_caught():
     assert snap.get("figures_hash") == cohort.figures_hash(snap), (
         "the snapshot's figures_hash disagrees with a recomputation over its own "
         "published blocks, so a figure was edited without re-freezing")
-    # Tamper with a value guaranteed different from the real one rather than a
-    # magic sentinel, so this meta-test cannot break if a freeze ever produces the
-    # sentinel. Every hashed key is exercised, not only the anchor.
+    # EVERY hashed key must be exercised, not a sample: the point is to catch a
+    # regression that drops a key from `figures_hash`'s covered tuple, and a
+    # sampled loop cannot see a dropped key it does not touch. `snapshot_id` was
+    # added to the hash and was not in the old loop, so dropping it again would
+    # have passed. This tampers one leaf inside each covered top-level key.
     import copy
-    for path in (("anchor_case", "days_carried"),
-                 ("frame", "enumeration_cap_per_stratum"),
-                 ("month_convention", "anchor_days_eom"),
-                 ("silent_carrier_audit", "multi"),
-                 ("n_distinct_trials",)):
+
+    def _bump(node):
+        """Mutate one leaf in place, whatever its type."""
+        if isinstance(node, dict):
+            return _bump(next(iter(node.values())))
+        if isinstance(node, list):
+            return node.append("TAMPERED") if node is not None else None
+        return "TAMPERED"
+
+    covered = ("strata", "anchor_case", "month_convention", "silent_carrier_audit",
+               "clustering", "frame", "as_of", "seed", "snapshot_id",
+               "n_distinct_trials")
+    for key in covered:
+        assert key in snap, f"{key} is not in the snapshot"
         tampered = copy.deepcopy(snap)
-        node = tampered
-        for k in path[:-1]:
-            node = node[k]
-        v = node[path[-1]]
-        node[path[-1]] = (v + 1) if isinstance(v, (int, float)) else "TAMPERED"
+        v = tampered[key]
+        if isinstance(v, dict):
+            # descend to a leaf and change it
+            node = v
+            while isinstance(node, dict):
+                k = next(iter(node))
+                if not isinstance(node[k], (dict,)):
+                    node[k] = (node[k] + 1) if isinstance(node[k], (int, float)) \
+                        and not isinstance(node[k], bool) else "TAMPERED"
+                    break
+                node = node[k]
+        elif isinstance(v, (int, float)) and not isinstance(v, bool):
+            tampered[key] = v + 1
+        else:
+            tampered[key] = "TAMPERED"
         assert tampered["figures_hash"] != cohort.figures_hash(tampered), (
-            f"editing {'/'.join(path)} did not change the figures hash")
+            f"editing the {key} block did not change the figures hash, so it is not "
+            f"covered")
 
 
 def test_point_prevalence_is_pinned_not_read_from_the_clock():
@@ -328,6 +403,29 @@ def test_point_prevalence_is_pinned_not_read_from_the_clock():
     assert early["carrying_now"] < late["carrying_now"], (
         "point prevalence did not move between 2016 and 2030, so the as-of date "
         "is not reaching the computation")
+
+
+def test_freeze_preserves_an_existing_as_of():
+    """Re-freezing the same rows keeps the study date, not the wall clock.
+
+    This is the preservation branch itself, which nothing exercised. It stops the
+    drift that shifted every days-since-expiry figure by a day when a re-freeze
+    picked up a rolled-over UTC date. No clock mock is needed: the study date is
+    2026-07-22 and the wall clock in any later session is a different day, so a
+    re-freeze that read the clock would move as_of and one that preserves does not.
+    A genuinely new draw -- different rows, so a different snapshot_id -- is a
+    different study and takes a fresh clock date; that path is not exercised here
+    because it would overwrite the committed snapshot.
+    """
+    if not _have_cache():
+        pytest.skip("freeze needs the version cache")
+    snap = cohort.load_snapshot()
+    if snap is None or snap["as_of"] != STUDY_AS_OF:
+        pytest.skip("no snapshot at the study date")
+    refrozen = cohort.freeze()
+    assert refrozen["as_of"] == STUDY_AS_OF, (
+        "re-freezing adopted the wall clock instead of preserving the study date")
+    assert refrozen["snapshot_id"] == snap["snapshot_id"]
 
 
 def test_an_actual_completion_date_is_not_a_lapsed_commitment():

@@ -5,10 +5,10 @@ investigation. The cohort answers "what is normal". This answers "where does
 this one sit", which is the only form in which a single company's record means
 anything.
 
-The framing rule, and it is the whole reason this file is careful: four in five
-of the industry-sponsored trials in the cohort carried an already-passed
-registered completion date at some point, so *doing it* separates nobody. What
-varies is *how long*, and the distribution has a long tail. So a profile reports
+The framing rule, and it is the whole reason this file is careful: most of the
+industry-sponsored trials in the cohort carried an already-passed registered
+completion date at some point, so *doing it* separates nobody. What varies is
+*how long*, and the distribution has a long tail. So a profile reports
 a percentile against the cohort, never a verdict, and the sentence it supports is
 "this sponsor's longest stretch sits at the Nth percentile of trials examined",
 not anything about the sponsor.
