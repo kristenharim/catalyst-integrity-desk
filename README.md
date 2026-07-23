@@ -132,7 +132,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 178 passed, 17 skipped
+python3 -m pytest tests/ -q       # 235 passed, 17 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -145,8 +145,9 @@ Nothing else.
 tracked files only and installs `requirements.txt` alone, so three groups skip: fifteen that
 replay registry version history out of the gitignored `data/cache/`, one live Granite check
 that needs watsonx credentials, and one browser-geometry check that needs Playwright. That
-is **178 passed, 17 skipped**, the number above, and the one a judge sees. Add the cache and
-Playwright locally and sixteen of those run instead, giving **194 passed, 1 skipped**. The
+is **235 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
+alone and the browser-geometry check runs too: **236 passed, 16 skipped**. Add the cache and
+Playwright locally and sixteen of those run instead, giving **251 passed, 1 skipped**. The
 last skip is the credentialed Granite test; that configuration has not been re-measured for
 this commit, so no count is quoted for it. That test is verified not to pass on the stub:
 pointed at an invalid endpoint it fails on `source == "granite"`.
