@@ -102,6 +102,39 @@ CORRECTIONS = (
     "by_construction", "jurisdiction",
 )
 
+# Each correction's layer, so the closing table renders its own counts rather
+# than having them typed. The layers run from the most mechanical defect a check
+# can catch to the least: a wrong number, then a wrong measure, then a figure
+# mistyped into prose, then a claim wrong in what it asserts. The point the table
+# makes is its first row: no numbered correction is a wrong measured number. A
+# reviewer can check any correction's layer against its own methods entry.
+CORRECTION_LAYER = {
+    "store_n": "figure_code", "cache_loss": "figure_code",
+    "filter_never_fired": "figure_code",
+    "overcorrection": "method", "pooled_rate": "method", "silence": "method",
+    "one_stratum": "method", "clustering_control": "method",
+    "anecdote": "prose",
+    "headline_downgrade": "semantic", "mandated_filing": "semantic",
+    "month_convention": "semantic", "by_construction": "semantic",
+    "jurisdiction": "semantic",
+}
+LAYERS = (
+    ("arithmetic", "the measured numbers",
+     "recomputed from the store by a review seat every round, and never wrong"),
+    ("figure_code", "figure-production code",
+     "a store that double-counted, a cache that truncated, a type filter that "
+     "never fired: a bug yielding a wrong figure from correct data"),
+    ("method", "measure and method design",
+     "the stretch measure could not see silence, the clustering test had no "
+     "control, a pooled rate printed against the rule forbidding it"),
+    ("prose", "retyped prose figures",
+     "the class the generated form eliminated; the last was an invented word, "
+     "not a digit, and none is numbered since figures were rendered not typed"),
+    ("semantic", "semantic and framing",
+     "a regulation quoted past its jurisdiction, an unexamined date convention, "
+     "an entailment that did not hold: no numeric check sees these"),
+)
+
 
 # ---------------------------------------------------------------------------
 # Formatting. Every rendered figure passes through one of these.
@@ -536,6 +569,25 @@ def figures(snap: dict) -> dict:
     # --- correction numbers, from the order rather than from prose ----------
     for i, key in enumerate(CORRECTIONS, start=1):
         f["c_" + key] = f"Correction {i}"
+
+    # --- the corrections-by-layer table, counts rendered from the record ----
+    by_layer = {}
+    for slug in CORRECTIONS:
+        by_layer.setdefault(CORRECTION_LAYER[slug], []).append(slug)
+    # Every correction must carry a layer, or the total below is wrong and the
+    # table silently under-counts. Asserted here so a new correction cannot be
+    # added without placing it.
+    unplaced = [s for s in CORRECTIONS if s not in CORRECTION_LAYER]
+    if unplaced:
+        raise ValueError(f"corrections with no layer: {unplaced}")
+    f["corrections_layer_table"] = _table(
+        ["Layer", "a defect here", "numbered corrections"],
+        ["---", "---", "---:"],
+        [[label, note, _n(len(by_layer.get(key, [])))]
+         for key, label, note in LAYERS])
+    f["n_corrections"] = _n(len(CORRECTIONS))
+    f["n_arithmetic"] = _n(len(by_layer.get("arithmetic", [])))
+    f["n_semantic"] = _n(len(by_layer.get("semantic", [])))
     return f
 
 
@@ -1188,6 +1240,33 @@ recorded in `docs/LIMITS.md` instead, where the guard's limits live. A correctio
 supposed to reach zero, and the point of counting the rounds after it does is to be able to say
 it did rather than assert it: the numbered corrections stopped at fourteen, and the rounds kept
 running.
+
+**What the corrections were, by layer.** The {n_corrections} of them sort into layers that run
+from the most mechanical defect a check can catch to the least, and the sort is the argument:
+
+{corrections_layer_table}
+
+The first row is the point. Not one numbered correction is a wrong measured number: a review
+seat recomputes every figure from the store each round, and the arithmetic has been right every
+time. What was wrong was one layer up and then two: code that produced a wrong figure from right
+data, a measure that was blind or a method that had no control, and, the hardest to catch and
+where the last findings landed, {n_semantic} claims that were wrong in what they asserted while
+every number in them was correct. The retyped-prose layer is the one this document's own form
+closed: figures are rendered from fields now, not typed, so a mistyped figure is not a defect
+that can occur here, and none has been numbered since. This is not a claim that the study is
+without error. It is a claim about where its errors have been, which is a thing the record can
+show and this table is how it shows it.
+
+The review that produced this table ran to a stopping rule rather than to exhaustion. The
+question space is unbounded: each adversarial round samples new questions, and "previously
+cleared" only ever means "not yet asked". So the rule was not "review until nothing is found",
+which never arrives, but "review until findings stop moving a claim past the bound it discloses".
+The deep findings came in one round, the eighth. The rounds after it found a sentence with its
+direction backwards, gaps in the guard's own coverage, a test that could corrupt what it checked,
+a paragraph crediting the wrong round: real, fixed, and none of them a figure, a claim, or a
+number that a reader relies on. When three consecutive rounds turned up nothing of that kind, the
+rule was met. A study that says it stopped there is making a smaller claim than one that implies
+the questions ran out, and it is the true one.
 
 ## What this does not license
 

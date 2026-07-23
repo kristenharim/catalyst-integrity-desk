@@ -801,6 +801,29 @@ def test_the_correction_log_numbers_itself():
             f"{k} is numbered but its entry is not in the write-up")
 
 
+def test_the_corrections_by_layer_table_sums_to_the_log():
+    """The closing table's counts are falsifiable, so they are checked.
+
+    Every correction carries exactly one layer, the per-layer counts sum to the
+    log length, and the measured-arithmetic row is zero -- which is the table's
+    whole argument and must not become non-zero silently. A correction added
+    without a layer already raises in `figures()`; this pins the rest.
+    """
+    keys = render_writeup.CORRECTIONS
+    layer_of = render_writeup.CORRECTION_LAYER
+    assert set(keys) == set(layer_of), (
+        "every correction must carry exactly one layer")
+    layer_keys = {k for k, *_ in render_writeup.LAYERS}
+    assert set(layer_of.values()) <= layer_keys, "a correction names an unknown layer"
+    counts = {k: 0 for k in layer_keys}
+    for slug in keys:
+        counts[layer_of[slug]] += 1
+    assert sum(counts.values()) == len(keys)
+    assert counts["arithmetic"] == 0, (
+        "a numbered correction is now in the measured-arithmetic layer, which "
+        "makes the table's headline row false; re-examine it")
+
+
 def test_n_pcd_revisions_is_not_the_number_of_changes():
     """The field-level root cause, asserted so the trap cannot be re-entered."""
     rows = [r for r in cohort.load_results() if "error" not in r]
