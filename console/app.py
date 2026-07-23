@@ -468,8 +468,17 @@ def redline_confirm():
     # Build receipt from the ledger's last entry at render time.
     # Nothing from the URL contributes to the receipt -- a URL-carried receipt
     # is not evidence of anything and must not be displayed as if it were.
+    #
+    # Selected by card_id, not by whichever entry happens to be last. Record a
+    # belief through /belief/new after an approval and the ledger's last entry is
+    # that belief, so the receipt rendered a different card's hashes underneath
+    # this redline's summary of what changed.
     receipt = None
-    last = ledger._last()
+    snap_redline = SNAPSHOT.get("redline", {})
+    redline_card_id = snap_redline.get("card_id")
+    mine = [e for e in ledger._entries()
+            if e.get("card", {}).get("card_id") == redline_card_id]
+    last = mine[-1] if mine else None
     if last and verdict == "approve":
         proposed_card = last.get("card", {})
         expected_low = proposed_card.get("expected_low", 0)
@@ -482,7 +491,6 @@ def redline_confirm():
         )
         breach_metric = ""
         classification_label = ""
-        snap_redline = SNAPSHOT.get("redline", {})
         if snap_redline:
             breach_metric = snap_redline.get("breach", {}).get("metric", "")
             classification_label = snap_redline.get("classification", {}).get("label", "")

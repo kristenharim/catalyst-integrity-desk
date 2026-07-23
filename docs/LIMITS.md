@@ -784,6 +784,44 @@ describes, in a different place.
   nothing yet re-reads it on the next rebuild. Say "records a belief", never "starts
   monitoring it", which is what the button used to imply.
 
+## The ledger accused itself of tampering, and the lock has a boundary
+
+`BeliefLedger._append` read the chain tail, computed the next `seq` and
+`prev_hash`, and only then appended, with nothing holding the file in between.
+Two writers released at the same moment read the same tail and wrote two entries
+claiming the same predecessor. `verify()` then returned False and
+`anchor.check()` returned `tampered`, on a file nobody had edited. Reproduced
+five times out of five with four threads on a barrier.
+
+That is the worst false positive this product can produce. Tamper evidence is
+the thing the decision record is for, and a guard that fires on two analysts
+accepting at the same moment teaches the reader to ignore it.
+
+The read and the write are now one critical section under an exclusive
+`fcntl.flock`, and the three writers state their precondition as a function of
+the state read inside that lock, so a create that loses a race raises `Conflict`
+and appends nothing rather than writing a second entry. The event schema is
+unchanged and every public method keeps its signature. `Conflict` subclasses
+`ValueError`, which is what the console already caught for a duplicate belief.
+
+What this does not cover, stated rather than implied:
+
+- **`fcntl` is POSIX.** The lock is real on macOS and Linux. On Windows this
+  import fails outright, so the console does not run there rather than running
+  unlocked, which is the safer of the two failures but is not portability.
+- **Network filesystems.** `flock` over NFS depends on the mount and the server,
+  and on some configurations it is advisory only or silently a no-op. The ledger
+  is one file on one host by design; put it on a share and the guarantee is the
+  share's, not this code's.
+- **Advisory, not mandatory.** A process that writes to `decisions.jsonl`
+  without taking the lock is unaffected by it. Every writer in this repo goes
+  through `_append`; anything editing the file directly is tampering, which is
+  what the anchor is for.
+- **The anchor is still recorded after the append, not inside the lock.** Two
+  writers can therefore interleave append and record, leaving the anchor briefly
+  behind the head. That reads as `truncated` and not as `tampered`, and it
+  resolves on the next successful record.
+
 ## Where these came from
 
 The first four sections were produced by a three-model adversarial review (Claude, Cursor,

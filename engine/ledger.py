@@ -17,6 +17,7 @@ scale becomes the bottleneck — the append/verify logic stays identical.
 """
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -25,6 +26,17 @@ from dataclasses import dataclass, asdict, replace
 
 GENESIS_HASH = "0" * 64
 CREATE, UPDATE, RETIRE = "CREATE", "UPDATE", "RETIRE"
+
+
+class Conflict(ValueError):
+    """A concurrent writer got there first, so this write appended nothing.
+
+    Subclasses ValueError deliberately: that is already what the console catches
+    for a duplicate belief, and losing a race is the same answer to the caller.
+    Your write did not land and the ledger is unchanged. The alternative, letting
+    both writes through, is what produced a chain that verify() then reported as
+    tampering on a file nobody had edited.
+    """
 
 
 @dataclass
@@ -64,6 +76,23 @@ def _hash(prev_hash: str, payload: dict) -> str:
     return hashlib.sha256((prev_hash + _canonical(payload)).encode()).hexdigest()
 
 
+def _fold(entries: list[dict]) -> dict[str, BeliefCard]:
+    """Latest card state per id, excluding retired ones.
+
+    Module level so the writers can fold the entries they read under the lock
+    without going back to the file, which would be reading state outside the
+    critical section it was meant to protect.
+    """
+    state: dict[str, BeliefCard] = {}
+    for e in entries:
+        card = BeliefCard(**e["card"])
+        if card.status == "retired":
+            state.pop(card.card_id, None)
+        else:
+            state[card.card_id] = card
+    return state
+
+
 class BeliefLedger:
     def __init__(self, path: str):
         self.path = path
@@ -80,61 +109,90 @@ class BeliefLedger:
         return entries[-1] if entries else None
 
     # --- append (the only writer) ---
-    def _append(self, event: str, card: BeliefCard, author: str,
+    def _append(self, event: str, prepare, author: str,
                 triggered_by: str | None, reason: str | None, ts: float | None) -> dict:
-        last = self._last()
-        prev_hash = last["entry_hash"] if last else GENESIS_HASH
-        seq = (last["seq"] + 1) if last else 0
-        payload = {
-            "seq": seq,
-            "ts": ts if ts is not None else time.time(),
-            "event": event,
-            "author": author,
-            "triggered_by": triggered_by,
-            "reason": reason,
-            "card": asdict(card),
-            "prev_hash": prev_hash,
-        }
-        entry = {**payload, "entry_hash": _hash(prev_hash, payload)}
+        """Append one event. The tail is read inside the lock, never before it.
+
+        Two analysts accepting at the same moment used to read the same tail,
+        compute the same seq and the same prev_hash, and both append. That
+        leaves two entries claiming the same link, which verify() then reports
+        as "tampered" on a file nobody touched. Benign concurrency making the
+        product accuse itself of tampering is the worst false positive it has,
+        so the read and the write are one critical section.
+
+        ponytail: an flock on the ledger file, which is Unix only and enough
+        while the ledger is one file on one host. A lock service is the upgrade
+        if it ever stops being that.
+        """
         os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
-        with open(self.path, "a") as f:
-            f.write(json.dumps(entry) + "\n")
+        with open(self.path, "a+") as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                f.seek(0)
+                entries = [json.loads(line) for line in f if line.strip()]
+                # The caller decides what to write from the state it finds here,
+                # inside the lock. Deciding outside it is what let two creates of
+                # the same id both pass their existence check, and two updates
+                # both bump off the same version.
+                card = prepare(_fold(entries))
+                last = entries[-1] if entries else None
+                prev_hash = last["entry_hash"] if last else GENESIS_HASH
+                seq = (last["seq"] + 1) if last else 0
+                payload = {
+                    "seq": seq,
+                    "ts": ts if ts is not None else time.time(),
+                    "event": event,
+                    "author": author,
+                    "triggered_by": triggered_by,
+                    "reason": reason,
+                    "card": asdict(card),
+                    "prev_hash": prev_hash,
+                }
+                entry = {**payload, "entry_hash": _hash(prev_hash, payload)}
+                f.seek(0, os.SEEK_END)
+                f.write(json.dumps(entry) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
         return entry
 
+    # The three writers below each state their precondition as a function of the
+    # ledger state, and `_append` runs it under the lock. The check and the write
+    # are therefore one atomic step: a losing concurrent writer raises Conflict
+    # and appends nothing, rather than writing a second entry that later reads as
+    # tampering.
+
     def create(self, card: BeliefCard, author: str = "seed", ts: float | None = None) -> dict:
-        if card.card_id in self.current():
-            raise ValueError(f"card {card.card_id} already exists")
-        return self._append(CREATE, replace(card, version=1, status="active"),
-                            author, None, None, ts)
+        def prepare(current: dict[str, BeliefCard]) -> BeliefCard:
+            if card.card_id in current:
+                raise Conflict(f"card {card.card_id} already exists")
+            return replace(card, version=1, status="active")
+        return self._append(CREATE, prepare, author, None, None, ts)
 
     def update(self, card: BeliefCard, author: str, triggered_by: str | None,
                reason: str, ts: float | None = None) -> dict:
         """Append an approved change. Bumps version off the current card.
         `author` should be a human (e.g. "human:kristen") — this is the gate."""
-        cur = self.current().get(card.card_id)
-        if cur is None:
-            raise ValueError(f"card {card.card_id} does not exist")
-        bumped = replace(card, version=cur.version + 1)
-        return self._append(UPDATE, bumped, author, triggered_by, reason, ts)
+        def prepare(current: dict[str, BeliefCard]) -> BeliefCard:
+            cur = current.get(card.card_id)
+            if cur is None:
+                raise Conflict(f"card {card.card_id} does not exist")
+            return replace(card, version=cur.version + 1)
+        return self._append(UPDATE, prepare, author, triggered_by, reason, ts)
 
     def retire(self, card_id: str, author: str, reason: str, ts: float | None = None) -> dict:
-        cur = self.current().get(card_id)
-        if cur is None:
-            raise ValueError(f"card {card_id} does not exist")
-        return self._append(RETIRE, replace(cur, status="retired", version=cur.version + 1),
-                            author, None, reason, ts)
+        def prepare(current: dict[str, BeliefCard]) -> BeliefCard:
+            cur = current.get(card_id)
+            if cur is None:
+                raise Conflict(f"card {card_id} does not exist")
+            return replace(cur, status="retired", version=cur.version + 1)
+        return self._append(RETIRE, prepare, author, None, reason, ts)
 
     # --- read models (fold events) ---
     def current(self) -> dict[str, BeliefCard]:
         """Latest card state per id, excluding retired ones."""
-        state: dict[str, BeliefCard] = {}
-        for e in self._entries():
-            card = BeliefCard(**e["card"])
-            if card.status == "retired":
-                state.pop(card.card_id, None)
-            else:
-                state[card.card_id] = card
-        return state
+        return _fold(self._entries())
 
     def history(self, card_id: str) -> list[dict]:
         return [e for e in self._entries() if e["card"]["card_id"] == card_id]
