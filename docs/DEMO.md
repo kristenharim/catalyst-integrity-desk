@@ -20,15 +20,23 @@ catching it, hand the decision to a human, then prove the record cannot be quiet
 rewritten. The reveal comes before the product, because a product demo that opens on a
 dashboard has already lost the room.
 
-Every figure below is in `data/snapshot.json`. If a rebuild moves one, re-read this file
-before filming.
+Every figure spoken below traces to `data/snapshot.json`, the frozen demo snapshot, or to a
+named source in the "what already exists" table. `tests/test_demo_claims.py` checks that: a
+number in a spoken line that is neither a snapshot value nor a named source fails the build. If
+a rebuild moves a figure, re-read this file before filming.
+
+**On the 677.** The registry records that completion date as `2022-06`, a month with no day.
+The console resolves a month-only date to the first of the month, which is the longer reading,
+so the screen shows six hundred and seventy seven days. The end-of-month reading is at least
+six hundred and forty eight. Both are derivable from the snapshot, and the spoken line gives
+the conservative one first. Never say "677 days" as a bare fact.
 
 ---
 
 **0:00 to 0:20, the hook.**
 
-> Every biotech thesis rests on a date. They have cash into Q1 2028, the trial completes in
-> Q3 2027, therefore they are funded to their catalyst and do not need to raise.
+> Every biotech thesis rests on a date. They have cash into next year, the trial completes
+> months before that, therefore they are funded to their catalyst and do not need to raise.
 >
 > The left side of that sentence comes from SEC filings. The right side comes from
 > ClinicalTrials.gov, where the company sets it, can change it whenever it likes, and
@@ -39,16 +47,14 @@ before filming.
 The console opens on Rocket. Do not click anything yet.
 
 > Here is a real trial. In April 2024, Rocket filed a protocol revision carrying a primary
-> completion date of June 2022. That date had already passed, six hundred and seventy seven
-> days earlier, and it sat on the public registry the entire time.
->
-> No press release. No 8-K. Nothing in the thesis that depended on it moved.
+> completion date the registry records as June 2022, a month with no day. Read at the end of
+> that month, the date had already passed at least six hundred and forty eight days before
+> the filing; read at the first of the month, six hundred and seventy seven. Either way it
+> sat on the public registry the entire time, and the thesis that depended on it was never
+> reconciled against the change.
 
-Then the second red node, on the trial above it:
-
-> And this is not a one-off. The trial that replaced it did the same thing on a smaller
-> scale, carrying an expired date for thirty days after moving it out by nine hundred and
-> forty three.
+The console shows the longer, first-of-month figure with a caption naming the convention;
+say the conservative figure first so the screen and the words agree.
 
 **0:50 to 1:25, the contract.**
 
@@ -143,13 +149,12 @@ Drop in this order:
 1. The belief form at 2:05. It answers a question a judge may not have asked yet, and the
    receipt at 2:20 already shows a human in the loop. Cut this first, because it is the only
    beat where nothing is wrong on screen.
-2. The second red node at 0:40, the thirty-day one. The 677 carries the point alone.
-3. The burn band explanation at 1:10.
-4. The second ledger break at 2:30, the deletion. Keep the byte edit.
+2. The burn band explanation at 1:10.
+3. The second ledger break at 2:30, the deletion. Keep the byte edit.
 
-**Never cut:** the 677 fact, and the lapse at 1:25. Those are the two things the room has
-not seen before, and the second one is the only demo where a thesis breaks because nobody
-did anything.
+**Never cut:** the lapsed-date fact at 0:20, and the lapse at 1:25. Those are the two things
+the room has not seen before, and the second one is the only demo where a thesis breaks
+because nobody did anything.
 
 ## What already exists
 
