@@ -32,10 +32,18 @@ second tool touched it.
 ## Never break these
 
 **Python computes, Granite judges prose, humans decide.** No model-produced number
-reaches the user. `_fabricated()` in the ported `granite.py` enforces it and is ported
-byte for byte. Do not tighten it to ban all digits, which rejects correct output quoting
-a figure from a belief's own claim text. Do not loosen it. The rule is "a number absent
-from the input".
+reaches the user. `_quantitative()` in `orchestrator/granite.py` enforces it: Granite
+prose carries no quantity of any kind, and a response containing one is discarded whole
+in favour of the deterministic stub. Never partially sanitise.
+
+**Do not loosen this back to "a number absent from the input".** That was the rule here
+until 2026-07-23 and this file used to defend it. An audit retired it: it authorised any
+magnitude whose digits appeared anywhere in the analyst's own free-text claim, so a thesis
+reading "Phase 3 readiness across 12 sites" licensed "3 months" and "12 months". The
+intermediate `Quantity(value, unit, sign)` binding did not fix that and never established
+semantic-field binding; that claim is withdrawn. `docs/LIMITS.md` carries the full
+reasoning and the exact residual. Every displayed figure is rendered by Python and Jinja
+from a named field, which is what makes a non-quantitative model affordable.
 
 **Every displayed number traces to a named XBRL tag or a specific registry version.**
 `Runway.provenance` exists for this. Do not add a figure that cannot name its source.

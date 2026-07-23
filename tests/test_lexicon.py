@@ -302,7 +302,9 @@ def test_granite_rationale_passes_through_the_lexicon():
         "granite.py no longer screens the model's rationale through the "
         "lexicon; a forbidden claim would reach the page"
     )
-    fab = body.index("_fabricated(rationale")
+    # Renamed from _fabricated in F2: the rule is no longer "a number absent
+    # from the input" but "no quantity at all". The ordering it pins is unchanged.
+    fab = body.index("_quantitative(rationale")
     lex = body.index("lexicon.scan(rationale)")
     parse_end = body.index("Classification(label", lex)
     assert fab < lex < parse_end, (

@@ -24,7 +24,7 @@ from dataclasses import replace
 
 from engine.ledger import BeliefCard, Breach
 from orchestrator.classifier import StubClassifier, LABELS
-from orchestrator.granite import GraniteClassifier, _fabricated, _numbers_in, SYSTEM_PROMPT
+from orchestrator.granite import GraniteClassifier, _quantitative, SYSTEM_PROMPT
 from orchestrator.redline import as_directions, ContractDelta, run_redline
 
 
@@ -101,9 +101,9 @@ def test_no_fabrication_live():
         f"expected granite, got source={result.source!r}; "
         f"rationale: {result.rationale!r}"
     )
-    invented = _fabricated(result.rationale, card, breach)
-    assert not invented, (
-        f"Granite fabricated {invented} in rationale: {result.rationale!r}"
+    quantities = _quantitative(result.rationale)
+    assert not quantities, (
+        f"Granite emitted quantities {quantities} in rationale: {result.rationale!r}"
     )
     assert result.label in LABELS
     assert 0.0 <= result.confidence <= 1.0
@@ -215,13 +215,14 @@ def test_scripted_amendment_produces_challenge_card():
     assert challenge.memo.strip(), "memo must not be empty"
     assert card.card_id in challenge.memo
 
-    # The fabrication rule applies to the model's rationale text. The memo template
-    # legitimately includes engine-computed values; check only the rationale.
-    invented = _fabricated(challenge.classification.rationale, card,
-                           challenge.breach)
-    assert not invented, (
-        f"rationale contains figures not in inputs: {invented}\n"
-        f"rationale: {challenge.classification.rationale!r}"
+    # The non-quantitative rule governs MODEL prose. This path is answered by the
+    # deterministic stub, whose rationale states engine-computed values by design:
+    # it is Python reading the same fields the page renders, and the source field
+    # records which of the two answered. Applying the model guard to it would be
+    # asserting that Python may not do arithmetic.
+    assert challenge.classification.source == "stub", (
+        f"expected the deterministic fallback, got "
+        f"{challenge.classification.source!r}"
     )
 
     # --- no-breach path ---

@@ -39,32 +39,68 @@ decisions, given the anchor was not also rewritten". Never say "immutable" or
 "append-only". Closing this properly needs the anchor somewhere the writer does not own:
 a commit, a signature, or a second machine.
 
-## The fabrication guard catches invented magnitudes, not wrong units
+## Granite prose carries no quantities, and that is all this guard proves
 
-`_fabricated()` flags any number in the model's output that appears nowhere in its input.
-The rule is deliberately not "no digits", because quoting a figure from the belief's own
-claim text is quotation rather than invention.
+**Replaced 2026-07-23. The two rules before it are recorded here because the way each one
+failed is the argument for the one that followed.**
 
-Verified behaviour, given an input containing `-14.5` and `10.4`:
+The first rule flagged any number in the model's output that appeared nowhere in its
+input, deliberately not "no digits", on the reasoning that quoting a figure from the
+belief's own claim is quotation rather than invention. It let a correct magnitude through
+wearing the wrong unit, the wrong scale or the wrong sign, and it could not see a
+magnitude written as a word.
 
-| Model output | Flagged |
+The second rule bound each magnitude to a unit and a sign and refused any value absent
+from the input. That closed wrong units, wrong signs and number words. It read as
+provenance and was not. The binding carried no **field**, so any bare digit anywhere in
+the input authorised that magnitude in the metric's own unit. An audit demonstrated it
+against ordinary analyst prose, and the examples are worth keeping because none of them
+looks like an attack:
+
+| Text in the analyst's own thesis | Model output it authorised |
 |---|---|
-| "The gap is 47.2 months" | yes, caught |
-| "The funding gap is -14.5 **years**" | no |
-| "The shortfall is 14.5 **million dollars**" | no |
-| "Runway fell 10.4**%**" | no |
-| "The gap is roughly **fourteen** months" | no |
-| "Runway ends about **twice as long** as assumed" | no |
+| "Phase **3** readiness" | "the gap has narrowed to **3 months**" |
+| "across **12** sites" | "cash runs out **12 months** before the readout" |
+| "**2** arms" | "only **2 months** of runway remain" |
+| conviction recorded as **3** | "the shortfall is **3 months**" |
 
-So a correct magnitude wearing the wrong unit, scale, or sign passes, as does any
-quantitative claim expressed in words. The guard bounds invention. It does not bound
-misuse of a number it was legitimately given, and it cannot see numbers that are not
-digits.
+`Quantity(value, unit, sign)` never established which field a number described, and no
+further unit arithmetic was going to. **Any claim that it constituted semantic-field
+binding is withdrawn.**
 
-Stronger versions, in increasing cost: normalise Unicode and detect number words before
-scanning; require quoted figures to carry the unit and entity from a single contiguous
-source span; or forbid quantitative expressions in generated prose entirely and render
-every figure from the application.
+So the rule is now that the model does not measure. `_quantitative()` refuses any
+quantitative expression in Granite prose: digits in any shape, signed, decimal,
+percentage, ratio, scientific notation, the digits inside an identifier, and quantities
+written as words including the ordinals and month names by which a date arrives carrying
+no digit at all. A response containing one is discarded whole and the deterministic stub
+answers. Nothing is partially sanitised, because a sentence with its number deleted is a
+sentence whose meaning nobody has checked.
+
+**What this proves, exactly:** that no quantity authored by the model reaches the page.
+
+**What it does not prove, and each of these is real:**
+
+- **It does not prove the qualitative judgment is correct.** "The approved funding
+  assumption no longer holds" passes this guard whether or not it is true. The guard
+  bounds the *form* of the model's output and says nothing about its accuracy.
+- **It does not prevent misleading causal or feasibility language.** "The sponsor is
+  concealing a delay" carries no quantity and passes here. `orchestrator/lexicon.py` is
+  the separate control for that, and it runs on the same response; neither guard covers
+  the other's failure.
+- **Deterministic fields remain the only displayed quantities.** Every figure on screen
+  is rendered by Python and Jinja from a named snapshot field. That is what makes this
+  policy affordable: the model never needed to carry a number.
+- **The stub fallback is quantitative by design and is not scanned.** It states
+  engine-computed values because it is Python reading the fields the page renders.
+  `Classification.source` records which of the two answered, and the page shows it.
+- **Two words are deliberately excluded from the word scan**, "first" and "second", along
+  with the month "May". All three are ordinary discourse in this vocabulary, and a guard
+  that fires on correct qualitative prose is a guard someone switches off. A real date
+  almost always carries a digit or a second month word, so the exclusions are narrow;
+  "March fifth", the case that motivated the word scan, is caught twice over.
+- **It is a backstop, not the primary control.** The prompt asks for non-quantitative
+  prose in the first place. A model that complies never reaches this code, and the frozen
+  demo rationale is digit-free without it.
 
 ## The provenance test detects unintended displayed literals
 

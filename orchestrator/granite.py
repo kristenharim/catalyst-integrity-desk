@@ -28,7 +28,6 @@ import os
 import re
 import sys
 import time
-from dataclasses import dataclass
 import urllib.parse
 import urllib.request
 
@@ -46,147 +45,94 @@ API_VERSION = "2024-10-08"
 # submission demo.
 DEFAULT_MODEL = "ibm/granite-4-h-small"
 
-# A number is fabricated if it did not come from the input. Quoting a figure that the
-# card's own claim already contains ("acceptable up to ~32%") is not invention, it is
-# quotation, and rejecting it throws away good judgment. What must never survive is a
-# figure the model produced on its own.
-# Compared as whole numbers, not as substrings. Substring containment let real
-# fabrications through: a model writing "5%" passed because the input mentioned
-# var_95_1d_dollar, and "3%" passed because it mentioned a 30-day window. Both
-# were invented trade sizes presented as if measured.
-_NUMBER_RUN = re.compile(r"\d+(?:\.\d+)?")
-
-
-def _numbers_in(text: str) -> set[str]:
-    return set(_NUMBER_RUN.findall(text))
-
-# Spans that carry digits but name a record rather than measure anything: a
-# registry id, an ISO date, a fiscal quarter, an SEC form name, a filer id.
-# Those digits are part of a name, so they may not authorise a quantity.
+# ---------------------------------------------------------------------------
+# The quantitative-expression policy
+# ---------------------------------------------------------------------------
+# Granite does not emit quantities. Not one it invented, and not one it was
+# given. Every figure on screen is rendered by Python and Jinja from a
+# deterministic field beside the model's prose, so the model has no reason to
+# carry a number and no way to be trusted with one.
 #
-# Left unmasked they did. The live Rocket card's driver reads "SEC XBRL
-# liquidity (Q1-2026 10-Q)", which licensed the model to write "2026 days of
-# cash remaining" and "a 1 month delay", because "2026" and "1" both appear in
-# it. Neither figure was ever measured; both would have reached the user as a
-# number the engine never computed, which is the one thing this project may not
-# do. The guard stays "a number absent from the input" and gets a stricter
-# reading of what counts as an input number.
-_IDENTIFIER = re.compile(
-    r"NCT\d+"                       # registry id
-    r"|\d{4}-\d{2}-\d{2}"           # ISO date
-    r"|\bQ\d[-\s]?\d{4}\b"          # fiscal quarter
-    r"|\b\d{1,2}-[A-Z]\b"           # SEC form name, 10-Q and 8-K
-    r"|\bCIK[\s:]*\d+"              # filer id
-)
+# What this replaces, and why it had to go. The previous rule authorised a
+# magnitude by binding it to a unit and a sign, refusing any value absent from
+# the input. That reads as provenance and is not: the binding carried no
+# *field*, so any bare digit anywhere in the input licensed that magnitude in
+# the metric's own unit. An audit demonstrated it against ordinary analyst
+# prose. A thesis reading "Phase 3 readiness across 12 sites and 2 arms"
+# authorised "3 months", "12 months" and "2 months", and the card's own
+# conviction score authorised a fourth. Quantity(value, unit, sign) never
+# established which field a number described, and no further unit arithmetic
+# was going to establish it.
+#
+# So the question stops being "which numbers may the model repeat" and becomes
+# "the model does not do numbers". A response carrying any quantity is
+# discarded whole and the deterministic stub answers. Nothing is partially
+# sanitised: a sentence with its number deleted is a sentence whose meaning
+# nobody has checked.
+#
+# This governs MODEL prose only. The stub fallback states engine-computed
+# values by design, because it is Python reading the same fields the page
+# renders, and `Classification.source` records which of the two answered.
 
+_DIGIT_RUN = re.compile(r"[-+\u2212]?\d[\d.,:]*(?:[eE][-+]?\d+)?%?")
 
-# Number words carry magnitudes that a digit scan never sees. "thirty months"
-# is as much a fabricated quantity as "30 months".
+# Number words carry magnitudes a digit scan never sees. "thirty days" is as
+# quantitative as "30 days", and an earlier guard shipped blind to exactly that.
 _WORDS = {
-    "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
-    "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
-    "eleven": "11", "twelve": "12", "thirteen": "13", "fourteen": "14",
-    "fifteen": "15", "sixteen": "16", "seventeen": "17", "eighteen": "18",
-    "nineteen": "19", "twenty": "20", "thirty": "30", "forty": "40",
-    "fifty": "50", "sixty": "60", "seventy": "70", "eighty": "80",
-    "ninety": "90", "hundred": "100", "thousand": "1000",
-}
-_WORD_RUN = re.compile(r"\b(" + "|".join(_WORDS) + r")\b", re.I)
-
-# The units this desk actually measures in. A magnitude with a unit outside this
-# set is not comparable to anything in the card, so it is treated as unitless
-# and judged on its value alone.
-_UNITS = {
-    "month": "months", "months": "months", "mo": "months",
-    "day": "days", "days": "days", "d": "days",
-    "year": "years", "years": "years", "yr": "years",
-    "week": "weeks", "weeks": "weeks",
-    "quarter": "quarters", "quarters": "quarters",
-    "percent": "%", "%": "%",
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+    "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+    "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty",
+    "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred",
+    "thousand", "million", "billion",
+    "half", "twice", "double", "triple", "dozen", "percent",
 }
 
-_QUANTITY = re.compile(
-    r"(?P<sign>[-+−])?\s*"
-    r"(?P<value>\d+(?:\.\d+)?)\s*"
-    r"(?P<unit>%|[A-Za-z]+)?"
+# Ordinals and month names build a date without ever using a digit, which is
+# how "March fifth" slips past every numeric scan ever written.
+#
+# "first" and "second" are deliberately absent. Both are ordinary discourse in
+# this vocabulary -- "the first assumption", "on second reading" -- and a guard
+# that fires on correct qualitative prose is a guard someone switches off. So
+# is "May", a modal verb far more often than a month here. The exclusions are
+# narrow and cheap: a real date almost always carries a digit or another month
+# word alongside, so it is caught anyway, and the demonstrated attack ("March
+# fifth") is caught twice over.
+_ORDINAL_WORDS = {
+    "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth",
+    "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth",
+    "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth",
+    "thirtieth", "thirty-first",
+}
+_MONTH_WORDS = {
+    "january", "february", "march", "april", "june", "july", "august",
+    "september", "october", "november", "december",
+}
+
+_QUANT_WORD = re.compile(
+    r"\b(" + "|".join(sorted(_WORDS | _ORDINAL_WORDS | _MONTH_WORDS)) + r")\b",
+    re.I,
 )
 
-
-@dataclass(frozen=True)
-class Quantity:
-    """One measurement, as the guard understands it.
-
-    value  canonical decimal text, "14.5" or "30"
-    unit   canonical unit, "months" | "days" | "years" | "weeks" | "quarters"
-           | "%" | "" when the number carried no unit this desk measures in
-    sign   "-" for a negative magnitude, "" otherwise
-    """
-
-    value: str
-    unit: str
-    sign: str
-
-    def __str__(self) -> str:
-        return f"{self.sign}{self.value}{' ' + self.unit if self.unit else ''}"
-
-
-def _typed(text: str) -> set[Quantity]:
-    """Every magnitude in `text`, bound to its unit and sign.
-
-    Identifier spans are typed out first: the digits in NCT04248439, 2026-05-05
-    and "10-Q" name a record and measure nothing, so they never become a
-    Quantity and can never authorise one.
-    """
-    cleaned = _IDENTIFIER.sub(" ", text)
-    cleaned = _WORD_RUN.sub(lambda m: _WORDS[m.group(1).lower()], cleaned)
-    out: set[Quantity] = set()
-    for m in _QUANTITY.finditer(cleaned):
-        raw_unit = (m.group("unit") or "").lower()
-        unit = _UNITS.get(raw_unit, "")
-        sign = "-" if m.group("sign") in ("-", "−") else ""
-        out.add(Quantity(m.group("value"), unit, sign))
-    return out
-
-
-def _quantities_in(text: str) -> set[str]:
-    """Bare values only, kept for the action-draft guard's coarser question."""
-    return {q.value for q in _typed(text)}
-
-# "1." at the start of a line is an option enumerator, not a claim about the book.
-# Stripped before the number guard runs so numbered options do not read as fabrication.
+# "1." at the start of a line is an option enumerator, not a claim about a
+# quantity. Stripped before the scan so formatting is not read as fabrication.
 _LIST_MARKER = re.compile(r"^\s*\d+[.)]\s+", re.M)
 
 
-def _fabricated(rationale: str, card: BeliefCard, breach: Breach) -> list[str]:
-    """Numbers in the rationale that appear nowhere in what the model was given."""
-    source = " ".join(str(x) for x in (
-        card.claim, card.driver, card.metric, card.confidence,
-        breach.observed, breach.expected_low, breach.expected_high,
-        # the model sees these rounded in the prompt, so allow both renderings
-        round(breach.observed), round(breach.expected_low), round(breach.expected_high),
-    ))
-    # The rule stays "a number absent from the input". What tightened is the
-    # reading of "the same number": a magnitude matches only when its value and
-    # its sign both appear in the input, and its unit is one the input actually
-    # measures in. A band edge of 10 months does not licence "10 days", and a
-    # shortfall of -15 does not licence "+15".
-    given = _typed(source)
-    values = {(q.value, q.sign) for q in given}
-    units = {q.unit for q in given if q.unit} | _metric_units(card.metric)
-    return [str(q) for q in _typed(rationale)
-            if (q.value, q.sign) not in values or (q.unit and q.unit not in units)]
+def _quantitative(text: str) -> list[str]:
+    """Every quantitative expression in `text`. Empty means the prose is clean.
 
+    Covers digits in any shape -- signed, decimal, percentage, ratio, scientific
+    notation, and the digits inside an identifier -- and quantities written as
+    words, including the ordinals and month names by which a date arrives with
+    no digit in it at all.
 
-def _metric_units(metric: str) -> set[str]:
-    """The unit a metric name declares, so a bare input value can be quoted with it.
-
-    `gap_months` is months. The engine hands the model bare floats, so without
-    this every correctly-united sentence about the gap would be refused, and a
-    guard that rejects correct output is a guard someone switches off.
+    Identifiers are refused rather than exempted. Granite has no need to repeat
+    an NCT number: the page renders it from the contract, where it is checkable.
     """
-    return {u for tail, u in (("_months", "months"), ("_days", "days"),
-                              ("_years", "years"), ("_pct", "%"))
-            if metric.endswith(tail)}
+    found = {m.group(0) for m in _DIGIT_RUN.finditer(text)}
+    found |= {m.group(0).lower() for m in _QUANT_WORD.finditer(text)}
+    return sorted(found)
+
 
 SYSTEM_PROMPT = """\
 You are the challenge partner on a catalyst integrity desk. A deterministic engine has \
@@ -224,19 +170,30 @@ condition; a small move can be serious if it undercuts the stated reason for the
 weaker story than a high-conviction one.
 
 HARD CONSTRAINT ON THE RATIONALE — this one is not stylistic, it is a correctness rule:
-Your rationale must contain NO digits. Not one. Do not restate the reading, do not quote \
-the band, do not echo a figure that appears in the claim itself. The desk's engine owns \
-every number and renders them beside your text; a number written by you is treated as \
-fabricated and your entire answer is discarded.
+Your rationale must contain NO QUANTITIES OF ANY KIND. No digits. No numbers written as \
+words. No percentages, ratios, confidence scores, dates, durations, or arithmetic. Do not \
+quote a figure even when it appears in the claim or in the reading you were given: the \
+desk's engine owns every number and renders them from its own fields beside your text. A \
+quantity written by you discards your entire answer and a deterministic fallback replaces \
+it, so the desk loses your judgment and keeps its arithmetic.
 
-Say it in words instead:
+Explain WHAT changed and in WHICH DIRECTION, never by how much:
 - NOT "gap_months is -5.2, below the approved floor of 0.0"
-- YES "the contract now sits below its approved floor"
+- YES "the current value sits below the approved value"
+- NOT "the shortfall widened by three months"
+- YES "the shortfall widened"
 - NOT "conviction is 2 out of 5"
 - YES "the desk's conviction in this driver is weak"
+- NOT "the completion date moved to 2028"
+- YES "the registered expectation moved later"
 
-Reply with JSON only, no prose and no code fences:
-{"label": "<one label>", "confidence": <0.0-1.0>, "rationale": "<two or three sentences, no digits>"}"""
+Refer to readings only as "the approved value", "the current value", "above the \
+threshold", or "below the threshold". Naming the metric in words is fine; measuring it \
+is not.
+
+Reply with JSON only, no prose and no code fences. The confidence field is a number \
+because it is a field, not prose; the rationale must carry no quantity at all:
+{"label": "<one label>", "confidence": <0.0-1.0>, "rationale": "<two or three sentences, no quantities>"}"""
 
 
 ACTION_PROMPT = """\
@@ -434,12 +391,9 @@ class GraniteClassifier:
         # figure to echo and nothing to do arithmetic on. The digits it did see are
         # window metadata ("30d", "95"), fine to repeat; anything else it produced
         # itself. Option enumerators are formatting, not claims.
-        allowed = _quantities_in(brief)
-        invented = [n for n in
-                    _NUMBER_RUN.findall(_IDENTIFIER.sub(" ", _LIST_MARKER.sub("", text)))
-                    if n not in allowed]
-        if invented:
-            raise ValueError(f"model invented {invented} in the action draft")
+        quantities = _quantitative(_LIST_MARKER.sub("", text))
+        if quantities:
+            raise ValueError(f"model emitted quantities {quantities} in the action draft")
         return text
 
     # --- the seam ---
@@ -465,16 +419,21 @@ class GraniteClassifier:
         rationale = str(obj.get("rationale", "")).strip()
         if not rationale:
             raise ValueError("model returned an empty rationale")
-        invented = _fabricated(rationale, card, breach)
-        if invented:
-            raise ValueError(f"model invented {invented}, provenance broken: {rationale!r}")
+        quantities = _quantitative(rationale)
+        if quantities:
+            raise ValueError(
+                f"model emitted quantities {quantities}; Granite prose must be "
+                f"non-quantitative and the engine renders every figure: {rationale!r}"
+            )
 
-        # Second structural guard, same treatment as the first.  _fabricated()
-        # stops the model inventing a number; this stops it making a claim the
+        # Second structural guard, same treatment as the first.  _quantitative()
+        # stops the model measuring anything; this stops it making a claim the
         # evidence does not support -- feasibility, intent, causation, or
-        # silence asserted as fact.  A model that says "this looks like fraud"
-        # has broken provenance exactly as badly as one that says "47.2 months",
-        # so it is discarded the same way and the deterministic stub answers.
+        # silence asserted as fact.  They are separate controls for separate
+        # failures: a model that says "this looks like fraud" has broken
+        # provenance exactly as badly as one that says "47.2 months", and the
+        # quantity guard would not have noticed, so it is discarded here the
+        # same way and the deterministic stub answers.
         banned = lexicon.scan(rationale)
         if banned:
             raise ValueError(
