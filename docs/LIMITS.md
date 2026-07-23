@@ -403,11 +403,11 @@ contributes many overlapping rows measuring the same expiry to successively late
 They are nested prefixes, not independent observations.
 
 `NCT02931474` has 97 registry versions, **2** completion-date changes, and **91** stretches,
-with durations running 42, 114, 356, 357, 359, 364, 400, 402 and upward. A handful of real
-episodes produced 91 rows, and that single trial is a sixth of the NIH stratum's entire
-duration distribution. (This line read "3 completion-date revisions" for a while, the
-`n_pcd_revisions` field that counts the initial registration, which is the exact off-by-one
-`docs/WRITEUP.md` warns about; the write-up renders `n_date_changes` and reads 2.)
+with durations that climb from tens of days to years across nested prefixes of the same
+lapse. A handful of real episodes produced 91 rows, and that single trial is a sixth of the
+NIH stratum's entire duration distribution. (This line read "3 completion-date revisions" for
+a while, the `n_pcd_revisions` field that counts the initial registration, which is the exact
+off-by-one `docs/WRITEUP.md` warns about; the write-up renders `n_date_changes` and reads 2.)
 
 Because the row count tracks how often a sponsor files for unrelated reasons while a date
 sits dead, the duration distribution is weighted toward frequent filers. Measuring one
@@ -579,32 +579,41 @@ to the month, `2022-06`, names no day. The engine resolves it to the first of th
 is one reading; the last of the month is the other, and the two bound every figure the date
 touches. An earlier note disclosed this as affecting days-since-expiry figures only. It affects
 more: the same resolved date sets the sign of every after-a-lapse revision, so switching the
-reading moves 16 of the 446 dated revisions across the prospective boundary and moves the
+reading moves a number of the dated revisions across the prospective boundary and moves the
 industry estimate-to-estimate headline down by several points, from its first-of-month reading
-to its end-of-month one, both of which the write-up quotes in full. It also shortens the
-durations and can drop a stretch that ceases to be a lapse under the later reading.
+to its end-of-month one, both of which the write-up quotes in full. It also shortens each carry
+and can drop a stretch that ceases to be a lapse under the later reading.
 
-End-of-month is the conservative reading of everything it touches, so the write-up quotes it
-with "at least" and carries the first-of-month reading beside it. The anchor case is "at least
-648 days" rather than 677. Both readings are snapshot fields (`month_convention`), computed from
-the cache at freeze time the way `anchor_case` is, and a test asserts the reconstruction
-reproduces the stored first-of-month split so the second reading bounds the same measurement.
+**The conservative direction is not the same for every figure, and an earlier draft of this
+section said it was.** Resolving to the last of the month makes a single carry and the
+after-a-lapse rate smaller, so end-of-month is the weaker reading of those and the write-up
+quotes it with "at least": the anchor case is "at least" its shorter reading. But it makes the
+closed-spell duration medians LARGER, because the shortest carries stop being lapses and drop
+out of the set, lifting the median of what remains; there the first-of-month reading is the
+smaller one and is what the duration tables print. In both places the figure shown is the
+weaker of the two, but they sit at opposite ends of the convention. Both readings are snapshot
+fields (`month_convention`), computed from the cache at freeze time the way `anchor_case` is,
+and an independent recomputation in the test validates the end-of-month figures rather than
+comparing the snapshot to a re-run of the function that produced it.
 
-Direction, stated plainly: every headline survives at the conservative reading. 648 days is
-still about twenty-one times the thirty-day window; 22.2% is still better than a fifth of
-industry revisions. The finding never rested on the optimistic resolution.
+Direction, stated plainly: every headline survives at its conservative reading. The anchor's
+shorter reading is still about twenty-one times the thirty-day window; the industry rate's
+lower reading is still better than a fifth of its revisions. The finding never rested on the
+optimistic resolution.
 
 ## The "filed nothing since it passed" claim was false, and was made stronger under review
 
 **Found 2026-07-22, and it is the instructive one.** A draft said no silent carrier had filed
 anything since its date passed, "by construction". The construction does not hold.
 `carried_until_corrected` pairs consecutive versions, so it emits no stretch for a trial's
-first filing, and 18 of the 39 silent carriers have a single version and so no pair. For those
-the zero stretch count is an empty loop, not a clean record. One of them, `NCT03613558`,
-registered its single filing years after the date it recorded had already passed.
+first filing, and nearly half the silent carriers have a single version and so no pair (the
+write-up gives the count). For those the zero stretch count is an empty loop, not a clean
+record. One of them, `NCT03613558`, registered its single filing years after the date it
+recorded had already passed.
 
-The claim is now split: of the 21 multi-version carriers, none filed after a lapse; the 18
-single-version ones filed once, at a time relative to expiry that runs both ways. What makes
+The claim is now split by the write-up: the multi-version carriers, none of which filed after a
+lapse, and the single-version ones, which filed once at a time relative to expiry that runs
+both ways. What makes
 this worth its own section is the direction of the error. The prior text said only that the
 store failed to support an anecdote, which was true. The version under review upgraded it to
 refutation, on a mechanism that does not deliver refutation. A fix written under review pressure

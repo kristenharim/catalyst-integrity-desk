@@ -101,7 +101,7 @@ _BLOCK = re.compile(r"<!-- generated: [a-z_]+ -->\n.*?\n<!-- /generated -->", re
 _CODE = re.compile(r"https?://\S+|\d{4}-\d{2}(?:-\d{2})?")
 _MARKER = re.compile(r"<!--\s*/?\s*generated")
 _NUM = re.compile(r"\d[\d,]*(?:\.\d+)?%?")
-_N_OF_M = re.compile(r"\d[\d,]* of \d[\d,]*\b")
+_N_OF_M = re.compile(r"\d[\d,]* of (?:the )?\d[\d,]*\b")   # "18 of 39" and "18 of the 39"
 
 
 # ---------------------------------------------------------------------------
@@ -349,6 +349,38 @@ def _expected_rows() -> dict:
             _num(trans), f"{scope / trans * 100:.1f}%", f"{sup / trans * 100:.1f}%",
             f"{unread / trans * 100:.1f}%"]
 
+    # The unit table (LIMITS) is column-oriented: strata are columns, so its data
+    # rows start with a metric label, not a stratum name, and the per-stratum row
+    # check above never sees it. Its cells are recomputed here and matched by row
+    # label. A reviewer rebound its "median over all stretches" cell to a different
+    # real field and published it green because nothing looked at this table.
+    I = [r for r in rows if r["sponsor_class"] == "INDUSTRY"]
+    N = [r for r in rows if r["sponsor_class"] == "NIH"]
+    i_str = [d for r in I for d in r["dead_date_days"]]
+    n_str = [d for r in N for d in r["dead_date_days"]]
+    i_tr = [max(r["dead_date_days"]) for r in I if r["dead_date_days"]]
+    n_tr = [max(r["dead_date_days"]) for r in N if r["dead_date_days"]]
+
+    def _ratio(a, b):
+        # No trailing "x": the tokenizer strips it, so the expected token is the
+        # bare number, matching what _NUM.findall pulls from "**2.4x**".
+        return f"{b / a:.1f}"
+
+    out["unit_rows"] = {
+        "| median over all stretches |": [
+            _num(_pctile(i_str, .5)), _num(_pctile(n_str, .5)),
+            _ratio(_pctile(i_str, .5), _pctile(n_str, .5))],
+        "| median of per-trial longest carry |": [
+            _num(_pctile(i_tr, .5)), _num(_pctile(n_tr, .5)),
+            _ratio(_pctile(i_tr, .5), _pctile(n_tr, .5))],
+        "| p90 over all stretches |": [
+            _num(round(_pctile(i_str, .9), 1)), _num(round(_pctile(n_str, .9), 1)),
+            _ratio(_pctile(i_str, .9), _pctile(n_str, .9))],
+        "| p90 of per-trial longest carry |": [
+            _num(round(_pctile(i_tr, .9), 1)), _num(round(_pctile(n_tr, .9), 1)),
+            _ratio(_pctile(i_tr, .9), _pctile(n_tr, .9))],
+    }
+
     # Table headers, pinned to independent literals. The documents are generated,
     # so a header swapped in the generator changes the committed file too and the
     # byte comparison sees nothing; a reviewer swapped two adjacent numeric column
@@ -372,6 +404,21 @@ def _expected_rows() -> dict:
         "measure | longest carry p50 | median versions |",
         "| Stratum | carried at some point (stretch measure) | carrying one now | "
         "invisible to the stretch measure | median versions |",
+        # The three the first pin missed: eleven tables are recomputed, only eight
+        # were pinned, and a reviewer swapped the reversal table's rate columns and
+        # published the ever-carried rates under "carrying one now".
+        "| Stratum | ever carried, and filed again | carrying one now | median "
+        "versions |",
+        "| Stratum | n | Carried a dead date | days p50 / p90 / max | Transitions "
+        "| Contingent | Refused |",
+        "| Stratum | transitions | scope changed | superseded | **unreadable** |",
+        # The unit table's row labels, which are its only headers: it is column-
+        # oriented, so its data rows do not start with a stratum name and were
+        # outside every check until this round.
+        "| median over all stretches | ",
+        "| median of per-trial longest carry | ",
+        "| p90 over all stretches | ",
+        "| p90 of per-trial longest carry | ",
     ]
 
     # Sentences whose figure is a relation between strata, which is where a
@@ -463,7 +510,7 @@ def check(docs: dict, source: str) -> list:
     everything = "\n".join(rendered.values())
     all_rows = [ln for text in rendered.values() for ln in text.splitlines()]
     for table, per_cls in expected.items():
-        if table in ("sentences", "headers"):
+        if table in ("sentences", "headers", "unit_rows"):
             continue
         for cls, want in per_cls.items():
             got = [_NUM.findall(ln) for ln in all_rows
@@ -471,6 +518,16 @@ def check(docs: dict, source: str) -> list:
             if want not in got:
                 out.append(f"no {cls} row renders the {table} table's fields; "
                            f"recomputed from the store they are {want}")
+
+    # The column-oriented unit table, matched by row label rather than stratum.
+    # The label itself is dropped before tokenizing, because "p90" carries a digit
+    # that is part of the row name, not a figure.
+    for label, want in expected["unit_rows"].items():
+        got = [_NUM.findall(ln.strip()[len(label):]) for ln in all_rows
+               if ln.strip().startswith(label)]
+        if want not in got:
+            out.append(f"the unit table row {label!r} does not render its fields; "
+                       f"recomputed from the store they are {want}")
 
     # Headers, against independent literals, so a swap fails on a mismatch rather
     # than on a copy of itself.
@@ -551,6 +608,30 @@ def _source() -> str:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
+def test_sponsor_profile_docstring_carries_no_figure():
+    """The one product module that describes the cohort in prose.
+
+    `research/sponsor_profile.py`'s module docstring explains the design by
+    reference to the cohort, and it is scanned by nothing else. It hardcoded the
+    ever-carried rate and the industry median once, a reviewer falsified all three
+    and watched the suite stay green, and the fix that emptied it left the surface
+    unguarded. Its docstring must carry no digit, the same rule the write-up's
+    quoted source obeys, so the figures cannot come back.
+    """
+    import ast
+    src = open(os.path.join(REPO, "research", "sponsor_profile.py")).read()
+    doc = ast.get_docstring(ast.parse(src)) or ""
+    bad = []
+    for ln in doc.splitlines():
+        rest = re.sub(r"NCT\d+", "", ln)     # trial ids are names, not figures
+        for label in LABELS:                 # "p90", "python3" likewise
+            rest = rest.replace(label, "")
+        if any(c.isdigit() for c in rest):
+            bad.append(ln)
+    assert not bad, ("the sponsor_profile docstring carries a figure; describe the "
+                     "cohort in words:\n  " + "\n  ".join(bad))
+
 
 def test_check_reports_nothing_on_the_committed_tree():
     """The whole of `check()`, asserted. This is the gate the other tests were

@@ -689,10 +689,10 @@ the first:
 """,
 
 "reversal_after": """\
-Read alone, the stretch measure would have said the non-industry public and institutional
-strata lapse and file again least often. They are the most likely to be carrying an expired
-date now. A measure that needs its subject to keep talking cannot see the subject that stops,
-and any frequency statistic built from observed corrections has the same blind spot.
+Read alone, the stretch measure would have said the OTHER_GOV and OTHER strata lapse and file
+again least often. They are the most likely to be carrying an expired date now. A measure that
+needs its subject to keep talking cannot see the subject that stops, and any frequency statistic
+built from observed corrections has the same blind spot.
 """,
 
 "mechanism_head": """\
@@ -746,16 +746,21 @@ A boundary convention: a revision filed on the exact day the date came due has z
 remaining and is counted as prospective rather than as a lapse. That is {boundary} dated
 revisions across all four strata and it moves no published figure.
 
-**The month-only convention, which does move figures, in one place.** A registry date given
-to the month rather than the day names no day, so it has two readings: the first of the month
-or the last. Resolving to the last pushes every date later, which lengthens the runway a
-revision had and shortens every carry, so end-of-month is the smaller reading of every figure
-it touches and is the one this document quotes with "at least". It is not a rounding footnote.
-Of the {dated_total} dated revisions across all four strata, {flips} cross between prospective
-and after-a-lapse when the reading is switched, which is why the rate above is a band. Every
-days-since-expiry median in the finding section and the innocence check is the first-of-month
-reading and is therefore the high end of its own bound. The tables that follow carry both
-readings where the convention moves them.
+**The month-only convention, which does move figures.** A registry date given to the month
+rather than the day names no day, so it has two readings: the first of the month or the last.
+Resolving to the last pushes every date later, and the direction that moves a figure is not the
+same for every figure, so "conservative" has to be worked out per quantity rather than asserted
+once. For a single carry and for the after-a-lapse rate the later date makes the figure
+**smaller**: the anchor case's carry shrinks and fewer revisions land after a lapse, so
+end-of-month is the weaker reading there and is the one this document quotes with "at least".
+For the closed-spell duration medians it makes the figure **larger**, not smaller, because the
+shortest carries cease to be lapses under the later date and drop out of the set, lifting the
+median of what remains; there the first-of-month reading is the smaller one, and it is the one
+the duration tables print. In both cases the figure shown is the weaker of the two, but they
+come from opposite ends of the convention. Of the {dated_total} dated revisions across all four
+strata, {flips} cross between prospective and after-a-lapse when the reading is switched, which
+is why the rate above is a band. The tables that follow carry both readings where the
+convention moves them.
 """,
 
 "scope": """\
@@ -820,11 +825,12 @@ monitor would actually alert on, contribute no duration at all: this study count
 does not say how long they run or where the replacement date lands. Recorded in
 `docs/PARKING.md` as the next measurement rather than estimated here.
 
-The medians in this table are the first-of-month reading, which is the longer one. Under the
-end-of-month reading OTHER_GOV's per-trial median falls from {other_gov_trial_p50} to
-{other_gov_trial_p50_eom} days and OTHER's holds; industry and NIH do not move, because
-neither has a month-only date in this measure. Where a stratum moves, the smaller figure is
-the bound.
+The medians in this table are the first-of-month reading, which for durations is the shorter
+one. Under the end-of-month reading OTHER_GOV's per-trial median rises from {other_gov_trial_p50}
+to {other_gov_trial_p50_eom} days, because its shortest carries stop being lapses and leave the
+set; the other three strata do not move on this unit. The smaller figure is the one printed, and
+for a duration that is the first-of-month reading, the opposite end from the rate and the anchor
+above.
 
 **Sensitivity, per stretch.** A stretch is emitted per consecutive version pair, so one
 lapse spanning many filings contributes many overlapping rows measuring the same expiry to
@@ -844,13 +850,16 @@ which is why the per-trial unit is primary and this one is labelled as a sensiti
 
 The month convention moves this table too, and further than it moves the per-trial one, because
 a stretch can cease to be a lapse entirely when the later reading of its date lands after the
-filing that would have ended it. Under end-of-month OTHER_GOV's stretch median runs from
+filing that would have ended it. Under end-of-month OTHER_GOV's stretch median rises from
 {other_gov_stretch_p50} to {other_gov_stretch_p50_eom} days and {og_stretch_vanished} of its
-stretches disappear. The first-of-month figures are printed above and are the high end.
+stretches disappear. The first-of-month figures printed above are the smaller reading and the
+one to lead with.
 
 ### Why the strata are not pooled
 
-Three independent differences, none of which rests on the duration ratio alone:
+Three independent differences, none of which rests on the duration ratio alone. The
+reconciliation rates in the first bullet are quoted at the first-of-month reading, the upper
+end of the band in the mechanism table; the ordering between strata holds under either reading.
 
 - **Reconciliation behaviour.** {industry_lapse_to_estimate} of industry revisions replace
   an already-expired estimate, against {nih_lapse_to_estimate} of NIH and
@@ -1158,9 +1167,12 @@ bodies, and a trial one of them runs with no U.S. arm is generally not an applic
 trial the U.S. rule binds at all. The window is now drawn against industry and NIH and
 explicitly not extended to OTHER_GOV or OTHER, the registry facts for those strata are stated
 without the regulation, and the undrawn FED stratum, where the duty applies most directly, is
-recorded in `docs/PARKING.md` as the follow-up. The finding sharpens: where the U.S. duty
-plainly applies, industry still carries an expired estimate at a rate the mechanism table
-reports, and where no such duty exists reconciliation is rarer still.
+recorded in `docs/PARKING.md` as the follow-up. What survives is a registry fact and not a
+compliance one: where the U.S. duty plainly applies, industry still carries an expired estimate
+at the rate the mechanism table reports; the strata where no such duty exists carry expired
+dates more often, not less. That the two facts sit either side of a jurisdictional line is not
+evidence the line explains them, and it is not offered as such: filing frequency confounds the
+comparison and this study cannot separate the two.
 
 **A note on what the corrections have in common.** Most of them were found by breaking
 something or by an outside reader, and several were found only on a later pass over material
@@ -1273,8 +1285,10 @@ against the stretch measure that cannot see them, as of {as_of}:
 "block_clustering_note": """\
 The clustering test in `docs/WRITEUP.md` reports both anniversary and control windows. The
 control windows score at least as high in three of the four strata and lower by a single
-interval in the fourth, so the test supports no conclusion about annual batching; the earlier conclusions drawn from it are withdrawn as
-{c_one_stratum} and {c_clustering_control}.
+interval in the fourth, so the test supports no conclusion about annual batching. The
+conclusions drawn from it are withdrawn by {c_clustering_control}, which gave the test the
+control it lacked; the earlier {c_one_stratum} only stopped it being shown for one stratum and
+withdrew no conclusion.
 """,
 }
 

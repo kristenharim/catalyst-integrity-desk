@@ -788,13 +788,17 @@ def month_convention(rows: list[dict]) -> dict:
     in `strata`; a test asserts it, so this cannot silently measure a different
     thing and call it a bound.
 
-    The direction is uniform and stated so the prose can quote it: resolving a
-    month to its last day pushes every date later, which lengthens the runway a
-    revision had (fewer after-lapse revisions, a lower estimate-to-estimate rate)
-    and shortens every carry (smaller durations, and a stretch can vanish when the
-    later date lands after the filing that would have ended it). So end-of-month
-    is the conservative reading of every figure it touches, and it is the one the
-    write-up quotes with "at least".
+    The direction is NOT uniform across figures, and the prose works it out per
+    quantity rather than asserting it once. Resolving a month to its last day
+    pushes every date later. For the after-a-lapse rate that lowers the figure
+    (fewer revisions land after a lapse), and for the anchor's single carry it
+    lowers the figure (the carry shrinks), so end-of-month is the smaller reading
+    there and is the one quoted with "at least". For the closed-spell duration
+    medians it RAISES the figure, because the shortest carries stop being lapses
+    under the later date and drop out of the set, lifting the median of what
+    remains; there the first-of-month reading is the smaller one, and it is what
+    the duration tables print. Both ends of the convention are stored so the
+    write-up can quote the weaker one in each place.
     """
     out = {"anchor_days_eom": _eom_stretches(ANCHOR_NCT, True)
            and max(_eom_stretches(ANCHOR_NCT, True)),
@@ -922,9 +926,18 @@ def freeze() -> dict:
             f"before freezing; a snapshot that quietly drops trials is the n-inflation "
             f"bug wearing the other sign.")
 
-    # Point prevalence is as of a date, so the date is pinned into the snapshot
-    # rather than read from the clock on every later report.
-    as_of = datetime.now(timezone.utc).date()
+    # Point prevalence is as of a date, and that date is a study parameter, not
+    # the moment of the freeze. The first freeze sets it from the clock; every
+    # later freeze -- to add a derived field, say -- reuses the committed one, so
+    # re-freezing cannot silently walk every days-since-expiry figure forward as
+    # the wall clock advances. It happened once: a re-freeze the day after the
+    # study date shifted every median by a day. A new draw (different rows, so a
+    # different snapshot id) starts its own as_of.
+    prior = load_snapshot()
+    if prior and prior.get("as_of") and prior.get("snapshot_id") == snapshot_id(all_rows):
+        as_of = _parse_date(prior["as_of"])
+    else:
+        as_of = datetime.now(timezone.utc).date()
     stale = [r["nct"] for r in rows if "last_pcd_type" not in r]
     if stale:
         raise ValueError(
@@ -995,7 +1008,8 @@ def figures_hash(snap: dict) -> str:
     """
     published = {k: snap[k] for k in
                  ("strata", "anchor_case", "month_convention",
-                  "silent_carrier_audit", "clustering", "frame", "as_of", "seed")
+                  "silent_carrier_audit", "clustering", "frame", "as_of", "seed",
+                  "snapshot_id", "n_distinct_trials")
                  if k in snap}
     return "figs-" + hashlib.sha256(
         json.dumps(published, sort_keys=True).encode()).hexdigest()[:16]

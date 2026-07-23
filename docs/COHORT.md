@@ -301,8 +301,10 @@ trial that did owes an update to actual, but this data does not say which happen
 <!-- generated: clustering_note -->
 The clustering test in `docs/WRITEUP.md` reports both anniversary and control windows. The
 control windows score at least as high in three of the four strata and lower by a single
-interval in the fourth, so the test supports no conclusion about annual batching; the
-earlier conclusions drawn from it are withdrawn as Correction 9 and Correction 10.
+interval in the fourth, so the test supports no conclusion about annual batching. The
+conclusions drawn from it are withdrawn by Correction 10, which gave the test the control it
+lacked; the earlier Correction 9 only stopped it being shown for one stratum and withdrew no
+conclusion.
 <!-- /generated -->
 - No individual stretch is called a breach, because that would need to know whether the
   trial actually completed on the registered date, and it is not in this dataset.

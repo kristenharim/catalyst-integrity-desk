@@ -71,8 +71,59 @@ def test_month_convention_reconstructs_the_first_of_month():
             f"{cls}: the cache reconstruction does not reproduce the stored "
             f"first-of-month split, so the end-of-month reading is not a bound on "
             f"the same measurement")
-    # And the stored end-of-month figures recompute from the cache.
-    assert snap["month_convention"] == cohort.month_convention(rows)
+    # The end-of-month figures, recomputed by an INDEPENDENT implementation rather
+    # than by re-running the function that produced them. Comparing the snapshot to
+    # `cohort.month_convention(rows)` would compare it to itself: an end-of-month
+    # bug present at freeze time is in both sides and cancels. This resolves month
+    # dates to the last day here, in the test, and walks the revisions itself.
+    import calendar
+    from datetime import date as _d
+
+    def eom(raw):
+        if not raw:
+            return None
+        p = [int(x) for x in raw.split("-")]
+        if len(p) == 3:
+            return _d(p[0], p[1], p[2])
+        return _d(p[0], p[1], calendar.monthrange(p[0], p[1])[1])
+
+    def revs(nct):
+        out, prev = [], None
+        for v in cohort._cached_versions(nct):
+            f = cohort._parse_date(v.get("pcd"))          # first-of-month, to match the set
+            if f is None or (prev is not None and f == prev):
+                prev = f if f is not None else prev
+                continue
+            out.append(v)
+            prev = f
+        return out
+
+    mc = snap["month_convention"]
+    assert mc["anchor_days_eom"] == max(
+        (cohort._parse_date(n.get("submitted")) - eom(p.get("pcd"))).days
+        for p, n in zip(revs(cohort.ANCHOR_NCT), revs(cohort.ANCHOR_NCT)[1:])
+        if eom(p.get("pcd")) and cohort._parse_date(n.get("submitted"))
+        and eom(p.get("pcd")) < cohort._parse_date(n.get("submitted"))), "anchor eom"
+    for cls in cohort.STRATA:
+        sub = [r for r in rows if r["sponsor_class"] == cls]
+        lapse = est = pro = 0
+        for r in sub:
+            prev = None
+            for v in revs(r["nct"]):
+                p = eom(v.get("pcd"))
+                s = cohort._parse_date(v.get("submitted"))
+                if prev is not None and s is not None:
+                    if (prev - s).days >= 0:
+                        pro += 1
+                    else:
+                        lapse += 1
+                        est += int((v.get("pcd_type") or "").upper() != "ACTUAL")
+                prev = p
+        m = mc["strata"][cls]
+        assert m["revisions_after_lapse_eom"] == lapse, f"{cls} eom lapse"
+        assert m["revisions_after_lapse_to_estimate_eom"] == est, f"{cls} eom est"
+        assert abs(m["lapse_to_estimate_rate_eom"] - est / (pro + lapse)) < 1e-9, cls
+
     assert snap["silent_carrier_audit"] == cohort.silent_carrier_audit(
         rows, cohort._parse_date(snap["as_of"]))
 
@@ -242,11 +293,23 @@ def test_a_hand_edit_to_any_published_figure_is_caught():
     assert snap.get("figures_hash") == cohort.figures_hash(snap), (
         "the snapshot's figures_hash disagrees with a recomputation over its own "
         "published blocks, so a figure was edited without re-freezing")
+    # Tamper with a value guaranteed different from the real one rather than a
+    # magic sentinel, so this meta-test cannot break if a freeze ever produces the
+    # sentinel. Every hashed key is exercised, not only the anchor.
     import copy
-    tampered = copy.deepcopy(snap)
-    tampered["anchor_case"]["days_carried"] = 977
-    assert tampered["figures_hash"] != cohort.figures_hash(tampered), (
-        "editing the anchor case did not change the figures hash")
+    for path in (("anchor_case", "days_carried"),
+                 ("frame", "enumeration_cap_per_stratum"),
+                 ("month_convention", "anchor_days_eom"),
+                 ("silent_carrier_audit", "multi"),
+                 ("n_distinct_trials",)):
+        tampered = copy.deepcopy(snap)
+        node = tampered
+        for k in path[:-1]:
+            node = node[k]
+        v = node[path[-1]]
+        node[path[-1]] = (v + 1) if isinstance(v, (int, float)) else "TAMPERED"
+        assert tampered["figures_hash"] != cohort.figures_hash(tampered), (
+            f"editing {'/'.join(path)} did not change the figures hash")
 
 
 def test_point_prevalence_is_pinned_not_read_from_the_clock():
