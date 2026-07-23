@@ -235,13 +235,15 @@
   {% endif %}
   {% if c.history.slip_refused_revisions %}
   <br>
-  <span class="verdict-alert">&#9888;
-    {{ c.history.slip_refused_revisions }} revision(s) are not comparable at all</span>
-  <span style="color:#8b949e;">
-    because a count or an enumeration changed, which no rewording explains.
-    Subtracting those dates would describe two different commitments. The
-    unaudited total across every revision is
-    {{ c.history.slip_reported_days }} days.</span>
+  <span style="color:#e6edf3; font-weight:bold; font-size:12px;">&#9888;
+    Not comparable. Do not treat as delay.</span>
+  <br>
+  <span style="color:#6b7280;">Reported movement across all revisions:
+    {{ c.history.slip_reported_days }} days, refused.</span>
+  <br>
+  <span style="color:#8b949e;">Reason: a count or an enumeration changed across
+    {{ c.history.slip_refused_revisions }} revision(s), so subtracting the two dates
+    would describe two different commitments rather than a delay.</span>
   {% endif %}
 </p>
 {% endif %}
@@ -348,13 +350,15 @@
   {% endif %}
   {% if lh.slip_refused_revisions %}
   <br>
-  <span class="verdict-alert">&#9888;
-    {{ lh.slip_refused_revisions }} revision(s) are not comparable at all</span>
-  <span style="color:#8b949e;">
-    because a count or an enumeration changed, which no rewording explains.
-    Subtracting those dates would describe two different commitments. The
-    unaudited total across every revision is
-    {{ lh.slip_reported_days }} days.</span>
+  <span style="color:#e6edf3; font-weight:bold; font-size:12px;">&#9888;
+    Not comparable. Do not treat as delay.</span>
+  <br>
+  <span style="color:#6b7280;">Reported movement across all revisions:
+    {{ lh.slip_reported_days }} days, refused.</span>
+  <br>
+  <span style="color:#8b949e;">Reason: a count or an enumeration changed across
+    {{ lh.slip_refused_revisions }} revision(s), so subtracting the two dates
+    would describe two different commitments rather than a delay.</span>
   {% endif %}
 </p>
 {% endif %}
