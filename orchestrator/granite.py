@@ -28,6 +28,7 @@ import os
 import re
 import sys
 import time
+from dataclasses import dataclass
 import urllib.parse
 import urllib.request
 
@@ -59,6 +60,98 @@ _NUMBER_RUN = re.compile(r"\d+(?:\.\d+)?")
 def _numbers_in(text: str) -> set[str]:
     return set(_NUMBER_RUN.findall(text))
 
+# Spans that carry digits but name a record rather than measure anything: a
+# registry id, an ISO date, a fiscal quarter, an SEC form name, a filer id.
+# Those digits are part of a name, so they may not authorise a quantity.
+#
+# Left unmasked they did. The live Rocket card's driver reads "SEC XBRL
+# liquidity (Q1-2026 10-Q)", which licensed the model to write "2026 days of
+# cash remaining" and "a 1 month delay", because "2026" and "1" both appear in
+# it. Neither figure was ever measured; both would have reached the user as a
+# number the engine never computed, which is the one thing this project may not
+# do. The guard stays "a number absent from the input" and gets a stricter
+# reading of what counts as an input number.
+_IDENTIFIER = re.compile(
+    r"NCT\d+"                       # registry id
+    r"|\d{4}-\d{2}-\d{2}"           # ISO date
+    r"|\bQ\d[-\s]?\d{4}\b"          # fiscal quarter
+    r"|\b\d{1,2}-[A-Z]\b"           # SEC form name, 10-Q and 8-K
+    r"|\bCIK[\s:]*\d+"              # filer id
+)
+
+
+# Number words carry magnitudes that a digit scan never sees. "thirty months"
+# is as much a fabricated quantity as "30 months".
+_WORDS = {
+    "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+    "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
+    "eleven": "11", "twelve": "12", "thirteen": "13", "fourteen": "14",
+    "fifteen": "15", "sixteen": "16", "seventeen": "17", "eighteen": "18",
+    "nineteen": "19", "twenty": "20", "thirty": "30", "forty": "40",
+    "fifty": "50", "sixty": "60", "seventy": "70", "eighty": "80",
+    "ninety": "90", "hundred": "100", "thousand": "1000",
+}
+_WORD_RUN = re.compile(r"\b(" + "|".join(_WORDS) + r")\b", re.I)
+
+# The units this desk actually measures in. A magnitude with a unit outside this
+# set is not comparable to anything in the card, so it is treated as unitless
+# and judged on its value alone.
+_UNITS = {
+    "month": "months", "months": "months", "mo": "months",
+    "day": "days", "days": "days", "d": "days",
+    "year": "years", "years": "years", "yr": "years",
+    "week": "weeks", "weeks": "weeks",
+    "quarter": "quarters", "quarters": "quarters",
+    "percent": "%", "%": "%",
+}
+
+_QUANTITY = re.compile(
+    r"(?P<sign>[-+−])?\s*"
+    r"(?P<value>\d+(?:\.\d+)?)\s*"
+    r"(?P<unit>%|[A-Za-z]+)?"
+)
+
+
+@dataclass(frozen=True)
+class Quantity:
+    """One measurement, as the guard understands it.
+
+    value  canonical decimal text, "14.5" or "30"
+    unit   canonical unit, "months" | "days" | "years" | "weeks" | "quarters"
+           | "%" | "" when the number carried no unit this desk measures in
+    sign   "-" for a negative magnitude, "" otherwise
+    """
+
+    value: str
+    unit: str
+    sign: str
+
+    def __str__(self) -> str:
+        return f"{self.sign}{self.value}{' ' + self.unit if self.unit else ''}"
+
+
+def _typed(text: str) -> set[Quantity]:
+    """Every magnitude in `text`, bound to its unit and sign.
+
+    Identifier spans are typed out first: the digits in NCT04248439, 2026-05-05
+    and "10-Q" name a record and measure nothing, so they never become a
+    Quantity and can never authorise one.
+    """
+    cleaned = _IDENTIFIER.sub(" ", text)
+    cleaned = _WORD_RUN.sub(lambda m: _WORDS[m.group(1).lower()], cleaned)
+    out: set[Quantity] = set()
+    for m in _QUANTITY.finditer(cleaned):
+        raw_unit = (m.group("unit") or "").lower()
+        unit = _UNITS.get(raw_unit, "")
+        sign = "-" if m.group("sign") in ("-", "−") else ""
+        out.add(Quantity(m.group("value"), unit, sign))
+    return out
+
+
+def _quantities_in(text: str) -> set[str]:
+    """Bare values only, kept for the action-draft guard's coarser question."""
+    return {q.value for q in _typed(text)}
+
 # "1." at the start of a line is an option enumerator, not a claim about the book.
 # Stripped before the number guard runs so numbered options do not read as fabrication.
 _LIST_MARKER = re.compile(r"^\s*\d+[.)]\s+", re.M)
@@ -72,8 +165,28 @@ def _fabricated(rationale: str, card: BeliefCard, breach: Breach) -> list[str]:
         # the model sees these rounded in the prompt, so allow both renderings
         round(breach.observed), round(breach.expected_low), round(breach.expected_high),
     ))
-    allowed = _numbers_in(source)
-    return [n for n in _NUMBER_RUN.findall(rationale) if n not in allowed]
+    # The rule stays "a number absent from the input". What tightened is the
+    # reading of "the same number": a magnitude matches only when its value and
+    # its sign both appear in the input, and its unit is one the input actually
+    # measures in. A band edge of 10 months does not licence "10 days", and a
+    # shortfall of -15 does not licence "+15".
+    given = _typed(source)
+    values = {(q.value, q.sign) for q in given}
+    units = {q.unit for q in given if q.unit} | _metric_units(card.metric)
+    return [str(q) for q in _typed(rationale)
+            if (q.value, q.sign) not in values or (q.unit and q.unit not in units)]
+
+
+def _metric_units(metric: str) -> set[str]:
+    """The unit a metric name declares, so a bare input value can be quoted with it.
+
+    `gap_months` is months. The engine hands the model bare floats, so without
+    this every correctly-united sentence about the gap would be refused, and a
+    guard that rejects correct output is a guard someone switches off.
+    """
+    return {u for tail, u in (("_months", "months"), ("_days", "days"),
+                              ("_years", "years"), ("_pct", "%"))
+            if metric.endswith(tail)}
 
 SYSTEM_PROMPT = """\
 You are the challenge partner on a catalyst integrity desk. A deterministic engine has \
@@ -321,8 +434,9 @@ class GraniteClassifier:
         # figure to echo and nothing to do arithmetic on. The digits it did see are
         # window metadata ("30d", "95"), fine to repeat; anything else it produced
         # itself. Option enumerators are formatting, not claims.
-        allowed = _numbers_in(brief)
-        invented = [n for n in _NUMBER_RUN.findall(_LIST_MARKER.sub("", text))
+        allowed = _quantities_in(brief)
+        invented = [n for n in
+                    _NUMBER_RUN.findall(_IDENTIFIER.sub(" ", _LIST_MARKER.sub("", text)))
                     if n not in allowed]
         if invented:
             raise ValueError(f"model invented {invented} in the action draft")
