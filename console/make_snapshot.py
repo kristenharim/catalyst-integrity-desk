@@ -31,6 +31,7 @@ from datetime import date, timedelta
 # Repo root is one level up from this file.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from console import states
 from engine.ctgov_history import _parse_date
 from engine.gap import build, find_trials, CatalystContract
 from engine.ledger import BeliefCard
@@ -356,10 +357,9 @@ def _derivation(c: dict, tl: dict | None) -> list[dict]:
 # from one snapshot are not shown rather than shown empty: a changed SEC tag path
 # needs a previous snapshot to diff against, and there is only ever one.
 
-# Months of gap below which a contract is close enough to breaching to be worth
-# a look. One quarter is too tight to act on and a year is not news, so a half
-# year is the compromise, and it is a judgement rather than a finding.
-APPROACHING_MONTHS = 6.0
+# Re-exported so there is exactly one threshold in the codebase. The classifier
+# owns it because the trigger it produces is what the queue row is projected from.
+APPROACHING_MONTHS = states.APPROACHING_MONTHS
 
 # Worst first. The order is the order an analyst should read them in, so it is
 # ranked by how much of the thesis is already gone, not by how alarming it looks.
@@ -376,46 +376,30 @@ _QUEUE_RANK = {k: i for i, (k, _) in enumerate(QUEUE_STATES)}
 def _queue_rows(ticker: str, c: dict) -> list[dict]:
     """Every reason this contract is worth looking at today.
 
-    A contract can be in more than one state at once, and collapsing that to a
-    single worst state hides the others. Rocket is both breached and carrying a
-    lapsed registered expectation, and those are two different things to do.
+    A projection over `states.build_triggers`, not a second opinion about it.
+    Two functions deciding independently what counts as a reason to look is how
+    the queue and the inbox end up disagreeing about the same company, so the
+    triggers are canonical and this maps them onto the older vocabulary.
+
+    Triggers with no legacy state (endpoint continuity, refused comparison) are
+    skipped rather than invented into the queue. They are new, the queue never
+    counted them, and adding them here would silently move its counts.
     """
-    r = c["runway"]
-    gap = c.get("gap_months")
     rows = []
-
-    if not r.get("reliable"):
-        rows.append({
-            "state": "unreliable",
-            "detail": "; ".join(r.get("notes") or []) or "burn estimate is not usable",
-        })
-    elif gap is not None and gap < 0:
-        rows.append({
-            "state": "breached",
-            "detail": (f"funding gap {_fmt_1f(gap)} months against "
-                       f"{c['trial']['nct']} ({c.get('catalyst_date')})"),
-        })
-    elif gap is not None and gap < APPROACHING_MONTHS:
-        rows.append({
-            "state": "approaching",
-            "detail": (f"funding gap {_fmt_1f(gap)} months against "
-                       f"{c['trial']['nct']} ({c.get('catalyst_date')})"),
-        })
-
-    for lapsed in c.get("lapsed") or []:
-        rows.append({
-            "state": "lapsed",
-            "detail": (f"{lapsed['nct']} registered primary completion "
-                       f"{lapsed['pcd']} has passed and was never amended"),
-        })
+    for t in states.build_triggers(c):
+        legacy = states.LEGACY_QUEUE_STATE.get(t.kind)
+        if legacy is None:
+            continue
+        rows.append({"state": legacy, "detail": t.detail})
 
     if not rows:
         rows.append({
             "state": "clear",
-            "detail": (f"funding gap {_fmt_1f(gap)} months against "
+            "detail": (f"funding gap {c.get('gap_months_1f')} months against "
                        f"{c['trial']['nct']} ({c.get('catalyst_date')})"),
         })
 
+    r = c["runway"]
     for row in rows:
         row["ticker"] = ticker
         row["name"] = r["name"]
@@ -541,6 +525,10 @@ def apply_displays(snapshot: dict) -> dict:
             c["gap_months_1f"] = _fmt_1f(c["gap_months"])
         c["thesis_timeline"] = _thesis_timeline(c, today_iso)
         c["derivation"] = _derivation(c, c["thesis_timeline"])
+        # Evidence axis only. Workflow and record integrity are joined at
+        # request time in console/review.py, because both depend on a ledger
+        # file that changes long after this snapshot was written.
+        c["decision"] = states.build_decision(c)
 
     redline = snapshot.get("redline")
     if redline and redline.get("breach"):

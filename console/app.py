@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from flask import Flask, redirect, render_template, request, url_for
 
-from console import intake
+from console import intake, review
 from engine.ledger import BeliefCard, BeliefLedger, Breach
 from evidence import FrozenSnapshotProvider, Incomplete
 from orchestrator.anchor import check as anchor_check, record as anchor_record
@@ -64,6 +64,12 @@ if not os.path.exists(SNAPSHOT_PATH):
 with open(SNAPSHOT_PATH) as _f:
     SNAPSHOT: dict = json.load(_f)
 
+# Content address of the artifact every computed state on screen came from.
+# Named in the footer so a reader can tell which snapshot produced the numbers,
+# and distinguish them from the human decisions, which are stored rather than
+# computed.
+SNAPSHOT_ID = review.snapshot_digest(SNAPSHOT_PATH)
+
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
@@ -79,7 +85,9 @@ app = Flask(__name__, template_folder="templates")
 
 @app.context_processor
 def inject_cmd_bar():
-    return {"snapshot_cmd_bar": SNAPSHOT.get("cmd_bar")}
+    return {"snapshot_cmd_bar": SNAPSHOT.get("cmd_bar"),
+            "snapshot_id": SNAPSHOT_ID,
+            "snapshot_as_of": SNAPSHOT.get("as_of")}
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +96,19 @@ def inject_cmd_bar():
 
 @app.get("/")
 def index():
+    return redirect(url_for("contract_detail", ticker="RCKT"))
+
+
+@app.get("/demo")
+def demo():
+    """The seeded scenario, reachable deterministically.
+
+    The inbox becomes the default landing page, which is right for the product
+    and wrong for a three-minute presentation: sorting is data-dependent, and a
+    demo that depends on Rocket happening to sort first is one snapshot away
+    from opening on the wrong company. This route does not care how the inbox
+    sorts.
+    """
     return redirect(url_for("contract_detail", ticker="RCKT"))
 
 

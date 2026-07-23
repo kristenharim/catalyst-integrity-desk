@@ -132,7 +132,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 177 passed, 1 skipped
+python3 -m pytest tests/ -q       # 191 passed, 1 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -142,7 +142,7 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **The one skipped test** is the live Granite fabrication check, which needs watsonx
-credentials. With them the suite is 178 passed, no skips. That test is verified not to pass
+credentials. With them the suite is 192 passed, no skips. That test is verified not to pass
 on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 **The 90 second tour:**
@@ -269,9 +269,12 @@ Work after Bob's build was completed by hand with Claude Code, not by Bob, and e
 of it is logged in `docs/BOB_LOG.md` at the same detail as the Bob rows. That is: the
 unresolved-ticker row on `/contracts`, the thesis-break timeline, the derivation table, the
 analyst belief form, the monitoring queue, then the larger pass that added the evidence
-seam, promise identity, the enforced claims lexicon and workspace mode, and most recently
-the random cohort study: its store, the snapshot the published rates cite, the first
-amendment to a protected engine module, and the absorption rules in the lexicon.
+seam, promise identity, the enforced claims lexicon and workspace mode, then the random
+cohort study: its store, the snapshot the published rates cite, the first amendment to a
+protected engine module, and the absorption rules in the lexicon. Most recently, the
+three-axis decision state model in `console/states.py` and `console/review.py`, which
+separates what the evidence says from what a human is doing and from whether the decision
+record is still intact.
 
 **Bob built the thing that works. What came after is mostly the project auditing itself**,
 which is the part that produced the finding about its own slip figures. Everything in the
@@ -295,8 +298,8 @@ failing.
 - The fabrication guard is tested against live Granite, not a mock. That test is
   itself checked by pointing it at an invalid endpoint: it then fails on the
   `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. With credentials the suite is 178
-  passed; without them that one test skips and you see 177 passed, 1 skipped.
+  precise way an earlier version of it gave a false pass. With credentials the suite is 192
+  passed; without them that one test skips and you see 191 passed, 1 skipped.
 - The number-provenance test asserts that every figure in the rendered HTML appears
   verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
   watching the test name that token.

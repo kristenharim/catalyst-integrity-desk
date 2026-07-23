@@ -244,7 +244,29 @@
           "kind": "result",
           "record": ""
         }
-      ]
+      ],
+      "decision": {
+        "evidence": "review_required",
+        "evidence_label": "review required",
+        "triggers": [
+          {
+            "kind": "funding_threshold_crossed",
+            "state": "deterministic",
+            "severity": "high",
+            "detail": "funding gap -35.6 months against NCT06559176 (2030-01-01)",
+            "label": "funding threshold crossed"
+          }
+        ],
+        "n_triggers": 1,
+        "severity": "high",
+        "severity_rank": 0,
+        "evidence_rank": 1,
+        "sort_key": [
+          0,
+          0,
+          -1
+        ]
+      }
     },
     "RCKT": {
       "runway": {
@@ -571,7 +593,43 @@
           "kind": "result",
           "record": ""
         }
-      ]
+      ],
+      "decision": {
+        "evidence": "review_required",
+        "evidence_label": "review required",
+        "triggers": [
+          {
+            "kind": "funding_threshold_crossed",
+            "state": "deterministic",
+            "severity": "high",
+            "detail": "funding gap -14.5 months against NCT06092034 (2028-04-01)",
+            "label": "funding threshold crossed"
+          },
+          {
+            "kind": "registered_expectation_expired",
+            "state": "deterministic",
+            "severity": "high",
+            "detail": "NCT04248439 registered primary completion 2026-05-05 has passed and was never amended",
+            "label": "registered expectation expired"
+          },
+          {
+            "kind": "comparison_refused",
+            "state": "contingent",
+            "severity": "medium",
+            "detail": "1 revision changed enrolment or scope, so the reported movement across them is not treated as delay",
+            "label": "comparison refused"
+          }
+        ],
+        "n_triggers": 3,
+        "severity": "high",
+        "severity_rank": 0,
+        "evidence_rank": 1,
+        "sort_key": [
+          0,
+          0,
+          -3
+        ]
+      }
     },
     "BEAM": {
       "runway": {
@@ -775,7 +833,21 @@
           "kind": "result",
           "record": ""
         }
-      ]
+      ],
+      "decision": {
+        "evidence": "intact",
+        "evidence_label": "intact",
+        "triggers": [],
+        "n_triggers": 0,
+        "severity": null,
+        "severity_rank": 3,
+        "evidence_rank": 3,
+        "sort_key": [
+          3,
+          3,
+          0
+        ]
+      }
     },
     "SRPT": {
       "runway": {
@@ -1288,7 +1360,50 @@
           "kind": "result",
           "record": ""
         }
-      ]
+      ],
+      "decision": {
+        "evidence": "unavailable",
+        "evidence_label": "unavailable",
+        "triggers": [
+          {
+            "kind": "runway_unreliable",
+            "state": "unavailable",
+            "severity": "high",
+            "detail": "cash-positive operating quarter(s) in TTM window: 2025-12-31, 2025-06-30 - likely a one-time inflow",
+            "label": "burn estimate unreliable"
+          },
+          {
+            "kind": "registered_expectation_expired",
+            "state": "deterministic",
+            "severity": "high",
+            "detail": "NCT06246513 registered primary completion 2025-03-04 has passed and was never amended",
+            "label": "registered expectation expired"
+          },
+          {
+            "kind": "registered_expectation_expired",
+            "state": "deterministic",
+            "severity": "high",
+            "detail": "NCT06128564 registered primary completion 2026-03-04 has passed and was never amended",
+            "label": "registered expectation expired"
+          },
+          {
+            "kind": "comparison_refused",
+            "state": "contingent",
+            "severity": "medium",
+            "detail": "2 revisions changed enrolment or scope, so the reported movement across them is not treated as delay",
+            "label": "comparison refused"
+          }
+        ],
+        "n_triggers": 4,
+        "severity": "high",
+        "severity_rank": 0,
+        "evidence_rank": 0,
+        "sort_key": [
+          2,
+          0,
+          -4
+        ]
+      }
     }
   },
   "redline": {
