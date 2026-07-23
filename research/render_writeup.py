@@ -1174,13 +1174,20 @@ dates more often, not less. That the two facts sit either side of a jurisdiction
 evidence the line explains them, and it is not offered as such: filing frequency confounds the
 comparison and this study cannot separate the two.
 
-**A note on what the corrections have in common.** Most of them were found by breaking
-something or by an outside reader, and several were found only on a later pass over material
-an earlier pass had already read without catching it. {c_clustering_control} is the first one
-found by giving an existing test a control rather than by reading its output, and
-{c_by_construction} is the first where a fix written under review made a true-but-weak claim
-false. The count is not falling to zero, and this document does not claim it will: the section
-titled for what went wrong grows every round it is read by someone new.
+**A note on what the corrections have in common, and when they stopped.** Most were found by
+breaking something or by an outside reader, and several only on a later pass over material an
+earlier pass had already read without catching it. {c_clustering_control} is the first found by
+giving an existing test a control rather than by reading its output, and {c_by_construction} is
+the first where a fix written under review made a true-but-weak claim false. The last three
+came in one round, the eighth, and they are the deepest: an unexamined date convention, a
+regulation quoted past its jurisdiction, an entailment that did not hold. Three review rounds
+after that added no numbered correction. They found things -- a directional sentence backwards,
+gaps in the guard's own coverage, a test that could corrupt what it checked -- but nothing that
+retracted a published figure or claim, which is what a numbered correction is. Those are
+recorded in `docs/LIMITS.md` instead, where the guard's limits live. A correction log is
+supposed to reach zero, and the point of counting the rounds after it does is to be able to say
+it did rather than assert it: the numbered corrections stopped at fourteen, and the rounds kept
+running.
 
 ## What this does not license
 

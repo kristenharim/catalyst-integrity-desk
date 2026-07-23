@@ -534,20 +534,23 @@ found that everything in the snapshot outside `strata` was a trusted root, and a
 `anchor_case.days_carried` published a fabricated headline; `figures_hash` closes that. And it
 confirmed the residuals below rather than refuting them.
 
-**Ninth and tenth rounds hardened the recompute and the freeze.** Round nine's recompute layer
-covered the write-up's tables but not the four block tables in the other documents, nor their
-headers, nor the column-oriented unit table; a wrong-field binding in any of those shipped
-green. All are recomputed now, and every generated table header is pinned to an independent
-literal so a swap fails against the literal rather than a copy of itself. Round nine also
-surfaced a real latent bug, found by the wall clock rolling over mid-session: `freeze()` read
-the clock each time, so a re-freeze walked every days-since-expiry figure forward by a day. It
-now preserves an existing snapshot's `as_of`, which is a study parameter and not the freeze
-moment, and because no data check can tell a right point-prevalence date from a wrong one the
-date itself is pinned in a test. The end-of-month bound gained an independent recomputation in
-the test rather than a comparison against a re-run of the function that produced it, extended
-in round ten to the duration medians it first missed. Round ten also caught the unit table's
-own column header still unpinned and the hand-edit test tampering only half the hashed keys;
-both closed.
+**Ninth and tenth rounds hardened the recompute and the freeze.** The recompute layer covered
+the write-up's tables and, from the eighth round, the four block tables in the other documents;
+what round nine added was the column-oriented unit table, which its stratum-row check could not
+see, and the pinning of three headers that were recomputed but unpinned. A wrong-field binding
+in the unit table shipped green until then. Every generated table header is now pinned to an
+independent literal so a swap fails against the literal rather than a copy of itself. Round
+nine also surfaced a real latent bug, found by the wall clock rolling over mid-session:
+`freeze()` read the clock each time, so a re-freeze walked every days-since-expiry figure
+forward by a day. It now preserves an existing snapshot's `as_of`, which is a study parameter
+and not the freeze moment, and because no data check can tell a right point-prevalence date
+from a wrong one the date itself is pinned in a test. The end-of-month bound gained an
+independent recomputation in the test rather than a comparison against a re-run of the function
+that produced it, extended in round ten to the duration medians it first missed. Round ten also
+caught the unit table's own column header still unpinned and the hand-edit test tampering only
+half the hashed keys; both closed. Round eleven found no defect in a figure, a claim, or a
+guard's behaviour: a misattribution in this paragraph, corrected here, and a test that wrote
+the committed snapshot as a side effect, redirected to a temp.
 
 **What is still open, and it is the honest residual.** A number spelled in words is invisible
 to every rule here, and one shipped on the seventh pass: a count of strata written as "three

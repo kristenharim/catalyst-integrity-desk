@@ -353,14 +353,6 @@ def test_a_hand_edit_to_any_published_figure_is_caught():
     # have passed. This tampers one leaf inside each covered top-level key.
     import copy
 
-    def _bump(node):
-        """Mutate one leaf in place, whatever its type."""
-        if isinstance(node, dict):
-            return _bump(next(iter(node.values())))
-        if isinstance(node, list):
-            return node.append("TAMPERED") if node is not None else None
-        return "TAMPERED"
-
     covered = ("strata", "anchor_case", "month_convention", "silent_carrier_audit",
                "clustering", "frame", "as_of", "seed", "snapshot_id",
                "n_distinct_trials")
@@ -405,7 +397,7 @@ def test_point_prevalence_is_pinned_not_read_from_the_clock():
         "is not reaching the computation")
 
 
-def test_freeze_preserves_an_existing_as_of():
+def test_freeze_preserves_an_existing_as_of(tmp_path, monkeypatch):
     """Re-freezing the same rows keeps the study date, not the wall clock.
 
     This is the preservation branch itself, which nothing exercised. It stops the
@@ -413,15 +405,25 @@ def test_freeze_preserves_an_existing_as_of():
     picked up a rolled-over UTC date. No clock mock is needed: the study date is
     2026-07-22 and the wall clock in any later session is a different day, so a
     re-freeze that read the clock would move as_of and one that preserves does not.
-    A genuinely new draw -- different rows, so a different snapshot_id -- is a
-    different study and takes a fresh clock date; that path is not exercised here
-    because it would overwrite the committed snapshot.
+
+    The write is redirected to a temp file. `freeze()` writes the snapshot, and
+    running it against the committed path would rewrite `data/cohort/snapshot.json`
+    as a test side effect -- byte-identical under a complete cache, but a partial
+    cache (this study is resumable and fetch-bound) recomputes the cache-fed blocks
+    from fewer versions and would corrupt the committed file while this test's
+    cache-independent assertions still passed. The prior snapshot is copied to the
+    temp path first, so `freeze()` reads the real committed `as_of` and writes back
+    to the copy.
     """
+    import shutil
     if not _have_cache():
         pytest.skip("freeze needs the version cache")
     snap = cohort.load_snapshot()
     if snap is None or snap["as_of"] != STUDY_AS_OF:
         pytest.skip("no snapshot at the study date")
+    temp_snap = tmp_path / "snapshot.json"
+    shutil.copy(cohort._snapshot_path(), temp_snap)
+    monkeypatch.setattr(cohort, "_snapshot_path", lambda: str(temp_snap))
     refrozen = cohort.freeze()
     assert refrozen["as_of"] == STUDY_AS_OF, (
         "re-freezing adopted the wall clock instead of preserving the study date")
