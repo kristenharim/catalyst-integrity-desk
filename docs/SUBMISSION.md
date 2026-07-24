@@ -29,7 +29,15 @@ Catalyst Integrity Desk
 
 ## One-line tagline
 
-An auditable monitor for the moment a biotech investment thesis quietly stops being true.
+An auditable monitor for when a biotech investment thesis no longer matches its approved
+evidence contract.
+
+## The product boundary
+
+The system does not determine whether a thesis is true. It identifies when the public
+evidence no longer matches the assumptions recorded in the evidence contract and routes
+that change to a human. A belief written through the console is recorded and hash-chained;
+no rebuild re-reads it, so nothing entered there is watched without a human asking again.
 
 ## The claim, in one sentence
 
@@ -71,12 +79,13 @@ filed, and at its earliest 677 days. Either way it stood in public, on a federal
 machine readable the entire time.
 <!-- /generated -->
 
-No press release, no 8-K, and nothing in the thesis that depended on it moved.
+The revision landed in the registry, and nothing in the thesis that depended on that date
+moved.
 
 Then that date passed too. A thesis anchored to it read plus 8.4 months, funded to
 catalyst. The nearest registered completion still in the future puts the same company at
-minus 14.5 months, financing required. Nobody filed an amendment. The date simply arrived,
-and passed.
+minus 14.5 months, financing required. No later registry version reconciled the registered
+expectation. The date simply arrived, and passed.
 
 **Rocket is ordinary, and the actual finding is about the registry.**
 
@@ -107,8 +116,12 @@ the raw after-lapse count, because a revision recording an *actual* completion i
 the regulation requires rather than a failure to file it.
 
 Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
-still open. The anchor case's carry of at least 648 days sits at the **85th percentile** of
-188 such stretches: long, but not the tail.
+still open. The anchor case stood expired for at least 648 days; under the first-of-month
+convention, the 677-day reading sits at the **85th percentile** of 188 such stretches. The
+rank is quoted with the reading it was computed from, because a percentile and the duration
+it ranks have to come off the same convention, and an earlier draft of this block paired the
+end-of-month duration with a first-of-month rank. Long, and inside the distribution rather
+than outside it.
 <!-- /generated -->
 
 <!-- generated: provenance -->
@@ -202,13 +215,15 @@ judgement stays human; the vigilance is what gets automated.
 
 ## How IBM Bob was used
 
-Bob was the primary development tool and built the working system. Eleven logged tasks,
-nine full session transcripts committed at `docs/bob-sessions/`.
+Bob was the primary development tool. Twelve logged tasks, nine full session transcripts
+committed at `docs/bob-sessions/`.
 
-Bob built: the governance port (ledger, challenge, classifier, Granite client), the redline
-loop, the entire original console including all three views and the test suite, the
-snapshot generator, the integrity-badge repair, the ledger anchor, the decision receipt,
-and the research panel.
+IBM Bob built the original governance, redline, console, receipt, and research-panel
+foundations: the governance port (ledger, challenge, classifier, Granite client), the
+redline loop, the entire original console including all three views and the test suite, the
+snapshot generator, the integrity-badge repair, the ledger anchor and the decision receipt.
+Later extensions and adversarial corrections were implemented separately with Claude Code
+and are recorded in the project log.
 
 What preceded Bob: the three verified engine modules in `engine/`, and the spec, findings,
 demo script and prompt pack in `docs/`.
@@ -221,9 +236,11 @@ judging.
 Work after Bob's build was done by hand with Claude Code, logged in `docs/BOB_LOG.md` at
 the same detail as the Bob rows: the unresolved-ticker row, the thesis-break timeline, the
 derivation table, the belief form, the monitoring queue, and the pass that added the
-evidence seam, promise identity, the enforced claims lexicon and workspace mode. Bob built
-the thing that works; what came after is largely the project auditing itself, which is what
-produced the correction to its own slip figures.
+evidence seam, promise identity, the enforced claims lexicon and workspace mode, the random
+cohort study, the three-axis decision state model, the non-quantitative Granite policy and
+the locked ledger append. That is substantial product code, not a review pass over Bob's,
+and it includes the correction to this project's own slip figures. Bob's foundations and
+the later work are both on the record, at the same detail, in the same file.
 
 ## What makes it checkable
 
@@ -239,7 +256,8 @@ hash chain cannot detect deletion, and the prediction held: deleting an entry, a
 replacing the file with a forged chain, both returned "intact" before it.
 
 `docs/LIMITS.md` states what every guard does and does not prove, including where each one
-is weaker than it looks. Nothing in this project claims more than it can show.
+is weaker than it looks. The project records known limits and corrections in place, and its
+controls target the classes of overclaim demonstrated during review.
 
 ## Tech stack
 
@@ -252,7 +270,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 304 passed, 17 skipped
+python3 -m pytest tests/ -q   # 332 passed, 17 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -261,9 +279,9 @@ judge can clone and run it with no IBM account.
 The count depends on what the machine carries. A clone installs `requirements.txt` and
 nothing else, so three groups skip: fifteen tests that replay registry version history out
 of the gitignored `data/cache/`, one credential-gated live Granite check, and one
-browser-geometry check needing Playwright. That is **304 passed, 17 skipped**. Install
-Playwright alone and the geometry check runs too: **305 passed, 16 skipped**. Add the cache
-and Playwright locally and sixteen of them run instead: **320 passed, 1 skipped**. The last
+browser-geometry check needing Playwright. That is **332 passed, 17 skipped**. Install
+Playwright alone and the geometry check runs too: **333 passed, 16 skipped**. Add the cache
+and Playwright locally and sixteen of them run instead: **348 passed, 1 skipped**. The last
 skip is the credentialed Granite test; that configuration has not been re-measured for this
 commit, so no count is quoted for it. The fifteen verify the cohort research rather than the
 console, so nothing on the demo path depends on them.
@@ -303,7 +321,10 @@ from memory: every figure in this file traces to `data/snapshot.json` or `docs/B
 - That the technology works, that a timeline will hold, or anything with the word that  [lexicon-exempt]
   means believable-about-management. Those are feasibility verdicts and this system does  [lexicon-exempt]
   not make them. `orchestrator/lexicon.py` is the enforced list.  [lexicon-exempt]
-- A net-slip figure without saying how many revisions were not comparable. Five of seven  [lexicon-exempt]
-  trials in the snapshot report totals the record does not support.  [lexicon-exempt]
+- A net-slip figure without saying how many revisions were not comparable. The audited
+  trials include established, contingent, and refused movements, and a net-slip total is
+  not usable unless promise identity holds across the revisions being compared. Do not
+  resurrect the first audit's single count of unsupported trials; the three-state audit
+  retracted it.
 - "No tool does this". A commercial screener covers the ranking layer and a judge will find
   it. The honest claim is the monitor.

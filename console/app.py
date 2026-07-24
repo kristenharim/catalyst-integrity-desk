@@ -30,6 +30,7 @@ from evidence import FrozenSnapshotProvider, Incomplete
 from orchestrator.anchor import check as anchor_check, record as anchor_record
 from orchestrator.challenge import (
     ChallengeCard, Decision, ReviewLog, apply_decision, build_challenge,
+    without_model_confidence,
 )
 from orchestrator.classifier import Classification
 
@@ -147,7 +148,11 @@ def redline_view():
     # The contract the redline is about, so its derivation can be shown behind
     # the headline figure without keeping a second copy of it in the snapshot.
     contract = SNAPSHOT["contracts"].get(redline.get("ticker"))
-    return render_template("redline.html", redline=redline, c=contract)
+    # The memo is the model's narrative and Python's figures in one string. The
+    # figures stay; the model's own confidence does not, because no
+    # model-produced number reaches the user.
+    return render_template("redline.html", redline=redline, c=contract,
+                           memo=without_model_confidence(redline["memo"]))
 
 
 # ---------------------------------------------------------------------------

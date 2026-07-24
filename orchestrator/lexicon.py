@@ -66,6 +66,16 @@ class Rule:
 # label anyone can type, and the assumption is the part a reader can argue with.
 LABELLED_CONTINGENT = r"(?=.*\bcontingent\b)(?=.*\bassum)"
 
+# An absence is evidence only with its source and its time. Both halves are
+# required, for the reason `LABELLED_CONTINGENT` requires two: a look-verb on its
+# own ("none found") is a password anyone can type, and the source is the part a
+# reader can go and check. This is the difference between "nobody filed an
+# amendment", which asserts a fact about the world, and "no amendment was found
+# in the registry version history queried on that date", which reports a search.
+SCOPED_ABSENCE = (r"(?=.*\b(?:found|search\w*|queried|examined|appear\w*)\b)"
+                  r"(?=.*\b(?:as of|version history|registry history|source|"
+                  r"under|in this replay|available to)\b)")
+
 
 RULES: list[Rule] = [
     # --- feasibility -----------------------------------------------------
@@ -108,8 +118,24 @@ RULES: list[Rule] = [
          "implies predictive validity that has not been established"),
 
     # --- silence as evidence ----------------------------------------------
-    Rule("silence", r"\bno amendment (?:exists|was ever filed|has ever been filed)\b",
-         "say 'none found in source S under procedure P at time T'"),
+    # These were three exact phrasings and let every synonym of themselves
+    # through: "Nobody filed an amendment." and "No press release, no 8-K" both
+    # scanned clean while sitting in a document the guard was already reading.
+    # A rule keyed on one wording of a claim is a rule against that wording, not
+    # against the claim, so both are keyed on the shape instead: an absence
+    # asserted without the source and time that would make it a search result.
+    Rule("silence",
+         r"\b(?:no|not one)\s+(?:amendment|press release|8-?k|10-?[kq]|"
+         r"announcement|statement|disclosure)s?\b",
+         "say 'none found in source S under procedure P at time T'; the absence "
+         "of an external disclosure is not established by a registry diff",
+         SCOPED_ABSENCE),
+    Rule("silence",
+         r"\b(?:nobody|no one|no-one|not one|none)\s+(?:ever\s+)?"
+         r"(?:filed|issued|published|announced|disclosed|amended|corrected)\b",
+         "say 'none found in source S under procedure P at time T'; nothing here "
+         "can establish that no document exists anywhere",
+         SCOPED_ABSENCE),
     Rule("silence", r"\bthe company (?:failed to|did not) disclose\b",
          "asserts a disclosure duty the system has not established"),
     Rule("silence", r"\b(?:hid|concealed|covered up)\b",
@@ -221,6 +247,19 @@ def demo() -> None:
     assert scan("Management is not credible.")[0].kind == "character"
     assert scan("A risk score of 4.")[0].kind == "character"
     assert scan("No amendment exists.")[0].kind == "silence"
+
+    # The semantic equivalents the exact-phrase rules let through. Each of the
+    # first three shipped in a claim document the guard was already scanning.
+    for planted in [
+        "Nobody filed an amendment.",
+        "No press release, no 8-K, and nothing in the thesis moved.",
+        "No amendment was filed. The date simply arrived, and passed.",
+        "No one ever issued a correction.",
+        "Not one announcement followed.",
+        "There was no press release.",
+    ]:
+        assert any(v.kind == "silence" for v in scan(planted)), (
+            planted, [str(v) for v in scan(planted)])
     assert scan("An immutable ledger.")[0].kind == "immutable"
     assert scan("The readout date moved.")[0].kind == "vocabulary"
     assert scan("This is an early warning of trouble.")[0].kind == "causation"
@@ -268,6 +307,13 @@ def demo() -> None:
     for ok in [
         "The registered primary-completion expectation moved 943 days.",
         "No amendment was found in ClinicalTrials.gov version history as of 2026-07-21.",
+        # The two replacements for the withdrawn silence claims. Both describe
+        # the registry record this system actually read, so neither needs the
+        # scope escape: they assert nothing about the world outside it.
+        "No later registry version reconciled the registered expectation before "
+        "the date passed.",
+        "The registered expectation passed without a replacement date appearing "
+        "in the registry history available to this replay.",
         "The ledger is tamper evident given the anchor was not also rewritten.",
         "The commitment changed shape, so a date difference is not slip.",
         "Financing is required before the registered completion under the stated model.",

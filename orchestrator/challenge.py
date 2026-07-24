@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 import json
 import os
+import re
 import time
 
 from engine.ledger import BeliefCard, BeliefLedger, Breach
@@ -52,6 +53,24 @@ class ChallengeCard:
         return "no range change proposed"
 
 
+# Memos built before the rule above carry `conf <n>` in their header, and one of
+# them is in the committed demo snapshot, which is frozen evidence and is not
+# rewritten to tidy a string. Every reader of a stored memo goes through here, so
+# the page cannot show a figure the model authored regardless of when the memo
+# was built. Anchored to two spaces and the literal token so it cannot eat a
+# figure Python computed.
+_MODEL_CONF = re.compile(r"\s{2}conf \d+(?:\.\d+)?\b")
+
+
+def without_model_confidence(memo: str) -> str:
+    """A stored memo with any model-authored confidence figure removed.
+
+    ponytail: a reader-side strip, because the alternative is editing a frozen
+    artifact. Delete it once no committed snapshot carries a pre-F3 memo.
+    """
+    return _MODEL_CONF.sub("", memo)
+
+
 def build_challenge(card: BeliefCard, breach: Breach, context: dict | None = None,
                     classifier: Classifier | None = None) -> ChallengeCard:
     classifier = classifier or StubClassifier()
@@ -64,8 +83,14 @@ def build_challenge(card: BeliefCard, breach: Breach, context: dict | None = Non
     else:
         proposed = replace(card, expected_low=round(breach.observed, 1))
 
+    # The header carries no confidence figure. `Classification.confidence` is the
+    # model's own JSON field, so printing it into a memo a human reads breaks the
+    # rule the whole architecture rests on: no model-produced number reaches the
+    # user. It is still recorded on the Classification, because discarding a
+    # measurement to tidy a display is the wrong direction; it is simply never
+    # rendered. `cls.source` stays, so the reader still sees who judged.
     memo = (
-        f"CHALLENGE [{cls.label}]  {card.card_id} (v{card.version})  conf {cls.confidence}\n"
+        f"CHALLENGE [{cls.label}]  {card.card_id} (v{card.version})  {cls.source}\n"
         f"  Belief : {card.claim}\n"
         f"  Driver : {card.driver} (conviction {card.confidence}/5)\n"
         f"  Reading: {breach.metric} = {breach.observed:.1f}, expected "

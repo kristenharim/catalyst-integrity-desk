@@ -79,7 +79,8 @@ Open the pending redline. Read the three columns left to right.
 > The thesis was approved against that first trial, completion May 2026, and it gave a
 > funding gap of plus eight point four months. Funded to catalyst.
 >
-> Then nothing happened. Nobody filed an amendment. The date simply arrived, and passed.
+> Then nothing happened. No later registry version reconciled that expectation. The date
+> simply arrived, and passed.
 >
 > A lapsed date is not a catalyst, because you cannot run out of money before an event that
 > already happened. So the binding catalyst becomes the next registered completion still in

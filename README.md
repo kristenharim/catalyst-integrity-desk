@@ -1,6 +1,12 @@
 # Catalyst Integrity Desk
 
-An auditable monitor for the moment an investment thesis quietly stops being true.
+An auditable monitor for when a biotech investment thesis no longer matches its approved
+evidence contract.
+
+**The boundary, stated before anything else.** The system does not determine whether a
+thesis is true. It identifies when the public evidence no longer matches the assumptions
+recorded in the evidence contract and routes that change to a human. A belief written
+through the console is recorded and hash-chained; nothing re-reads it on its own.
 
 <!-- generated: anchor -->
 In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
@@ -42,8 +48,12 @@ the raw after-lapse count, because a revision recording an *actual* completion i
 the regulation requires rather than a failure to file it.
 
 Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
-still open. The anchor case's carry of at least 648 days sits at the **85th percentile** of
-188 such stretches: long, but not the tail.
+still open. The anchor case stood expired for at least 648 days; under the first-of-month
+convention, the 677-day reading sits at the **85th percentile** of 188 such stretches. The
+rank is quoted with the reading it was computed from, because a percentile and the duration
+it ranks have to come off the same convention, and an earlier draft of this block paired the
+end-of-month duration with a first-of-month rank. Long, and inside the distribution rather
+than outside it.
 <!-- /generated -->
 
 `docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the
@@ -132,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 304 passed, 17 skipped
+python3 -m pytest tests/ -q       # 332 passed, 17 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -145,9 +155,9 @@ Nothing else.
 tracked files only and installs `requirements.txt` alone, so three groups skip: fifteen that
 replay registry version history out of the gitignored `data/cache/`, one live Granite check
 that needs watsonx credentials, and one browser-geometry check that needs Playwright. That
-is **304 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
-alone and the browser-geometry check runs too: **305 passed, 16 skipped**. Add the cache and
-Playwright locally and sixteen of those run instead, giving **320 passed, 1 skipped**. The
+is **332 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
+alone and the browser-geometry check runs too: **333 passed, 16 skipped**. Add the cache and
+Playwright locally and sixteen of those run instead, giving **348 passed, 1 skipped**. The
 last skip is the credentialed Granite test; that configuration has not been re-measured for
 this commit, so no count is quoted for it. That test is verified not to pass on the stub:
 pointed at an invalid endpoint it fails on `source == "granite"`.
@@ -242,10 +252,11 @@ caught three violations already shipped in this repo when it was first run.
 **Slip is only slip when the promise held its shape.** `engine/promise.py` classifies every
 registry revision as unchanged, date-only, a scope revision, a supersession, or uncertain,
 and only the first two may produce a number. A revision that also changed the primary
-endpoint describes a different commitment, and subtracting its dates is not a delay. This
-found that five of the seven trials in the snapshot had been reporting net-slip figures the
-record does not support, including this project's own headline numbers. See
-`docs/LIMITS.md`.
+endpoint describes a different commitment, and subtracting its dates is not a delay. The
+audited trials include established, contingent, and refused movements. A net-slip total is
+not usable unless promise identity holds across the revisions being compared. The first
+version of this audit reported a single count of unsupported trials; the three-state audit
+retracted it, and `docs/LIMITS.md` carries both the count and why it was withdrawn.
 
 Two supporting rules do the rest of the work.
 
@@ -304,14 +315,22 @@ record is still intact, and then the non-quantitative Granite policy in
 `orchestrator/granite.py`: the rule that replaced "a number absent from the input" after an
 audit broke it, and the pass that closed the word-form dates the replacement still let
 through, aligned both prompts with the rule the runtime actually enforces, and corrected the
-test counts three earlier rows had published from memory rather than from a run.
+test counts three earlier rows had published from memory rather than from a run. Then the
+submission reconciliation: the classification's confidence stopped being rendered, the
+lexicon's silence rules stopped being keyed on three exact phrasings, and the claims this
+file makes about its own percentile, its own retracted audit, and its own Bob counts were
+put under `tests/test_claim_integrity.py` rather than left to review.
 
-**Bob built the thing that works. What came after is mostly the project auditing itself**,
-which is the part that produced the finding about its own slip figures. Everything in the
-original console -- all three views, the snapshot generator, the redline loop, the
-governance port and the first test suite -- is Bob's, and `.bob/custom_modes.yaml` shows
-the constraints it was built under. Describing that split inaccurately would be a worse
-failure than admitting a second tool touched the repo.
+**IBM Bob built the original governance, redline, console, receipt and research-panel
+foundations. Later extensions and adversarial corrections were implemented separately with
+Claude Code and are recorded in the project log.** Everything in the original console --
+all three views, the snapshot generator, the redline loop, the governance port and the
+first test suite -- is Bob's, and `.bob/custom_modes.yaml` shows the constraints it was
+built under. What came after is not only review: the evidence seam, promise identity, the
+claims lexicon, workspace mode, the cohort study, the decision state model, the
+non-quantitative Granite policy and the locked ledger append are all product code written
+by hand. Describing that split inaccurately would be a worse failure than admitting a
+second tool touched the repo.
 
 ## How it was verified
 
@@ -357,7 +376,8 @@ the snapshot.
 expired for 677 days, on `NCT04248439`. That date has since passed too, so the binding
 catalyst is now `NCT06092034` at 2028-04, against which the same runway gives **-14.5
 months, financing required**. Anchored to the old date the thesis read +8.4 months, funded.
-No amendment was filed. The date simply arrived, and passed.
+No later registry version reconciled the registered expectation. The date simply arrived,
+and passed.
 
 **And a correction this project found in its own numbers, then corrected again.** Earlier
 versions of this section reported "1,008 days of net slip" on that trial and "a 943 day

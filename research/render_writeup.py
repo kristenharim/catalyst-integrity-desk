@@ -1340,9 +1340,13 @@ recording an *actual* completion is the update the regulation requires rather th
 file it.
 
 Industry point prevalence is {industry_prevalence} of all trials, and {industry_open_rate}
-of those whose commitment is still open. The anchor case's carry of at least {anchor_days_eom}
-days sits at the **{anchor_stretch_pct} percentile** of {anchor_stretch_n} such stretches:
-long, but not the tail.
+of those whose commitment is still open. The anchor case stood expired for at least
+{anchor_days_eom} days; under the first-of-month convention, the {anchor_days}-day reading
+sits at the **{anchor_stretch_pct} percentile** of {anchor_stretch_n} such stretches. The
+rank is quoted with the reading it was computed from, because a percentile and the duration
+it ranks have to come off the same convention, and an earlier draft of this block paired the
+end-of-month duration with a first-of-month rank. Long, and inside the distribution rather
+than outside it.
 """,
 
 "block_primary_measures": """\

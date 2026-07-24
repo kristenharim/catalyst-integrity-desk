@@ -375,8 +375,12 @@ the raw after-lapse count, because a revision recording an *actual* completion i
 the regulation requires rather than a failure to file it.
 
 Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
-still open. The anchor case's carry of at least 648 days sits at the **85th percentile** of
-188 such stretches: long, but not the tail.
+still open. The anchor case stood expired for at least 648 days; under the first-of-month
+convention, the 677-day reading sits at the **85th percentile** of 188 such stretches. The
+rank is quoted with the reading it was computed from, because a percentile and the duration
+it ranks have to come off the same convention, and an earlier draft of this block paired the
+end-of-month duration with a first-of-month rank. Long, and inside the distribution rather
+than outside it.
 <!-- /generated -->
 
 A draft published the undivided after-lapse rate for that mechanism, which counted the

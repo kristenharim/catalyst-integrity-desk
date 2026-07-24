@@ -109,6 +109,22 @@ whose meaning nobody has checked.
 - **Deterministic fields remain the only displayed quantities.** Every figure on screen
   is rendered by Python and Jinja from a named snapshot field. That is what makes this
   policy affordable: the model never needed to carry a number.
+- **The classification's confidence was the one model-authored number that still reached
+  a human, and it no longer does.** `_quantitative()` scans the rationale, not the JSON
+  object around it, so the model's own `confidence` field went straight to the redline
+  template, and a second copy travelled inside the memo header `build_challenge` composed
+  from the same field. Both render sites are removed. The value is still recorded on
+  `Classification` and in the frozen snapshot, because discarding a measurement to tidy a
+  display is the wrong direction; it is simply never shown, and `classification.source`
+  stays on the page so the reader still sees which of the two answered. It is **not**
+  mapped to a high/medium/low label either, since that is the same model-produced
+  quantification wearing words. Memos built before this rule carry the token in their
+  header, and one of them is in the committed demo snapshot, which is frozen evidence and
+  is not rewritten to tidy a string, so `without_model_confidence()` strips it at the read
+  site. `tests/test_claim_integrity.py` renders every GET page and fails on the value.
+  What that does not prove: it reads the value the snapshot happens to hold, so a memo
+  carrying a differently formatted figure would pass. The structural half is the second
+  assertion, that `build_challenge` no longer composes the field into prose at all.
 - **The stub fallback is quantitative by design and is not scanned.** It states
   engine-computed values because it is Python reading the fields the page renders.
   `Classification.source` records which of the two answered, and the page shows it.
@@ -473,7 +489,8 @@ one. The filter never fired. It is the same defect shape as the `status` bug thr
 down and as everything else in this file: a check that silently does not apply is
 indistinguishable from a check that passes, and this one produced a more dramatic number in
 the flattering direction and survived a manual review. Corrected 2026-07-22 under snapshot
-`cohort-8326c1c1e964`; a test now asserts a past ACTUAL date does not count.
+`cohort-8326c1c1e964`, which is the historical id frozen at that moment and not the
+current one; a test now asserts a past ACTUAL date does not count.
 
 **The cross-stratum comparison is inverted by this**, and on the corrected figures the two
 measures reverse the ordering, with industry and NIH tied at the top of the stretch
@@ -550,7 +567,15 @@ frequency measure and per-trial longest carry the primary duration measure, with
 stretch-based figures retained as a labelled sensitivity. "2.4x" is removed as a headline
 everywhere and the no-pooling rule is re-justified on three independent differences:
 reconciliation behaviour, point prevalence, and filing frequency. The store was re-measured
-and the snapshot re-frozen as `cohort-8326c1c1e964`.
+and the snapshot re-frozen as the now historical `cohort-8326c1c1e964`.
+
+**Both ids in this section are historical and are kept as written.** Each names the state
+of the store at the moment of the correction it describes, and a correction record that
+renames its own subject is not a record. The published snapshot is now
+`cohort-5b03269658b8`: later rounds added derived fields, and the id hashes the measured
+rows and the frame together, so adding a field does not move it. No figure quoted from
+either older id is offered as a current figure; the current figures are in the generated
+blocks above, which name their own snapshot.
 
 **Why this is the same lesson as everything else in this file.** The cohort deliberately
 measures with the product's own code, on the argument that a study measured by a
@@ -854,19 +879,30 @@ describes, in a different place.
 ## Untested, and known to be
 
 - ~~The decision receipt's two hashes.~~ Closed. The receipt used to travel in the query
-  string and a hand-written URL could forge every field; it is now read from the ledger's
-  last entry at render time, with a test that requests the page carrying forged values and
-  asserts the real ones render.
+  string and a hand-written URL could forge every field. It is now built at render time
+  from the ledger's last entry **for the card the page is about**, selected by `card_id`
+  rather than by whichever entry happens to be last: record a belief through
+  `/belief/new` after an approval and the plain last entry is that belief, so the receipt
+  showed one card's hashes under another card's summary. A test requests the page carrying
+  forged values and asserts the real ones render, and a second pins the selection.
 - Whether a rebuild is reproducible. Nothing asserts that building twice from the same
   inputs produces the same bytes, so a hand-edited snapshot would not be detected.
-- Concurrency anywhere. Two decisions appended at once are untested; the ledger has no
-  compare-and-swap on the head. This applies to the analyst belief form too: two analysts
-  confirming at the same moment both read the same head hash and both append.
-- Whether a belief written through the form is ever monitored. `POST /belief/new` appends
-  a real CREATE entry to the real chain, and the redline loop still runs off the committed
-  snapshot rather than off the ledger's live cards. So the form records a belief, and
-  nothing yet re-reads it on the next rebuild. Say "records a belief", never "starts
+- ~~Concurrency on the ledger head.~~ Closed for the single-host case. The read and the
+  append are one critical section under an exclusive `fcntl.flock`, and a writer whose
+  precondition no longer holds raises `Conflict` and appends nothing, so two analysts
+  confirming at the same moment no longer produce two entries claiming the same
+  predecessor. The section below states what the lock does not cover: it is POSIX only, it
+  is advisory rather than mandatory, and over NFS the guarantee is the mount's. Concurrency
+  elsewhere in the console is still untested.
+- Whether a belief written through the form is ever monitored. It is not. **A newly
+  entered belief is recorded, not reconciled.** `POST /belief/new` appends a real CREATE
+  entry to the real chain, and the redline loop still runs off the committed snapshot
+  rather than off the ledger's live cards, so nothing re-reads that card against fresh
+  evidence on the next rebuild or at any other time. Say "records a belief", never "starts
   monitoring it", which is what the button used to imply.
+  `tests/test_capability_language.py` enforces the wording on every surface and pins the
+  structural fact underneath it, so wiring the rebuild to read the ledger fails that file
+  rather than silently making these sentences true.
 
 ## The ledger accused itself of tampering, and the lock has a boundary
 

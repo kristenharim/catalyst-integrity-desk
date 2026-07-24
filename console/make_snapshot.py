@@ -686,8 +686,11 @@ def _build_rckt_redline(rckt: CatalystContract) -> dict:
     gives gap_months ~+8.4.  The recomputed contract is the real current
     contract (NCT06092034, 2028-04), which gives gap_months ~-14.5.
 
-    No amendment was filed.  The date simply arrived and passed.  That is the
-    event the BeliefCard is being updated to reflect.
+    No later registry version reconciled the registered expectation before the
+    date passed.  That is the event the BeliefCard is being updated to reflect,
+    and it is the whole of what the record supports: this project reads registry
+    version history, so it can say what the registry did and cannot say what the
+    company did or did not publish elsewhere.
     """
     if not rckt.lapsed:
         print(
@@ -789,7 +792,11 @@ def _build_rckt_redline(rckt: CatalystContract) -> dict:
         "current_trial": recomputed.trial["nct"],
         "current_pcd": _iso(recomputed.catalyst_date),
         "current_gap_months": current_gap,
-        # No amendment was filed. The date lapsing is the event.
+        # The date lapsing is the event: no later registry version reconciled
+        # the registered expectation before it passed. The field name is the
+        # one the frozen snapshot carries and is kept for that reason; what it
+        # licenses on screen is a statement about the registry history this
+        # project reads, never about disclosures it never queried.
         "no_amendment_filed": True,
     }
 

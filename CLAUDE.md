@@ -11,9 +11,11 @@ repo and is kept as a record only. Do not plan work from it.
 
 This project is an entry in the IBM AI Builders Challenge, which requires **IBM Bob as
 the primary development tool** and a README section describing that use. Bob's build is
-already on the record: eleven logged tasks and seven session transcripts in
-`docs/bob-sessions/`. That requirement is met by work already done, so you are no longer
-restricted to verification.
+already on the record: twelve logged tasks and nine session transcripts in
+`docs/bob-sessions/`. Counted from the rows tagged `IBM Bob` in `docs/BOB_LOG.md` and the
+files in that directory, which `tests/test_claim_integrity.py` re-counts on every run, so
+this line cannot go stale again. That requirement is met by work already done, so you are
+no longer restricted to verification.
 
 You may write new code, including in areas Bob built. You still own kill gates,
 acceptance criteria, adversarial verification, docs, and prior-art checks.

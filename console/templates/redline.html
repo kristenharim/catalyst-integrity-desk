@@ -59,7 +59,8 @@
       {% if redline.no_amendment_filed %}
       <div style="background:#2d1f00; border:1px solid #d29922; border-radius:4px;
                   padding:8px 12px; margin-bottom:12px; font-size:11px; color:#d29922;">
-        No amendment was filed. The registered completion date passed.
+        No later registry version reconciled the registered expectation before
+        the date passed.
       </div>
       {% endif %}
       <div style="margin-bottom:12px;">
@@ -138,9 +139,10 @@
             {{ cls_label | upper | replace("_", " ") }}
           </span>
         {% endif %}
+        {# No confidence figure. The classification's confidence is the model's
+           own JSON field, and no model-produced number reaches the user. The
+           source stays, because who judged is the part a reader can act on. #}
         <span style="color:#8b949e; font-size:11px; margin-left:6px;">
-          conf {{ redline.classification.confidence }}
-          &nbsp;|&nbsp;
           <span class="granite-accent">{{ redline.classification.source }}</span>
         </span>
       </div>
@@ -183,7 +185,7 @@
     </div>
     <div style="background:#0d1117; border:1px solid #30363d; border-radius:4px;
                 padding:14px; font-size:12px; line-height:1.6;
-                white-space:pre-wrap; color:#c9d1d9;">{{ redline.memo }}</div>
+                white-space:pre-wrap; color:#c9d1d9;">{{ memo }}</div>
   </div>
 
   {# Original claim with invalidated clause marked, and proposed replacement #}
