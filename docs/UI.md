@@ -149,9 +149,13 @@ Integrity Receipt with its tampered and truncated states. The rest is not starte
 - Flask and Jinja remain the authoritative renderer. No React rewrite.
 - HTMX only later, for bounded server-driven interactions.
 - A server-rendered `/_components` gallery.
-- Playwright screenshot tests and axe-core accessibility checks. Built for the two screens
-  above in `tests/test_inbox_receipt.py`, skipped rather than vendored when the browser or
-  the axe source is absent.
+- Playwright screenshot tests and axe-core accessibility checks. Built for the Phase 2
+  decision spine in `tests/test_inbox_receipt.py`: the inbox, the receipt, the redline and
+  the confirmation. axe-core is installed rather than vendored, and the scan is skipped when
+  the browser or the axe source is absent. `npm run test:a11y` is the command that requires
+  it instead, and which pages are scanned is keyed on the `url_map`, so a new screen has to
+  be scanned or named as out of scope before the suite passes. The Phase 1 screens are named
+  as out of scope, which is a gap in coverage rather than a statement that they pass.
 - IBM Bob for one bounded component at a time.
 
 ### Components to design before any page template

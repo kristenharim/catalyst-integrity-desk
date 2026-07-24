@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "Pins axe-core for the accessibility test tier. The product is Flask and Jinja and has no frontend build step.",
+  "scripts": {
+    "test:a11y": "CID_AXE_REQUIRED=1 python3 -m pytest tests/ -q"
+  },
   "devDependencies": {
     "axe-core": "4.12.1"
   }

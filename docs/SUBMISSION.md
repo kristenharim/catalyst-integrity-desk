@@ -270,7 +270,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 369 passed, 19 skipped
+python3 -m pytest tests/ -q   # 370 passed, 19 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -285,10 +285,10 @@ command:
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **369 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **370 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `CID_AXE_REQUIRED=1 python3 -m pytest tests/ -q` | **372 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **385 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **370 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **371 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **373 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **386 passed, 3 skipped** |
 
 Base is what a judge gets, and on a clone with nothing extra installed the plain command
 produces it. The last tier shares a command with the second because the cache is data
@@ -302,8 +302,16 @@ cohort research rather than the console, so nothing on the demo path depends on 
 the exact version these numbers were measured against. No frontend build step, no bundler,
 no framework: the product is Flask and Jinja. axe-core is MPL-2.0 and is installed rather
 than vendored, so no third-party source is committed here, and the tests read it from disk
-rather than a CDN so the tier runs offline. `CID_AXE_REQUIRED=1` makes an accessibility run
-that scans nothing fail rather than report green.
+rather than a CDN so the tier runs offline.
+
+`npm run test:a11y` is the whole accessibility command and it sets `CID_AXE_REQUIRED=1`
+itself, so the strict requirement is not something a reader has to remember. It exits
+nonzero on a missing axe-core, on zero scans executed, and on any violation, because a
+`skip` and a `pass` look identical in a summary line. Which pages get scanned is keyed on
+the app's own `url_map` rather than typed into the test: every route is either scanned or
+named with a reason for not being, so a new screen fails the suite until it is classified.
+That is coverage of the Phase 2 surfaces and not of the whole app; the Phase 1 screens are
+named as unscanned and `docs/LIMITS.md` says what is open on them.
 
 ## Links
 

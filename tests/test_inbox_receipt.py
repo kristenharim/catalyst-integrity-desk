@@ -741,9 +741,63 @@ def test_the_root_still_redirects_to_the_rocket_detail(client):
 # from CID_AXE_CORE or a local node_modules, and skipped when absent rather than
 # vendored into the repo. `package.json` and `package-lock.json` pin the version
 # `npm ci` puts in that node_modules, so the tier is reproducible rather than
-# whatever axe-core the registry served that day.
+# whatever axe-core the registry served that day, and `npm run test:a11y` sets
+# CID_AXE_REQUIRED itself, so the strict tier no longer depends on a reader
+# remembering a variable.
 
 AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"]
+
+# The pages this tier drives, keyed on the url_map rule rather than typed as a
+# list of URLs. `{entry_hash}` is filled from the ledger entry the test seeds,
+# the way tests/test_lexicon.py's PARAMETERISED map gives a parameterised rule a
+# fixture instance to run against.
+A11Y_PAGES = {
+    "/inbox": "/inbox",
+    "/redline": "/redline",
+    "/redline/confirm": "/redline/confirm?verdict=approve",
+    "/receipts/<entry_id>": "/receipts/{entry_hash}",
+}
+
+# Every other rule, each with why this tier does not scan it. Nothing falls
+# through: the test at the end of this file reads the url_map and fails on a
+# rule that is in neither map.
+A11Y_NOT_SCANNED = {
+    "/": "302 to the Rocket detail, renders nothing a reader can look at",
+    "/demo": "302 to the Rocket detail, renders nothing a reader can look at",
+    "/static/<path:filename>": "Flask builtin, serves files rather than pages",
+    "/redline/decide": "POST only; it redirects to /redline/confirm, scanned above",
+    "/workspace/discover": "POST only, a stage of the Phase 1 workspace",
+    "/workspace/select": "POST only, a stage of the Phase 1 workspace",
+    "/workspace/approve": "POST only, a stage of the Phase 1 workspace",
+    # Phase 1 screens. They are user-facing and they are not scanned here, which
+    # is a gap in coverage rather than a statement that they pass. See
+    # docs/LIMITS.md; three of them were measured and do carry violations.
+    "/contract/<ticker>": "Phase 1 detail screen, outside the Phase 2 surface",
+    "/contracts": "Phase 1 ranked list, outside the Phase 2 surface",
+    "/queue": "Phase 1 monitoring queue, outside the Phase 2 surface",
+    "/workspace": "Phase 1 workspace, outside the Phase 2 surface",
+    "/belief/new": "Phase 1 belief form, outside the Phase 2 surface",
+}
+
+# Violations already present on a scanned page, each entry the exact pairing that
+# produces it. A page with a known violation stays scanned rather than dropping
+# out of the inventory, because dropping out is how these survived: the commit
+# before this one repaired `#10b981` on `#1a4731` and `#6b7280` on `#161b22` on
+# `/redline`, and the identical pairings live on `/redline/confirm`, which no
+# scan reached. Repairing them is a template change and belongs to a commit
+# allowed to touch the UI; this one makes the page measured and the residual
+# written down. Both directions are asserted below, so the list cannot rot: a
+# violation outside it fails, and an entry in it that no longer fires fails too.
+KNOWN_VIOLATIONS = {
+    "/redline/confirm": {
+        # The record-integrity badge. #10b981 on #1a4731, 4.16:1, floor 4.5:1.
+        "color-contrast div:nth-child(1) > div:nth-child(2) > div > span",
+        # The hash-verified chip, the same pairing.
+        "color-contrast span:nth-child(7)",
+        # The entry hash in the receipt table. #6b7280 on #161b22, 3.57:1.
+        "color-contrast div:nth-child(5) > table > tbody > tr:nth-child(1) > td:nth-child(2)",
+    },
+}
 
 # Every axe.run that actually executed, appended by the test below and read by
 # the guard at the end of this file. A skipped accessibility test and a passing
@@ -787,8 +841,8 @@ def live_server(tmp_path, monkeypatch):
         server.shutdown()
 
 
-def test_the_decision_screens_pass_axe_core(live_server):
-    """The accessibility regression for the three screens of the decision spine.
+def test_the_phase_2_screens_pass_axe_core(live_server):
+    """The accessibility regression for the Phase 2 decision spine.
 
     Colour is never the only signal, contrast clears the Carbon floor on both
     the quiet and the alarm state, landmarks and heading order are real, and the
@@ -796,10 +850,13 @@ def test_the_decision_screens_pass_axe_core(live_server):
     structural half is asserted beside it, because axe cannot know that a badge
     which drops its text still has a colour.
 
-    `/redline` is measured here rather than in a second harness of its own. It
-    is the demo centrepiece and it carried two colour-contrast violations of its
-    own while the two screens either side of it were clean, which is what a
-    check scoped to the newest work looks like from the outside.
+    The pages come from `A11Y_PAGES` rather than a list typed here, so the
+    inventory test below can hold this scan to the url_map. `/redline` is
+    measured here rather than in a second harness of its own. It is the demo
+    centrepiece and it carried two colour-contrast violations of its own while
+    the two screens either side of it were clean, which is what a check scoped
+    to the newest work looks like from the outside; `/redline/confirm` then
+    carried the same two, for the same reason, until this scan reached it.
     """
     if os.environ.get("CID_BASE_DEPS_ONLY"):
         pytest.skip("base dependencies only; playwright is a development extra")
@@ -827,26 +884,23 @@ def test_the_decision_screens_pass_axe_core(live_server):
             pytest.skip(f"no playwright browser installed: {exc}")
         try:
             page = browser.new_page(viewport={"width": 1280, "height": 800})
-            for name, url in [("inbox", f"{base}/inbox"),
-                              ("receipt", f"{base}/receipts/{entry_hash}"),
-                              ("redline", f"{base}/redline")]:
-                page.goto(url, wait_until="load")
+            for rule, path in sorted(A11Y_PAGES.items()):
+                page.goto(base + path.format(entry_hash=entry_hash),
+                          wait_until="load")
                 page.add_script_tag(content=axe)
                 result = page.evaluate(
                     "async (tags) => await axe.run(document, "
                     "{runOnly: {type: 'tag', values: tags}})", AXE_TAGS)
-                _AXE_SCANS.append(name)
-                findings[name] = [
-                    f"{v['id']} ({v['impact']}): "
-                    + "; ".join(n["target"][0] for n in v["nodes"][:3])
-                    for v in result["violations"]
-                ]
+                _AXE_SCANS.append(rule)
+                findings[rule] = {f"{v['id']} {n['target'][0]}"
+                                  for v in result["violations"]
+                                  for n in v["nodes"]}
                 # Every status carries text, so a reader who cannot see the
                 # colour still gets the state.
                 for selector in [".badge", ".chip", ".record-badge"]:
                     for handle in page.query_selector_all(selector):
                         assert handle.inner_text().strip(), (
-                            f"{selector} on {name} conveys its state by colour alone"
+                            f"{selector} on {rule} conveys its state by colour alone"
                         )
                 # The whole page is reachable by keyboard, with a visible ring.
                 focused = []
@@ -854,20 +908,63 @@ def test_the_decision_screens_pass_axe_core(live_server):
                     page.keyboard.press("Tab")
                     focused.append(page.evaluate(
                         "() => document.activeElement && document.activeElement.tagName"))
-                assert "A" in focused, f"no link on {name} is reachable by Tab"
+                assert "A" in focused, f"no link on {rule} is reachable by Tab"
         finally:
             browser.close()
 
-    assert not any(findings.values()), (
+    new = {rule: sorted(found - KNOWN_VIOLATIONS.get(rule, set()))
+           for rule, found in findings.items()}
+    assert not any(new.values()), (
         "axe-core violations:\n  "
-        + "\n  ".join(f"{page}: {v}" for page, vs in findings.items() for v in vs)
+        + "\n  ".join(f"{rule}: {v}" for rule, vs in new.items() for v in vs)
+    )
+    stale = {rule: sorted(known - findings.get(rule, set()))
+             for rule, known in KNOWN_VIOLATIONS.items()}
+    assert not any(stale.values()), (
+        "these violations are declared known and no longer fire, so the page is "
+        "being held to a weaker check than it passes; delete them:\n  "
+        + "\n  ".join(f"{rule}: {v}" for rule, vs in stale.items() for v in vs)
+    )
+
+
+def test_every_route_is_axe_scanned_or_named_outside_the_phase_2_surface():
+    """The control that cannot silently omit a newly added Phase 2 page.
+
+    The scope, exactly: `A11Y_PAGES` is the Phase 2 decision spine, four pages,
+    and this is not whole-app accessibility coverage. Every other rule is named
+    in `A11Y_NOT_SCANNED` with why, and for the Phase 1 screens that reason is
+    that they are outside this tier, which is a gap in coverage and not a
+    statement that they pass.
+
+    Keyed on `flask_app.url_map`, the same shape as
+    `tests/test_lexicon.py::test_every_route_is_scanned_or_named_as_exempt`,
+    which exists because `/redline/confirm` and every `/workspace` stage went
+    unread behind a hand-typed list. The accessibility page list was hand-typed
+    inside the axe test in exactly the same way, and `/redline/confirm` escaped
+    it in exactly the same way, still carrying the two colour pairings the
+    previous commit repaired on the page next to it.
+
+    So a route added from here on fails this until someone classifies it.
+    `/_components` and the Decision Review route do not exist yet; when either
+    is added this fails naming it, which is the point of writing it now.
+    """
+    rules = {str(r.rule) for r in flask_app.url_map.iter_rules()}
+    unaccounted = rules - set(A11Y_PAGES) - set(A11Y_NOT_SCANNED)
+    assert not unaccounted, (
+        "these routes are neither scanned by the accessibility tier nor named "
+        f"in A11Y_NOT_SCANNED with a reason: {sorted(unaccounted)}"
+    )
+    stale = (set(A11Y_PAGES) | set(A11Y_NOT_SCANNED)) - rules
+    assert not stale, (
+        "these entries name no route the app serves, so the inventory is "
+        f"describing an app that no longer exists: {sorted(stale)}"
     )
 
 
 def test_the_documented_accessibility_command_ran_an_axe_scan():
     """The accessibility tier cannot report green having scanned nothing.
 
-    Every gate in the test above is a `pytest.skip`, and a skip is invisible in
+    Every gate in the scan above is a `pytest.skip`, and a skip is invisible in
     the one line a reader looks at. Someone follows the documented setup, `npm
     ci` fails or installs somewhere else or the package layout moves, the axe
     test skips, the suite says green, and the accessibility claim in the README
@@ -876,12 +973,14 @@ def test_the_documented_accessibility_command_ran_an_axe_scan():
     receipt-link matcher that passed its own mutation: a check with no way to
     fail on the thing it is named after.
 
-    So the documented command sets `CID_AXE_REQUIRED=1`, and with it set this
-    asserts that axe actually ran. It reads `_AXE_SCANS`, which is appended only
-    after `axe.run` returns for a page, so it fails on a skip, on a browser that
-    would not launch, and on a page list that quietly emptied. Without the
-    variable it skips, because the base and Playwright tiers do not carry
-    axe-core and must not be failed for it.
+    So the documented command is `npm run test:a11y`, which sets
+    `CID_AXE_REQUIRED=1` itself, and with it set this asserts that axe actually
+    ran on every page the inventory declares. It reads `_AXE_SCANS`, appended
+    only after `axe.run` returns for a page, so it fails on a skip, on a browser
+    that would not launch, on a page list that quietly emptied, and on a loop
+    that stopped short of the declared set. Without the variable it skips,
+    because the base and Playwright tiers do not carry axe-core and must not be
+    failed for it.
 
     This file's tests run in definition order, so the scan is recorded before
     this reads it.
@@ -896,4 +995,8 @@ def test_the_documented_accessibility_command_ran_an_axe_scan():
         "measured nothing. axe-core source: "
         f"{_axe_source_path() or 'not found, run npm ci in the repo root'}; "
         f"playwright: {'importable' if have_playwright else 'absent, pip install playwright'}"
+    )
+    assert set(_AXE_SCANS) == set(A11Y_PAGES), (
+        "the scan did not cover the pages the inventory declares. scanned: "
+        f"{sorted(set(_AXE_SCANS))}; declared: {sorted(A11Y_PAGES)}"
     )

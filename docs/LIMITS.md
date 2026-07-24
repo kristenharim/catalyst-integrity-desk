@@ -992,6 +992,37 @@ mutated copies of the snapshot: deleting or flipping the literal changes nothing
 reconciliation added to the history withdraws the claim, and an incomplete, absent, or
 not-yet-lapsed history produces `unknown`.
 
+## The accessibility tier covers the Phase 2 spine, and one of those pages still fails
+
+The scan is keyed on the app's own `url_map`, so no route can go unclassified, but the set it
+actually drives is four pages: `/inbox`, `/receipts/<entry_id>`, `/redline` and
+`/redline/confirm`. Everything else is named in `A11Y_NOT_SCANNED` with a reason. For the
+Phase 1 screens that reason is that they are outside this tier, and that is a gap in coverage,
+not a finding that they pass.
+
+Measured on 2026-07-24 with the same tags the tier uses, and recorded here because leaving it
+out would let the tier's green summary read as more than it is: `/contracts` and `/queue`
+reported no violations, while `/contract/<ticker>`, `/workspace` and `/belief/new` each
+reported at least one, including a `select` with no accessible name on the belief form. None
+of those five is scanned, so those readings are a snapshot from one run rather than a
+guarantee in either direction.
+
+`/redline/confirm` is scanned and does not pass. It carries three colour-contrast failures:
+the record-integrity badge and the hash-verified chip at `#10b981` on `#1a4731`, `4.16:1`
+against a `4.5:1` floor, and the entry hash in the receipt table at `#6b7280` on `#161b22`,
+`3.57:1`. They are the same two pairings the commit before this one repaired on `/redline`,
+and they survived exactly because `/redline` was scanned and `/redline/confirm` was not, which
+is the hole this inventory closes. They are declared in `KNOWN_VIOLATIONS` in
+`tests/test_inbox_receipt.py` rather than excused by dropping the page: a fourth violation on
+that page fails, and an entry in the list that stops firing fails too, so the list cannot
+quietly become a licence. Repairing them is a template change and belongs to a commit allowed
+to touch the UI. Until then the page is measured and failing on the record rather than
+unmeasured.
+
+What the tier does not establish, at the strength it holds: axe is a mechanical check at one
+viewport in one browser. It does not read a screen, and a page can clear every rule in it and
+still be unusable.
+
 ## Where these came from
 
 The first four sections were produced by a three-model adversarial review (Claude, Cursor,

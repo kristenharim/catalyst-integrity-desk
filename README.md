@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 369 passed, 19 skipped
+python3 -m pytest tests/ -q       # 370 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -160,10 +160,10 @@ above it, and each has its own command, so a number here is traceable to what pr
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **369 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **370 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `CID_AXE_REQUIRED=1 python3 -m pytest tests/ -q` | **372 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **385 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **370 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **371 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **373 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **386 passed, 3 skipped** |
 
 Base is the tier a judge gets and the number printed above; on a clone with nothing extra
 installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
@@ -178,9 +178,10 @@ on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 The fifteen cache-dependent tests verify the cohort research rather than the console, the
 browser check verifies the demo's opening frame is where the script says it is, and the
-accessibility checks run axe-core over the decision inbox, the receipt and the redline.
-Nothing on the demo path depends on any of them, which is why a clone can run the whole
-product with nineteen tests skipped and still be running the real thing.
+accessibility checks run axe-core over the Phase 2 decision spine: the inbox, the receipt,
+the redline and the confirmation the demo ends on. Nothing on the demo path depends on any
+of them, which is why a clone can run the whole product with nineteen tests skipped and
+still be running the real thing.
 
 `package.json` and `package-lock.json` pin axe-core and nothing else, so `npm ci` installs
 the exact version these results were measured against. There is no frontend build step and
@@ -188,9 +189,18 @@ the product is Flask and Jinja; the lockfile exists only so the accessibility ti
 reproducible. axe-core is MPL-2.0 and is installed rather than vendored, so no third-party
 source is committed here. The tests load it from disk and never from a CDN, which keeps the
 no-network guarantee. `CID_AXE_CORE` still overrides the path if you have axe-core
-elsewhere. `CID_AXE_REQUIRED=1` is what makes that tier honest: with it set, an
-accessibility run that scans nothing fails instead of reporting green, because a `skip` and
-a `pass` look identical in a summary line.
+elsewhere.
+
+**Two things make that tier fail closed rather than fail quiet.** `npm run test:a11y` is the
+whole command; it sets `CID_AXE_REQUIRED=1` itself, so nothing depends on a reader
+remembering a variable, and with it set a run that scans nothing fails instead of reporting
+green, because a `skip` and a `pass` look identical in a summary line. It exits nonzero on a
+missing axe-core, on zero scans executed, and on any violation. And the pages scanned are
+keyed on the app's own `url_map`: a route is either scanned or named in `A11Y_NOT_SCANNED`
+with a reason, so adding a screen fails the suite until someone classifies it. That covers
+the Phase 2 surfaces and is not whole-app accessibility coverage; the Phase 1 screens are
+named as unscanned, and `docs/LIMITS.md` records what was measured on them and what is still
+open on `/redline/confirm`.
 
 **The 90 second tour:**
 
@@ -356,7 +366,14 @@ in this repo stores asserted absent from the rendered page. Most recently, that 
 a way in: `/redline/confirm` links to the address of the entry it just rendered, selected by
 `card_id` like the receipt itself, so a later unrelated write cannot move it, and the
 accessibility check was widened to `/redline`, which had been carrying two colour-contrast
-failures of its own while the two screens either side of it measured clean.
+failures of its own while the two screens either side of it measured clean. Most recently
+that check stopped choosing its own pages: which routes it scans is keyed on the app's
+`url_map`, so a screen cannot be added without being scanned or named as out of scope with a
+reason, and `npm run test:a11y` sets the strict requirement itself rather than asking anyone
+to remember a variable. The first thing the inventory caught was `/redline/confirm`, the page
+the demo ends on, which no scan had ever reached and which carries the same two pairings; it
+is now scanned, with those three violations declared and failing on the record rather than
+unmeasured.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with
