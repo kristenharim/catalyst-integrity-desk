@@ -61,21 +61,22 @@ Current status as of the Phase 1 commit.
 | `/inbox` | added | the decision inbox, one item per decision, triggers grouped |
 | `/receipts/<entry_id>` | added | the decision integrity receipt for one ledger entry |
 | `/decisions/<card_id>/review` | added | one decision read end to end; adjudication for the one challenge, evidence only for the rest |
+| `/activity` | added | the decision history: ledger events and review-log rejections, in the order the record holds them |
 | `/queue` | unchanged | serves the queue rows |
 | `/redline` | unchanged | serves the pending challenge |
 | `/contracts`, `/contract/<ticker>` | unchanged | list and detail |
 | `/belief/new`, `/workspace` | unchanged | belief entry and intake |
 
-Intended structure. The first four are built; the rest are Phase 2 work not yet done:
+Intended structure. The first five are built; the rest are Phase 2 work not yet done:
 
 ```text
 /inbox                     Decision Inbox                          built
 /demo                      deterministic Rocket demonstration      built
 /receipts/<entry_id>       Decision Integrity Receipt              built
 /decisions/<card_id>/review    Decision Review                     built
+/activity                  decision history                        built
 /decisions                 decision portfolio
 /evidence/<contract_id>    Evidence Explorer
-/activity                  decision history
 ```
 
 A decision is addressed by the id of the belief card recorded for it, and by the ticker
@@ -147,11 +148,19 @@ The precise capability today: **recorded** yes, **projected from the frozen snap
 ## Phase 2 direction
 
 Specified in `docs/plans/phase2-inbox-spec.md`, which maps every proposed element to the
-backend field that feeds it and lists in its section 8 the elements nothing feeds. Three
+backend field that feeds it and lists in its section 8 the elements nothing feeds. Four
 screens of it are built: the Decision Inbox with its empty state, the Decision Integrity
-Receipt with its tampered and truncated states, and the Decision Review with its
-adjudication, evidence-only, contingent, refused and unavailable states. The rest is not
-started.
+Receipt with its tampered and truncated states, the Decision Review with its
+adjudication, evidence-only, contingent, refused and unavailable states, and the Activity
+history with its empty, tampered and truncated states. The rest is not started.
+
+Activity answers one question and stays inside it: what decisions were recorded, reviewed,
+changed or retired, and in what order. It is decision history and not evidence-change
+history, and it says so on the page, because there are no historical evidence runs here to
+be a history of. Every row is one entry in the decision record; a rejection appears as a row
+with no entry hash and no receipt, because it writes to the review log and leaves the ledger
+untouched. The one challenge the snapshot carries is a computed state rather than something
+a human did, and it is not rendered here at all.
 
 The Decision Review reads in one order at every width: what changed, why that needs a
 human, the approved belief, the current contract, then the evidence under all four. Above

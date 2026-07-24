@@ -804,6 +804,7 @@ AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"]
 # reporting the rule as covered.
 A11Y_PAGES = {
     "/inbox": ["/inbox"],
+    "/activity": ["/activity"],
     "/redline": ["/redline"],
     "/redline/confirm": ["/redline/confirm?verdict=approve"],
     "/receipts/<entry_id>": ["/receipts/{entry_hash}"],
@@ -821,6 +822,10 @@ A11Y_PAGES = {
 DEFAULT_VIEWPORTS = [(1280, 800)]
 A11Y_VIEWPORTS = {
     "/decisions/<card_id>/review": [(1440, 1000), (1024, 768), (390, 844)],
+    # Same three, for the same reason. The activity list's rows wrap rather than
+    # scroll, and a row carrying a 64-character hash is exactly the shape that
+    # pushes a page sideways on a phone while measuring clean on a desktop.
+    "/activity": [(1440, 1000), (1024, 768), (390, 844)],
 }
 
 # Every other rule, each with why this tier does not scan it. Nothing falls
@@ -1111,8 +1116,8 @@ def test_the_three_record_integrity_states_stay_visually_distinct():
 def test_every_route_is_axe_scanned_or_named_outside_the_phase_2_surface():
     """The control that cannot silently omit a newly added Phase 2 page.
 
-    The scope, exactly: `A11Y_PAGES` is the Phase 2 decision spine, five rules
-    and six pages, and this is not whole-app accessibility coverage. Every
+    The scope, exactly: `A11Y_PAGES` is the Phase 2 decision spine, six rules
+    and seven pages, and this is not whole-app accessibility coverage. Every
     other rule is named in `A11Y_NOT_SCANNED` with why, and for Phase 1 that is
     that they are outside this tier, which is a gap in coverage and not a
     statement that they pass.

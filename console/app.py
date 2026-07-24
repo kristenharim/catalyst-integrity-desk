@@ -13,7 +13,6 @@ render_template(). All arithmetic happened in make_snapshot.py.
 """
 from __future__ import annotations
 
-import datetime
 import json
 import os
 import sys
@@ -133,6 +132,34 @@ def inbox():
     return render_template(
         "inbox.html",
         rows=review.inbox_rows(SNAPSHOT, ledger, review_log, SNAPSHOT_ID),
+        record=review.record_integrity(ledger, ANCHOR_PATH),
+    )
+
+
+@app.get("/activity")
+def activity():
+    """The decision history: what was recorded, reviewed, changed or retired,
+    and in what order.
+
+    Decision history, and not evidence-change history. There are no historical
+    evidence runs here -- one snapshot exists and it is frozen -- so a page
+    listing every ledger event is a complete account of what humans did and no
+    account at all of when the evidence underneath them moved. The difference is
+    stated on the page, because a history screen in a monitoring product reads
+    as the second thing unless it says otherwise.
+
+    Two stores, one list. An approval bumps the ledger; a rejection leaves the
+    belief standing and writes to the review log, so a page reading only the
+    ledger would report a history in which nobody ever declined anything.
+    Record integrity is the third wire and stays page-level: a chain that no
+    longer agrees with its anchor is a statement about the list, not about any
+    row in it.
+    """
+    ledger = BeliefLedger(DECISIONS_PATH)
+    return render_template(
+        "activity.html",
+        rows=review.activity_rows(ledger, ReviewLog(REVIEW_LOG_PATH),
+                                  set(SNAPSHOT.get("contracts") or {})),
         record=review.record_integrity(ledger, ANCHOR_PATH),
     )
 
@@ -555,9 +582,10 @@ def _receipt(entry: dict) -> dict:
         # so the chain strip that names one is not drawn over it.
         "from_challenge": (entry.get("triggered_by") or "").startswith("breach:"),
         "author": entry["author"],
-        "ts_display": datetime.datetime.fromtimestamp(entry["ts"]).strftime(
-            "%Y-%m-%d %H:%M:%S UTC"
-        ),
+        # Shared with the activity screen, which lists these same entries. Two
+        # pages dating one entry differently would be a discrepancy in the
+        # record rather than in the formatting.
+        "ts_display": review.ts_display(entry["ts"]),
         "card_id": card.get("card_id", ""),
         "what_changed": what_changed,
         "thesis_state": ("funded to catalyst" if expected_low >= 0

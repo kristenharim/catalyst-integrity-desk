@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 404 passed, 19 skipped
+python3 -m pytest tests/ -q       # 422 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -160,10 +160,10 @@ above it, and each has its own command, so a number here is traceable to what pr
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **404 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **405 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **407 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **420 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **422 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **423 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **425 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **438 passed, 3 skipped** |
 
 Base is the tier a judge gets and the number printed above; on a clone with nothing extra
 installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
@@ -176,9 +176,9 @@ The cache-backed tier and the combined cache-plus-axe pair were off this page fo
 commits. At the counts they carried then, both passed counts were also renderings of a
 cohort field, and `tests/test_prose_figures.py` cannot tell a test count from a retyped
 cohort figure, so it reported the collision either way. That is the right way round for a
-guard to be wrong. Adding this screen moved the counts and neither collides now, so both are
-printed again: the cache-backed tier is in the table above, and running the axe command with
-the cache present gives 422 passed and 1 skipped. Every printed tier reconciles to the same
+guard to be wrong. Two screens later the counts have moved twice more and neither collides,
+so both stay printed: the cache-backed tier is in the table above, and running the axe
+command with the cache present gives 440 passed and 1 skipped. Every printed tier reconciles to the same
 total, which is what the count guard enforces. The Granite check is verified not to pass on
 the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
@@ -189,9 +189,10 @@ run `npm ci` reports one tier higher than the row it thinks it is running.
 The fifteen cache-dependent tests verify the cohort research rather than the console, the
 browser check verifies the demo's opening frame is where the script says it is, and the
 accessibility checks run axe-core over the Phase 2 decision spine: the inbox, the receipt,
-the redline, the confirmation the demo ends on, and the decision review screen in both of
-the states it renders, that last one at 1440x1000, 1024x768 and 390x844 because its layout
-changes with the width and a breakpoint can create a violation neither side of it has.
+the redline, the confirmation the demo ends on, the decision review screen in both of
+the states it renders, and the activity history. The last two are measured at 1440x1000,
+1024x768 and 390x844, because their layout changes with the width and a breakpoint can
+create a violation neither side of it has.
 Nothing on the demo path depends on any of them, which is why a clone can run the whole
 product with nineteen tests skipped and still be running the real thing.
 
@@ -209,9 +210,11 @@ remembering a variable, and with it set a run that scans nothing fails instead o
 green, because a `skip` and a `pass` look identical in a summary line. It exits nonzero on a
 missing axe-core, on zero scans executed, and on any violation. And the pages scanned are
 keyed on the app's own `url_map`: a route is either scanned or named in `A11Y_NOT_SCANNED`
-with a reason, so adding a screen fails the suite until someone classifies it. All four
-scanned pages report zero violations, and there is no map of declared exceptions to file a
-fifth one in; the one that existed held three colour-contrast nodes on `/redline/confirm`
+with a reason, so adding a screen fails the suite until someone classifies it. It did that
+again for the activity history, which is scanned at three widths rather than merged into
+the default one. All seven scanned pages report zero violations, and there is no map of
+declared exceptions to file an eighth one in; the one that existed held three
+colour-contrast nodes on `/redline/confirm`
 and went with them when the template was repaired. That covers the Phase 2 surfaces and is
 not whole-app accessibility coverage; the Phase 1 screens are named as unscanned, and
 `docs/LIMITS.md` records what was measured on them.
@@ -401,7 +404,12 @@ that already existed; every other decision renders its evidence and no control a
 disabled ones included, because a control that cannot complete is a claim about capability
 the desk cannot keep. Measuring that screen at 390x844 found a defect every screen here had
 carried since the first commit: the navigation row could not wrap, so the whole console
-scrolled sideways on a phone.
+scrolled sideways on a phone. Most recently, the fourth Phase 2 screen: the activity history
+at `/activity`, which lists the ledger's own events and the rejections that never reach it,
+in the order the record holds them, each row bound to its own entry hash rather than to
+whichever entry is last. It is decision history and not evidence-change history, and it
+says which of the two it is on the page, because nothing here has a history of evidence runs
+to show.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

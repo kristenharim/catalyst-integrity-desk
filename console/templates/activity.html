@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Activity &middot; Catalyst Integrity Desk{% endblock %}
+
+{% block styles %}
+<style>
+  /* Carbon g100 tokens from base.html. Nothing imported, nothing fetched. */
+  .scope {
+    max-width: 900px; margin-bottom: var(--cds-spacing-05);
+    padding: var(--cds-spacing-05);
+    background: var(--cds-tint-info);
+    border-left: 4px solid var(--cds-support-info);
+    color: var(--cds-text-primary); font-size: 13px; line-height: 1.7;
+  }
+
+  /* Record integrity: the third wire, and on this page it is a statement about
+     the list rather than about any row in it. Quiet while it holds, loud when
+     it does not, and never merged into an event. */
+  .record-head { display: flex; flex-wrap: wrap; align-items: baseline;
+                 gap: var(--cds-spacing-03); margin-bottom: var(--cds-spacing-05); }
+  .record-badge {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    padding: var(--cds-spacing-02) 12px; border: 1px solid;
+  }
+  .record-intact    { background: var(--cds-tint-success);
+                      border-color: var(--cds-support-success);
+                      color: var(--cds-support-success); }
+  .record-tampered  { background: var(--cds-tint-error);
+                      border-color: var(--cds-support-error);
+                      color: var(--cds-support-error); }
+  .record-truncated { background: var(--cds-tint-warning);
+                      border-color: var(--cds-support-warning);
+                      color: var(--cds-support-warning); }
+  .record-notice {
+    max-width: 900px; margin-bottom: var(--cds-spacing-05);
+    padding: var(--cds-spacing-05); font-size: 13px; line-height: 1.7;
+    background: var(--cds-tint-error);
+    border: 1px solid var(--cds-support-error);
+    color: var(--cds-text-primary);
+  }
+  .record-notice.warn { background: var(--cds-tint-warning);
+                        border-color: var(--cds-support-warning); }
+
+  .activity { list-style: none; max-width: 1000px; }
+  .event {
+    background: var(--cds-layer-01);
+    border: 1px solid var(--cds-border-subtle);
+    border-left: 4px solid var(--cds-layer-02);
+    padding: var(--cds-spacing-05);
+    margin-bottom: var(--cds-spacing-05);
+  }
+  .event.ev-CREATE { border-left-color: var(--cds-support-info); }
+  .event.ev-UPDATE { border-left-color: var(--cds-support-success); }
+  .event.ev-RETIRE { border-left-color: var(--cds-text-secondary); }
+  .event.ev-review_log { border-left-color: var(--cds-support-warning); }
+
+  .event-head {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    gap: var(--cds-spacing-05); margin-bottom: var(--cds-spacing-03);
+  }
+  .event-time { font-size: 12px; color: var(--cds-text-secondary);
+                font-variant-numeric: tabular-nums; }
+  /* The human action. The workflow wire, and the only wire on a row here:
+     nothing on this page states what the evidence says about a contract. */
+  .chip {
+    display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px;
+    border: 1px dashed var(--cds-border-subtle); color: var(--cds-text-primary);
+  }
+  .figure { color: var(--cds-text-primary); font-variant-numeric: tabular-nums; }
+  .field-label { font-size: 11px; color: var(--cds-text-secondary);
+                 text-transform: uppercase; letter-spacing: 0.07em; }
+
+  .event-fields { display: flex; flex-wrap: wrap; gap: var(--cds-spacing-05);
+                  font-size: 12px; line-height: 1.6; }
+  .event-field { max-width: 100%; min-width: 0; }
+  .event-value { color: var(--cds-text-primary); overflow-wrap: anywhere; }
+  .unavailable { color: var(--cds-text-secondary); }
+
+  .event-links { display: flex; flex-wrap: wrap; gap: var(--cds-spacing-05);
+                 margin-top: var(--cds-spacing-05); font-size: 12px; }
+  details.hashes { margin-top: var(--cds-spacing-05); font-size: 11px; }
+  details.hashes summary { color: var(--cds-link-primary); cursor: pointer; }
+  .hash { font-family: ui-monospace, monospace; word-break: break-all;
+          color: var(--cds-text-secondary); margin-top: var(--cds-spacing-02); }
+
+  .empty {
+    max-width: 900px; padding: var(--cds-spacing-06);
+    background: var(--cds-layer-01);
+    border: 1px solid var(--cds-border-subtle);
+    color: var(--cds-text-primary); line-height: 1.7; font-size: 13px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1>Activity</h1>
+
+{# The scope statement. It is rendered above the list rather than under it,
+   because the sentence a reader needs before they read a history screen in a
+   product like this one is what the history is a history OF. #}
+<p class="scope">
+  Activity records human decision events in the ledger. It does not yet represent a
+  complete history of evidence refreshes.
+</p>
+
+<p class="note">
+  What was recorded, reviewed, changed or retired, and in what order. Every row is one
+  entry in the decision record, shown in the order that record holds them. Approvals,
+  belief entries and retirements are ledger entries and each carries the hash it is
+  addressed by; a rejection leaves the belief standing and writes to the review log
+  instead, so it has no entry and no receipt, and the row says so rather than pointing at
+  the nearest one.
+</p>
+
+{# Record integrity: read from the anchor at request time. It is a statement about
+   this list, never about a thesis, and never merged into a row. #}
+<div class="record-head">
+  <span class="field-label">Decision record</span>
+  {% if record.state == "intact" %}
+    <span class="record-badge record-intact">&#10003; {{ record.label }}</span>
+  {% elif record.state == "tampered" %}
+    <span class="record-badge record-tampered">&#10007; {{ record.label }}</span>
+  {% else %}
+    <span class="record-badge record-truncated">&#9888; {{ record.label }}</span>
+  {% endif %}
+</div>
+
+{% if record.failed %}
+<div class="record-notice {% if record.state == 'truncated' %}warn{% endif %}" role="status">
+  {% if record.state == "tampered" %}
+  <strong>This history cannot be trusted to be what was recorded.</strong>
+  The chain no longer recomputes: a byte inside a hashed payload was edited, so at least one
+  event below does not hash to what it claims. The rows are still listed as the file holds
+  them, because hiding them would remove the only evidence of what the file now says.
+  {% else %}
+  <strong>This history may be missing events.</strong>
+  The chain still recomputes and it no longer agrees with its anchor, which is what a
+  deleted entry, a truncated file or a wholesale replacement looks like from here. The rows
+  below are what remains; how many are gone is not answerable from the file that is left.
+  {% endif %}
+  Either way this is a statement about the record of what humans decided, not about the
+  evidence any of those decisions were taken against.
+</div>
+{% endif %}
+
+{% if rows %}
+<ol class="activity">
+  {% for row in rows %}
+  <li class="event ev-{{ row.event or row.source }}">
+    <div class="event-head">
+      <span class="event-time">{{ row.ts_display }}</span>
+      {# The human action, in words. #}
+      <span class="chip">{{ row.action }}</span>
+      <span class="tag">{{ row.card_id }}</span>
+      <span>
+        <span class="field-label">version</span>
+        {% if row.version is not none %}
+          <span class="figure">{{ row.version }}</span>
+        {% else %}
+          <span class="unavailable">no ledger version: nothing was appended</span>
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="event-fields">
+      <div class="event-field">
+        <div class="field-label">author</div>
+        {# Author identity is whatever the store holds. There is no account
+           system here, so the string is shown as recorded and is not dressed up
+           as a verified person. #}
+        <div class="event-value">{{ row.author or "unavailable" }}</div>
+      </div>
+      <div class="event-field">
+        <div class="field-label">trigger</div>
+        <div class="event-value">
+          {% if row.triggered_by %}{{ row.triggered_by }}
+          {% else %}<span class="unavailable">none recorded</span>{% endif %}
+        </div>
+      </div>
+      <div class="event-field">
+        <div class="field-label">reason</div>
+        <div class="event-value">
+          {% if row.reason %}{{ row.reason }}
+          {% else %}<span class="unavailable">none recorded</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if row.entry_hash %}
+    {# Progressive disclosure, native <details>, no script. The pair is what
+       links this event to the one before it, and it is the identity the receipt
+       link is bound to. #}
+    <details class="hashes">
+      <summary>Entry identity</summary>
+      <div class="hash">this entry {{ row.entry_hash }}</div>
+      <div class="hash">previous {{ row.prev_hash }}</div>
+    </details>
+    {% endif %}
+
+    <div class="event-links">
+      {% if row.review_href %}
+        <a href="{{ row.review_href }}">Decision review &rarr;</a>
+      {% else %}
+        <span class="unavailable">no decision review: this snapshot holds no contract
+          for {{ row.ticker or "this card" }}</span>
+      {% endif %}
+      {% if row.receipt_href %}
+        {# Addressed by this entry's own hash, never by the record's latest
+           entry: a later unrelated write must not be able to move it. #}
+        <a href="{{ row.receipt_href }}">Decision integrity receipt &rarr;</a>
+      {% else %}
+        <span class="unavailable">no receipt: this ruling wrote to the review log and left
+          the ledger untouched</span>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<div class="empty">
+  <p><strong>No decision event has been recorded here.</strong></p>
+  <p style="margin-top:10px;">
+    That is a statement about the two files this page reads, the hash-chained decision
+    ledger and the review log beside it, and both are empty. Nothing has been recorded,
+    revised, retired or declined, so there is no order to report. This page lists what
+    humans did; it reads no evidence and rereads none between snapshots.
+  </p>
+</div>
+{% endif %}
+
+<p class="note" style="margin-top:20px;">
+  The decision record is tamper evident rather than tamper proof: an edit inside a hashed
+  payload, a deleted entry and a replaced chain are each detectable given the anchor beside
+  it was not rewritten in the same pass. The evidence states on the rest of this console are
+  computed from the snapshot taken on {{ snapshot_as_of }}; the events above are stored, and
+  the two are shown apart because they fail apart.
+</p>
+
+<p style="font-size:12px;">
+  <a href="/inbox">&larr; Decision inbox</a>
+  &nbsp;|&nbsp;
+  <a href="/contracts">Contract list</a>
+</p>
+
+{% endblock %}

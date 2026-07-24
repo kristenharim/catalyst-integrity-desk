@@ -19,6 +19,7 @@ moving the evidence moves the sentence.
 """
 from __future__ import annotations
 
+import datetime
 import hashlib
 import os
 from dataclasses import dataclass, field
@@ -65,6 +66,13 @@ EVENT_LABELS = {
     "UPDATE": "belief revised",
     "RETIRE": "belief retired",
 }
+
+# The one human action that is not a ledger event. A rejection leaves the belief
+# standing and writes to the review log, so it has no entry, no hash and no
+# receipt. It is still something a human did to a decision, and a history that
+# read only the ledger would report one in which nobody ever declined anything.
+REJECTED_LABEL = "challenge rejected, belief stands"
+REVIEWED_LABEL = "challenge reviewed"
 
 # ---------------------------------------------------------------------------
 # Record integrity
@@ -486,6 +494,103 @@ def inbox_rows(snapshot: dict, ledger, review_log, snapshot_id: str) -> list[dic
     rows = open_tasks(build_tasks(snapshot, ledger, review_log, snapshot_id))
     redline = snapshot.get("redline") or {}
     return [{**r, "action": _action(r, redline)} for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Activity: the decision history
+# ---------------------------------------------------------------------------
+
+
+def ts_display(ts) -> str:
+    """One timestamp rendering, so two pages cannot date the same entry
+    differently.
+
+    `console/app.py::_receipt` formatted the ledger's epoch seconds inline and
+    the activity screen lists the same entries, so the format is shared rather
+    than copied.
+
+    The conversion is to UTC, which is what the label has always said and not
+    what the code did: `fromtimestamp` with no timezone reads the machine's
+    local clock, so the receipt has been stamping local wall time with a UTC
+    suffix. On a page whose subject is the order events happened in, a timestamp
+    that names the wrong zone is the field a reader would use to check the
+    order. Fixed here rather than beside it, because both pages read this.
+    """
+    if ts is None:
+        return "unavailable"
+    return datetime.datetime.fromtimestamp(
+        ts, datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
+def activity_rows(ledger, review_log, tickers) -> list[dict]:
+    """Every recorded decision event, in the order the record holds them.
+
+    What decisions were recorded, reviewed, changed or retired, and in what
+    order. That is the whole question, and the answer comes from the two stores
+    a human ruling can land in: the hash-chained ledger, and the review log a
+    rejection writes to instead.
+
+    Nothing here is derived from the snapshot. The snapshot carries exactly one
+    challenge and it is written in Python inside `make_snapshot.py`; it is a
+    computed state rather than something anybody did, so putting it on this page
+    would fabricate a decision. `tickers` is read for one purpose only, which is
+    whether a review link would resolve to a contract this snapshot holds.
+
+    Ordering is the record's own. Ledger entries come back in `seq` order and
+    the sort is stable, so two entries sharing a timestamp keep the order the
+    chain links them in rather than an arbitrary one.
+    """
+    rows: list[dict] = []
+
+    for e in ledger._entries():
+        card = e.get("card") or {}
+        card_id = card.get("card_id") or ""
+        rows.append({
+            "source": "ledger",
+            "ts": e.get("ts") or 0.0,
+            "ts_display": ts_display(e.get("ts")),
+            "event": e.get("event") or "",
+            "action": EVENT_LABELS.get(e.get("event") or ""),
+            "card_id": card_id,
+            "ticker": card_ticker(card_id) if card_id else "",
+            "version": card.get("version"),
+            "author": e.get("author") or "",
+            "reason": e.get("reason") or "",
+            "triggered_by": e.get("triggered_by") or "",
+            "entry_hash": e.get("entry_hash") or "",
+            "prev_hash": e.get("prev_hash") or "",
+        })
+
+    for r in review_log.all():
+        card_id = r.get("card_id") or ""
+        rows.append({
+            "source": "review_log",
+            "ts": r.get("ts") or 0.0,
+            "ts_display": ts_display(r.get("ts")),
+            "event": "",
+            "action": (REJECTED_LABEL if r.get("verdict") == "reject"
+                       else REVIEWED_LABEL),
+            "card_id": card_id,
+            "ticker": card_ticker(card_id) if card_id else "",
+            # A rejection bumps nothing and hashes nothing. Both are stated on
+            # the page as absent for a reason rather than left blank.
+            "version": None,
+            "author": r.get("author") or "",
+            "reason": r.get("reason") or "",
+            "triggered_by": "",
+            "entry_hash": "",
+            "prev_hash": "",
+        })
+
+    rows.sort(key=lambda r: r["ts"])
+    for r in rows:
+        # The receipt is addressed by this row's own entry hash, never by the
+        # ledger's latest entry: a later unrelated write must not move a link on
+        # a history page any more than it may move one on the receipt itself.
+        r["receipt_href"] = f"/receipts/{r['entry_hash']}" if r["entry_hash"] else None
+        r["review_href"] = (f"/decisions/{r['card_id']}/review"
+                            if r["ticker"] in tickers else None)
+    return rows
 
 
 def snapshot_digest(path: str) -> str:
