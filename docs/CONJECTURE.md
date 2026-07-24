@@ -1,10 +1,14 @@
 # Conjecture: what this could be
 
-The built thing is a monitor for one company. This is what the same idea supports if it
-keeps going, ordered by how much has to be true for each rung to hold.
+The built thing is a Phase 2 console for one company: an analyst enters a belief through the
+workspace intake, and the Inbox, Decision Review, Evidence Explorer, Decision Integrity
+Receipt and Activity screens carry it through adjudication and into a hash-chained record. A
+belief entered there is recorded, not monitored. This file is what the same idea supports if
+it keeps going, ordered by how much has to be true for each rung to hold.
 
-The discipline of the project applies to this file too. Nothing below is claimed as done,
-and nothing is claimed as a finding.
+The discipline of the project applies to this file too. Nothing in the rungs below is
+claimed as done, and nothing is claimed as a finding. The analyst pilot, the monitoring
+loop, the scheduled refresh and everything from Rung 1 on remain future work.
 
 ## The insight the whole thing rests on
 
@@ -15,8 +19,9 @@ diffs it.**
 That sentence generalises well beyond biotech, and that is the interesting part.
 
 Rocket is the demonstration because it is unarguable: a completion date sat expired on a
-federal registry for 677 days, and the thesis that depended on it never moved. No
-amendment was filed. The date simply arrived, and passed.
+federal registry for 677 days, and the thesis that depended on it never moved. No later
+registry version reconciled the lapsed expectation before its date passed, as far as the
+frozen version history shows. The date simply arrived, and passed.
 
 ## Rung 0: the same monitor, driven by an analyst instead of by `TICKERS`
 

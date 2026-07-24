@@ -40,8 +40,9 @@ The same is true of the case this project actually demonstrates. Rocket Pharmace
 filed a protocol revision in April 2024 carrying a primary completion date of June 2022,
 already expired for 677 days, on a federal registry, machine readable the entire time.
 The system does not say that means the gene therapy will not work. It says the sponsor
-carried an expired date for 677 days and nothing reconciled it, and it can prove both
-halves of that sentence from named records.
+carried an expired date for 677 days, and that no later stored registry version reconciled
+the registered expectation before expiry, as of the frozen artifact date, and it can prove
+both halves of that sentence from named records.
 
 ## What follows from the principle
 

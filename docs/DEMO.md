@@ -42,9 +42,7 @@ the conservative one first. Never say "677 days" as a bare fact.
 > ClinicalTrials.gov, where the company sets it, can change it whenever it likes, and
 > nothing reconciles that change against the thesis that depended on the old date.
 
-**0:20 to 0:50, the fact.**
-
-The console opens on Rocket. Do not click anything yet.
+**0:20 to 0:50, the fact.** `/` redirects to `/contract/RCKT`. Do not click anything yet.
 
 > Here is a real trial. In April 2024, Rocket filed a protocol revision carrying a primary
 > completion date the registry records as June 2022, a month with no day. Read at the end of
@@ -56,28 +54,21 @@ The console opens on Rocket. Do not click anything yet.
 The console shows the longer, first-of-month figure with a caption naming the convention;
 say the conservative figure first so the screen and the words agree.
 
-**0:50 to 1:25, the contract.**
+**0:50 to 1:10, the queue.** Click **Inbox** in the top nav, landing on `/inbox`. Point at
+the RCKT row, then the Sarepta row.
 
-Scroll to the gap table.
+> This is not a dashboard that ranks companies. It is a queue of beliefs that need an analyst
+> today, worst first, one row per decision with its triggers grouped underneath. Sarepta is
+> on screen with no rank and the reason attached: a cash-positive quarter we do not trust as
+> burn. Rows we cannot rank stay visible. A screen that hides its hard cases is worse than
+> one that shows them.
 
-> So we treat the catalyst as a contract: this company has capital to reach this completion
-> by this date. Runway comes from XBRL tags, and every figure names the tag it came from.
-> The completion date comes from the sponsor's own filing with its full revision history
-> attached. Python computes both sides. No model touches a number.
+**1:10 to 1:55, the break. This is the centre of the demo.** Click **Adjudicate** on the
+RCKT row, landing on `/decisions/rckt:funded_to_catalyst/review`. Read the panels left to
+right: the approved belief, what changed, the current contract.
 
-Point at the burn band, then at the flagged row on the contract list.
-
-> Burn is a range, not a point, because a partnership upfront makes one quarter
-> unrepresentative. Sarepta is on screen and has no rank, with the reason attached: a
-> cash-positive quarter in the trailing window that we do not trust as burn. Rows we cannot
-> rank stay visible. A screen that hides its hard cases is worse than one that shows them.
-
-**1:25 to 2:05, the break. This is the centre of the demo.**
-
-Open the pending redline. Read the three columns left to right.
-
-> The thesis was approved against that first trial, completion May 2026, and it gave a
-> funding gap of plus eight point four months. Funded to catalyst.
+> The thesis was approved against that first trial, completion May 2026, a funding gap of
+> plus eight point four months. Funded to catalyst.
 >
 > Then nothing happened. No later registry version reconciled that expectation. The date
 > simply arrived, and passed.
@@ -90,38 +81,45 @@ Open the pending redline. Read the three columns left to right.
 > The company did not change. The filing did not change. The thesis broke because time
 > passed and nobody was watching.
 
-Then the memo.
+Scroll to the Granite memo panel. Point at the deterministic explanation first, then the
+memo below it.
 
-> Granite reads the analyst's own written rationale and reports which stated assumption
-> broke. It is given the direction of the move, never the values, so it has nothing to echo
-> and nothing to do arithmetic on. Any figure in its output that was not in its input
-> discards the whole response.
+> The deterministic explanation comes first, and it comes from Python. Granite reads the
+> analyst's own written rationale and reports which stated assumption broke. It is handed the
+> direction of the move, never the values, so it has nothing to echo and no arithmetic to do.
+> Its judgement carries no quantity of any kind; a response that contains one at all is
+> discarded whole, and the deterministic explanation above stands in its place.
 
-**2:05 to 2:20, where the belief came from.** Cuttable. See the run-long list.
+**1:55 to 2:20, the record.** Click **View evidence, the record** to
+`/evidence/rckt:funded_to_catalyst`. Scroll the levels and land on the unresolved join.
 
-Open `/belief/new`. Do not fill it in on camera, just show it and move.
+> This is what sits behind every number. The runway traces to named SEC XBRL tags; the
+> completion date to the registry record and its version history. And where a link is only
+> named, not resolved, the page says so: the sponsor on the trial reads "Rocket
+> Pharmaceuticals Inc.", the SEC issuer reads it in a different case, and nothing here
+> quietly joins them. It shows you where the evidence chain is solid and exactly where it
+> stops. It does not claim the thesis is true.
 
-> One question this has been begging: judged against what? Against this. A human writes the
-> thesis, the trial it depends on, and the funding gap below which they would no longer
-> believe it. The desk does not invent beliefs, it records the ones someone signed.
+**2:20 to 2:35, the gate.** Back to Decision Review, click **✓ Accept**. The receipt renders.
+
+> The analyst accepts or rejects. Nothing is automatic. The decision hash-chains into the
+> ledger: who decided, what changed, the resulting thesis state, the previous hash and the
+> new one, all read back out of the ledger itself.
+
+**2:35 to 2:50, the close.** Click **Activity** in the nav, landing on `/activity`.
+
+> Every decision, in the order the record holds it. Four contracts monitored. Two active
+> breaches. Three registered completion dates already lapsed. This is not a screen that ranks
+> companies, it is a queue of beliefs that need an analyst today.
 >
-> The invalidation conditions go in the same field Granite reads, so the challenge is
-> judged against the conditions the analyst said would change their mind.
+> Built with IBM Bob on watsonx and Granite. The registry is not a data source. It is a
+> disclosure channel with incentives, and now it has an auditor.
 
-**2:20 to 2:50, the human gate and the record.**
+**2:50 to 3:00, the postscript: prove the auditor.** Break the record on camera, twice.
 
-> The analyst accepts or rejects. Nothing is automatic.
+> Edit one byte of the decision file.
 
-Click Accept. The receipt appears.
-
-> The decision hash-chains into the ledger. Who decided, what changed, the resulting thesis
-> state, the previous hash and the new one, all read back out of the ledger itself.
-
-Now break it on camera, twice.
-
-> Edit one byte of the ledger file.
-
-Reload. The badge reads tampered.
+Reload the receipt. The badge reads tampered.
 
 > Fine, so delete the whole entry instead.
 
@@ -132,28 +130,20 @@ Delete the last line, reload. The badge reads truncated or replaced.
 > outside the chain, and the page checks both. Delete the anchor too and it still refuses
 > to say intact.
 
-**2:50 to 3:00, the close.**
-
-> Four contracts monitored. Two active breaches. Three registered completion dates already
-> lapsed. This is not a screen that ranks companies, it is a queue of beliefs that need an
-> analyst today.
->
-> Built with IBM Bob on watsonx and Granite. The registry is not a data source. It is a
-> disclosure channel with incentives, and now it has an auditor.
-
 ---
 
 ## If you run long
 
 Drop in this order:
 
-1. The belief form at 2:05. It answers a question a judge may not have asked yet, and the
-   receipt at 2:20 already shows a human in the loop. Cut this first, because it is the only
-   beat where nothing is wrong on screen.
-2. The burn band explanation at 1:10.
-3. The second ledger break at 2:30, the deletion. Keep the byte edit.
+1. The second ledger break in the postscript, the deletion. Keep the byte edit; it is the
+   one that surprises the room.
+2. The evidence walk at 1:55. Land on the unresolved join, say the one sentence about where
+   the chain stops, and move.
+3. The Sarepta half of the queue framing at 0:50. Keep "worst first, and the hard rows stay
+   visible"; the burn-band reason is the cuttable part.
 
-**Never cut:** the lapsed-date fact at 0:20, and the lapse at 1:25. Those are the two things
+**Never cut:** the lapsed-date fact at 0:20, and the break at 1:10. Those are the two things
 the room has not seen before, and the second one is the only demo where a thesis breaks
 because nobody did anything.
 

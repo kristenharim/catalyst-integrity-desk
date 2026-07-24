@@ -1,14 +1,63 @@
 # Workspace mode: ticker in, recorded contract out
 
-**Nothing in this file is built.** It is a design, written at the same discipline as the
-rest of the repo: what exists is marked as existing, what is proposed is marked as
-proposed, and the problems that have no answer yet are named rather than skipped.
-`docs/CONJECTURE.md` covers where the *idea* could go. This file covers where the
-*product* could go, which is a narrower and more concrete question.
+Part of this is built and part is still design, so this file marks the line explicitly.
+What exists is marked as existing, what is proposed is marked as proposed, and the problems
+that have no answer yet are named rather than skipped. `docs/CONJECTURE.md` covers where the
+*idea* could go. This file covers where the *product* could go, which is a narrower and more
+concrete question.
 
 Read `docs/LIMITS.md` first. Several things proposed here are only possible because
-workspace mode fixes a limitation the demo has, and several are impossible for reasons
-that file already states.
+workspace mode closes a limitation the frozen demo has, and several are impossible for
+reasons that file already states.
+
+## Built today
+
+The intake and the Phase 2 UI exist and run against the frozen evidence bundles,
+credential-free.
+
+- **Workspace intake** (`/workspace` → `/workspace/discover` → `/workspace/select` →
+  `/workspace/approve`, `console/intake.py`). An analyst enters a ticker, sees the
+  sponsor-to-issuer join as a reviewable claim rather than a fact, picks the trial that
+  underwrites the thesis from the candidates, edits a deterministically-assembled contract,
+  and approves it into the hash-chained ledger. Every gate is a human's, and the intake
+  computes nothing a template renders as a number without going through the engine. A belief
+  written here is **recorded, not monitored**: nothing re-reads it on a schedule.
+- **The Decision Inbox** (`/inbox`), one row per decision, worst first, with unrankable rows
+  shown and never ranked.
+- **Decision Review** (`/decisions/<card_id>/review`), the approved belief, what changed,
+  and the current contract side by side, with the Granite memo below the deterministic
+  explanation.
+- **The Decision Integrity Receipt** (`/receipts/<entry_id>`), the hash-chained record of
+  who decided what, with its tampered and truncated states.
+- **Activity** (`/activity`), every recorded decision in the order the record holds it.
+- **The Evidence Explorer** (`/evidence/<contract_id>`), every displayed figure followed to
+  a named XBRL tag or a numbered registry version, and the unresolved identity join shown as
+  unresolved.
+
+The intake reads frozen evidence bundles, not a live API. That seam is what the rest of this
+file is about: the same views over a live source instead of a file.
+
+## Still unbuilt
+
+- The **live source**. Intake reads `evidence/` bundles; nothing yet resolves a ticker
+  against live SEC and ClinicalTrials.gov at request time.
+- The **nightly loop**: fetch, rebuild each `CatalystContract`, compare to the approved
+  card, and queue the breaches. `orchestrator/redline.py` and `orchestrator/challenge.py`
+  already do everything from "compare" rightward; the scheduler and the per-night storage do
+  not exist.
+- The **diff**, and the two queue states that need it, "newly breached" and "moved since
+  last look". One frozen snapshot has nothing to diff against.
+- The **sponsor-to-issuer join at scale**. Intake shows the join for one company as a
+  reviewable claim; an alias table and a review queue for hundreds do not exist.
+
+## Pilot roadmap
+
+The sections below are the design for the live pilot, in build order: the shared seam that
+keeps demo and workspace mode computing one way, the two human gates, the evidence-page
+upgrade, document intake, and the monitoring loop. They predate the Phase 2 build, so where
+a step is marked `[proposed]` it means "not yet wired to a live source"; the gates and the
+intake layer themselves already exist over the frozen evidence bundles, as **Built today**
+records.
 
 ## The problem with what exists
 
@@ -96,8 +145,9 @@ The analyst types one thing.
   BeliefCard into the hash-chained ledger  engine/ledger.py::create      [exists]
 ```
 
-Everything marked `[exists]` is already verified against live APIs and already runs. The
-new work is the two human gates and the intake layer around them.
+Everything marked `[exists]` is already verified against live APIs and already runs. The two
+human gates and the intake layer around them now exist too, over the frozen evidence bundles
+(see **Built today**); the new work is wiring them to a live source.
 
 ### Why the analyst must pick the trial
 
@@ -302,9 +352,12 @@ but `build()` still splits lapsed from future on `date.today()` during a rebuild
 run must stamp its own `as_of` and every diff must be between two stamped runs, or
 "the date lapsed overnight" and "we rebuilt at a different hour" become indistinguishable.
 
-**Concurrency.** The ledger has no compare-and-swap on the head. Two analysts approving at
-the same moment both read the same head hash and both append. Untested today, and
-untestable to ignore once there is more than one analyst.
+**Concurrency, now handled at the append.** The read of the head and the append are one
+critical section under an exclusive `fcntl.flock`, and a writer whose precondition no longer
+holds raises `Conflict` and appends nothing, so two analysts approving at once no longer
+interleave into a corrupt chain. `docs/LIMITS.md` records this and its residual: the anchor
+is recorded after the lock rather than inside it, so it can lag a concurrent append briefly,
+and `flock` over a network filesystem depends on the mount.
 
 **The anchor is still self-owned.** `data/ledger.anchor` is written by the same process
 that writes the ledger. Multi-user makes this worse, not better: the honest fix is a

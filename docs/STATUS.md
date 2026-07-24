@@ -1,5 +1,10 @@
 # Status — 2026-07-22
 
+> **Superseded for current product state.** See `README.md`, `docs/UI.md`, `docs/LIMITS.md`,
+> and the latest submission checkpoint (`submission-candidate-2026-07-24`). This file is kept
+> as the pre-Phase-2 record; the body below describes the state on 2026-07-22 and is not
+> rewritten.
+
 Where the build stands and what a session with no prior context needs to know.
 Read `HANDOFF.md` for the idea, `AGENTS.md` for the rules, this for the state.
 

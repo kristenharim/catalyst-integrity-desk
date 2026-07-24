@@ -191,7 +191,7 @@ def test_demo_script_speaks_the_figure_the_screen_shows():
     # the note names the figure the console renders first, on purpose, because it
     # is explaining what the screen shows. Scope to the narration beat.
     start = script.index("0:20 to 0:50")
-    spoken = script[start:script.index("0:50 to 1:25", start)]
+    spoken = script[start:script.index("0:50 to 1:10", start)]
     assert words[648] in spoken and words[677] in spoken, (
         "the 0:20 beat must speak both readings of the month-only date; it says "
         f"{[w for w in words.values() if w in spoken]}"
