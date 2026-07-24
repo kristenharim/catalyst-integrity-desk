@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 
 import pytest
@@ -26,7 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from engine.ledger import BeliefCard, Breach                       # noqa: E402
 from orchestrator.granite import (                                  # noqa: E402
-    GraniteClassifier, _quantitative, SYSTEM_PROMPT,
+    GraniteClassifier, _quantitative, SYSTEM_PROMPT, ACTION_PROMPT,
 )
 
 REPO = os.path.join(os.path.dirname(__file__), "..")
@@ -65,7 +66,70 @@ REFUSED = [
     ("input magnitude, right unit", "The gap is -14.5 months."),
     ("input magnitude, wrong unit", "The gap is 14.5 years."),
     ("input magnitude, wrong sign", "The gap is +14.5 months."),
+    ("non-ASCII decimal digits",    "Completion is expected in ２０２７."),
+    # A magnitude written as an inflection of a word the policy already refuses.
+    # Refusing "double" while passing "doubled" is a spelling, not a policy.
+    ("multiplicative inflection",   "The shortfall doubled."),
+    ("fractional inflection",       "The runway halved."),
+    ("fold compound",               "Revisions increased tenfold."),
+    ("plural magnitude",            "The date slipped by hundreds of days."),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Dates composed out of words the guard deliberately allows on their own
+# ---------------------------------------------------------------------------
+# "may", "first" and "second" are ordinary discourse here and are excluded from
+# the word scan by design. The exclusions compose: every part of "May first" is
+# allowed, so the phrase carried a registered completion date past every scan.
+# These are the phrase, not the words, and several months are covered so this
+# pins a date rule rather than one memorised string.
+
+REFUSED_DATES = [
+    "May first",
+    "May the first",
+    "May second",
+    "May the second",
+    "the first of May",
+    "the second of May",
+    "completion is expected May first",
+    "The binding date is the first of May.",
+    "June first",
+    "the second of April",
+    "March fifth",
+    "Re-register by March first.",
+    "Sept. second",
+    "september first",
+    "THE SECOND OF JANUARY",
+]
+
+
+@pytest.mark.parametrize("text", REFUSED_DATES)
+def test_word_form_dates_are_refused(text):
+    assert _quantitative(text), f"{text!r} is a date and carried no detected quantity"
+
+
+# The other half of the same rule. A guard that fires on correct qualitative
+# prose is a guard someone switches off, so the ordinary senses of the same
+# words must survive it.
+ACCEPTED_DISCOURSE = [
+    "The evidence may require review.",
+    "The first assumption no longer holds.",
+    "The second condition requires review.",
+    "The sponsor may revise the registered expectation again.",
+    "The first and second revisions both moved later.",
+    # "the first of X" only composes into a date when X is a month. Note the
+    # phrasing avoids "one", which is a number word and refused on its own.
+    "The first of the objections is the objection that matters.",
+    "A couple of assumptions remain unverified.",
+    "The comparison may not be establishable at all.",
+]
+
+
+@pytest.mark.parametrize("text", ACCEPTED_DISCOURSE)
+def test_ordinary_discourse_survives_the_date_rule(text):
+    found = _quantitative(text)
+    assert not found, f"{text!r} is qualitative prose and was refused, naming {found}"
 
 
 @pytest.mark.parametrize("label,text", REFUSED, ids=[r[0] for r in REFUSED])
@@ -148,6 +212,81 @@ def test_a_qualitative_response_is_kept(live):
 
 
 # ---------------------------------------------------------------------------
+# _draft_once: what is scanned is what is returned
+# ---------------------------------------------------------------------------
+# `draft_action` is dormant. Nothing in `console/` or `research/` calls it, so
+# none of this ships today. It is fixed anyway, because the defect was that the
+# guard scanned list-marker-stripped text and returned the unstripped original,
+# and a dormant path with a hole in its provenance guard is a path that goes
+# live with the hole in it.
+
+def _draft_transport(text):
+    def call(messages):
+        return {"choices": [{"message": {"content": text}}]}
+    return call
+
+
+DRAFT_REFUSED = [
+    ("leading year",        "2028. The registered expectation moved later."),
+    ("leading integer",     "12. Human review is required."),
+    ("leading decimal",     "1.5. The shortfall widened."),
+    ("parenthesised marker", "3) The approved assumption no longer holds."),
+    ("non-ASCII marker",    "２. The current value sits below the approved value."),
+    ("marker mid-draft",    "The shortfall widened.\n2028. And then it lapsed."),
+]
+
+
+@pytest.mark.parametrize("label,text", DRAFT_REFUSED, ids=[d[0] for d in DRAFT_REFUSED])
+def test_a_leading_numeral_is_scanned_not_stripped(label, text):
+    g = GraniteClassifier(api_key="x", project_id="y", transport=_draft_transport(text))
+    with pytest.raises(ValueError, match="quantities"):
+        g._draft_once("brief")
+
+
+DRAFT_ACCEPTED = [
+    "The approved funding assumption no longer holds.",
+    "The registered expectation moved later, so the shortfall widened.\n\n"
+    "Human review is required before anything is pre-committed.",
+]
+
+
+@pytest.mark.parametrize("text", DRAFT_ACCEPTED)
+def test_an_accepted_draft_is_returned_byte_identical(text):
+    g = GraniteClassifier(api_key="x", project_id="y", transport=_draft_transport(text))
+    returned = g._draft_once("brief")
+    assert returned == text, (
+        "the returned draft is not the text that was scanned; a guard that "
+        "checks one string and returns another checks nothing"
+    )
+
+
+def test_draft_action_is_still_dormant():
+    """Pins the claim made in this file's comment and in docs/LIMITS.md.
+
+    If something starts calling `draft_action`, this fails and tells whoever
+    wired it that the Action path now ships model prose to a human.
+    """
+    callers = []
+    for sub in ("console", "research", "engine", "orchestrator"):
+        base = os.path.join(REPO, sub)
+        for root, _dirs, names in os.walk(base):
+            if "__pycache__" in root:
+                continue
+            for name in names:
+                if not name.endswith(".py"):
+                    continue
+                path = os.path.join(root, name)
+                src = open(path).read()
+                if "draft_action" in src and not path.endswith("granite.py"):
+                    callers.append(os.path.relpath(path, REPO))
+    assert not callers, (
+        f"draft_action now has callers {callers}; it is no longer dormant, so "
+        "docs/LIMITS.md and the comments in tests/test_quantity_policy.py have "
+        "to stop saying it is"
+    )
+
+
+# ---------------------------------------------------------------------------
 # The shipped artifact and the shipped prompt
 # ---------------------------------------------------------------------------
 
@@ -177,3 +316,74 @@ def test_the_prompt_asks_for_what_the_guard_enforces():
     assert "must contain NO digits" not in SYSTEM_PROMPT, (
         "the prompt still states the retired digits-only rule as the constraint"
     )
+
+
+# ---------------------------------------------------------------------------
+# Prompt policy and runtime policy state the same rule
+# ---------------------------------------------------------------------------
+# ACTION_PROMPT used to instruct the model to "write quantities in words
+# instead" while `_quantitative()` refused number words, so the prompt asked
+# for output the guard was built to discard. That is worse than either rule
+# alone: the model complies and the desk still loses the draft.
+#
+# This is checked structurally rather than by pinning sentences. Every worked
+# example in both prompts is run through the guard, so a future edit that adds
+# a "YES" the guard refuses, or a "NOT" it waves through, fails here.
+
+PROMPTS = {"SYSTEM_PROMPT": SYSTEM_PROMPT, "ACTION_PROMPT": ACTION_PROMPT}
+
+_EXAMPLE = re.compile(r'^- (YES|NOT) "(.+)"$', re.M)
+
+
+@pytest.mark.parametrize("name", sorted(PROMPTS))
+def test_prompt_examples_agree_with_the_guard(name):
+    examples = _EXAMPLE.findall(PROMPTS[name])
+    assert examples, f"{name} has no worked examples left to check"
+    for verdict, text in examples:
+        found = _quantitative(text)
+        if verdict == "YES":
+            assert not found, (
+                f"{name} offers {text!r} as acceptable output, but the guard "
+                f"refuses it, naming {found}. The prompt is asking for prose "
+                f"the runtime discards."
+            )
+        else:
+            assert found, (
+                f"{name} offers {text!r} as forbidden output, but the guard "
+                f"accepts it. The prompt is stricter than the runtime, so the "
+                f"example teaches a rule nothing enforces."
+            )
+
+
+@pytest.mark.parametrize("name", sorted(PROMPTS))
+def test_no_prompt_authorises_a_quantity_in_words(name):
+    prompt = PROMPTS[name]
+    assert "NO QUANTITIES OF ANY KIND" in prompt, (
+        f"{name} no longer states the enforced policy in the terms the guard "
+        f"implements"
+    )
+    for retired in ("Write quantities in words instead",
+                    "must contain NO digits at all",
+                    "NO digits at all"):
+        assert retired not in prompt, (
+            f"{name} still carries {retired!r}, a rule the runtime contradicts"
+        )
+
+
+# The phrasing the policy leaves available. If the guard ever refuses one of
+# these, the model has been left with no way to say anything at all.
+ALLOWED_PHRASING = [
+    "the approved value",
+    "the current value",
+    "above the threshold",
+    "below the threshold",
+    "the shortfall widened",
+    "the registered expectation moved later",
+    "human review is required",
+]
+
+
+@pytest.mark.parametrize("phrase", ALLOWED_PHRASING)
+def test_the_allowed_vocabulary_survives_the_guard(phrase):
+    found = _quantitative(phrase)
+    assert not found, f"{phrase!r} is the sanctioned phrasing and was refused: {found}"

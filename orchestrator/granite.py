@@ -11,10 +11,10 @@ sit outside its numeric band and still be fine if the thesis said so, and a smal
 drift can be fatal if it contradicts the stated rationale. That judgment is the
 whole reason a model is in this loop.
 
-Provenance rule: Granite emits NO numbers. Every figure in the final artifact is
-rendered by application code from the engine's own output. A rationale containing
-a digit is rejected as fabrication risk and the run falls back to the stub. See
-`_NUMBER` below.
+Provenance rule: Granite emits NO quantities. Every figure in the final artifact
+is rendered by application code from the engine's own output. A rationale
+carrying any quantitative expression is discarded whole and the run falls back
+to the stub. See `_quantitative` below.
 
 Credentials (never hardcode):
     export WATSONX_API_KEY=...
@@ -85,6 +85,21 @@ _WORDS = {
     "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred",
     "thousand", "million", "billion",
     "half", "twice", "double", "triple", "dozen", "percent",
+    # Plurals and inflections of roots already on this list. "the shortfall
+    # doubled" states a ratio exactly as "the shortfall is twice as large"
+    # does, and banning the root while passing its own inflection is not a
+    # policy, it is a spelling. The rule for this block is narrow and stated so
+    # it does not become an ever-growing word list: a token belongs here only
+    # if its root is already above it.
+    #
+    # Listed explicitly rather than matched with an optional suffix, because
+    # "seconds" and "coupled" are not quantities and a suffix rule catches
+    # both. "couple" is deliberately absent: its root is not on the list and
+    # "a couple of issues remain" is ordinary discourse, not a measurement.
+    # "quadrupled" is absent for the same reason, its root not being listed.
+    "doubled", "tripled", "halved",
+    "twofold", "threefold", "tenfold", "hundredfold",
+    "dozens", "hundreds", "thousands", "millions", "billions",
 }
 
 # Ordinals and month names build a date without ever using a digit, which is
@@ -93,10 +108,9 @@ _WORDS = {
 # "first" and "second" are deliberately absent. Both are ordinary discourse in
 # this vocabulary -- "the first assumption", "on second reading" -- and a guard
 # that fires on correct qualitative prose is a guard someone switches off. So
-# is "May", a modal verb far more often than a month here. The exclusions are
-# narrow and cheap: a real date almost always carries a digit or another month
-# word alongside, so it is caught anyway, and the demonstrated attack ("March
-# fifth") is caught twice over.
+# is "May", a modal verb far more often than a month here. Those exclusions
+# stand for a word on its own; `_DATE_PHRASE` below closes the phrase they
+# compose into.
 _ORDINAL_WORDS = {
     "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth",
     "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth",
@@ -113,24 +127,52 @@ _QUANT_WORD = re.compile(
     re.I,
 )
 
-# "1." at the start of a line is an option enumerator, not a claim about a
-# quantity. Stripped before the scan so formatting is not read as fabrication.
-_LIST_MARKER = re.compile(r"^\s*\d+[.)]\s+", re.M)
+# The single-word exclusions above hold for a word standing on its own. They do
+# not hold for the phrase those words compose into. "May first" is a registered
+# completion date carrying no digit, and every one of its parts is excluded, so
+# the word scan saw nothing at all. The comment above used to defend that on the
+# grounds that a real date almost always brings a digit or a second month word
+# along; an audit disproved it with "May first", "May the second" and "the first
+# of May". The composition is matched directly instead, which closes the date
+# and still leaves "the first assumption" and "on second reading" clean.
+#
+# Abbreviated months belong here rather than in _MONTH_WORDS for the same reason
+# "May" does not: ambiguous standing alone, unambiguous once composed into a
+# date. The `\b` on both sides of the month alternation is what makes the
+# alternation order irrelevant, so "Sept." cannot be consumed as "sep".
+_MONTH_TOKEN = "|".join(sorted(_MONTH_WORDS | {
+    "may", "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sept", "sep",
+    "oct", "nov", "dec",
+}))
+_ORDINAL_TOKEN = "|".join(sorted(_ORDINAL_WORDS | {"first", "second"}))
+_DATE_PHRASE = re.compile(
+    rf"\b(?:{_MONTH_TOKEN})\b\.?\s+(?:the\s+)?(?:{_ORDINAL_TOKEN})\b"
+    rf"|\b(?:{_ORDINAL_TOKEN})\s+of\s+(?:{_MONTH_TOKEN})\b",
+    re.I,
+)
 
 
 def _quantitative(text: str) -> list[str]:
     """Every quantitative expression in `text`. Empty means the prose is clean.
 
-    Covers digits in any shape -- signed, decimal, percentage, ratio, scientific
-    notation, and the digits inside an identifier -- and quantities written as
-    words, including the ordinals and month names by which a date arrives with
-    no digit in it at all.
+    Covers every decimal digit -- signed, decimal, percentage, ratio, scientific
+    notation, the digits inside an identifier, and the non-ASCII decimal digits,
+    since `\\d` is Unicode-aware -- quantities written as words, and the dates
+    that a month and an ordinal compose with no digit in them at all.
+
+    It does not cover numerals outside the decimal-digit category: superscripts,
+    subscripts, vulgar fractions, circled and Roman forms. `docs/LIMITS.md`
+    records that residual in full, together with the words accepted on purpose.
+    This is a backstop with known holes, not a barrier; the prompt is the primary
+    control and rendering every figure from a named field is what makes a
+    non-quantitative model affordable.
 
     Identifiers are refused rather than exempted. Granite has no need to repeat
     an NCT number: the page renders it from the contract, where it is checkable.
     """
     found = {m.group(0) for m in _DIGIT_RUN.finditer(text)}
     found |= {m.group(0).lower() for m in _QUANT_WORD.finditer(text)}
+    found |= {m.group(0).lower() for m in _DATE_PHRASE.finditer(text)}
     return sorted(found)
 
 
@@ -219,18 +261,27 @@ State the trigger that should make the desk act, and the observation that would 
 this scenario is actually starting rather than noise.
 
 HARD CONSTRAINT ON NUMBERS — this is a correctness rule, not a style note:
-Your draft must contain NO digits at all. Not one.
+Your draft must contain NO QUANTITIES OF ANY KIND. No digits. No numbers written as \
+words. No percentages, ratios, confidence scores, dates, durations, or arithmetic.
 
 You have deliberately been given directions rather than values, because the desk's engine \
 owns every figure and renders them beside your text. You do not know the numbers, so you \
-cannot state them, size a trade with them, or do arithmetic on them. Any digit in your \
+cannot state them, size a trade with them, or do arithmetic on them. Any quantity in your \
 draft is therefore something you invented, and the entire draft is discarded.
 
-Write quantities in words instead:
+Writing the number as a word does not make it sayable, and neither does writing it as a \
+date. Describe which assumption changed and in which direction, never by how much:
 - NOT "the gap has narrowed to -5 months"
-- YES "the contract now shows a negative gap — the money runs out before the readout"
+- NOT "the gap has narrowed to five months"
+- YES "the contract now shows a negative gap, so the money runs out before the readout"
 - NOT "burn is 180,000,000 per year"
 - YES "the burn rate has increased materially"
+- NOT "re-register by March first"
+- YES "re-register before the registered expectation lapses"
+
+Refer to readings only as "the approved value", "the current value", "above the \
+threshold", or "below the threshold". Naming the metric in words is fine; measuring it \
+is not.
 
 Other rules:
 - You cannot trade, execute, or approve anything. Everything you write is a proposal a \
@@ -388,10 +439,19 @@ class GraniteClassifier:
             raise ValueError("model returned an empty action draft")
 
         # The brief carries directions, never measured values, so the model has no
-        # figure to echo and nothing to do arithmetic on. The digits it did see are
-        # window metadata ("30d", "95"), fine to repeat; anything else it produced
-        # itself. Option enumerators are formatting, not claims.
-        quantities = _quantitative(_LIST_MARKER.sub("", text))
+        # figure to echo and nothing to do arithmetic on. Every quantity in the
+        # draft is therefore one it invented.
+        #
+        # INVARIANT: the text scanned is the text returned. A line-initial
+        # enumerator used to be exempted -- the marker was stripped, the
+        # remainder was scanned, and the ORIGINAL was returned -- so whatever the
+        # marker ate was never scanned and shipped anyway, and "2028. The
+        # registered expectation moved later." went out with its year intact.
+        # The exemption is deleted rather than narrowed, because narrowing it to
+        # two digits still ships "12. Human review is required." ACTION_PROMPT
+        # forbids markdown and bullet symbols outright, so a numbered list is
+        # non-compliance to discard, not formatting to protect.
+        quantities = _quantitative(text)
         if quantities:
             raise ValueError(f"model emitted quantities {quantities} in the action draft")
         return text

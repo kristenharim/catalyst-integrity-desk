@@ -132,7 +132,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 242 passed, 17 skipped
+python3 -m pytest tests/ -q       # 304 passed, 17 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -145,9 +145,9 @@ Nothing else.
 tracked files only and installs `requirements.txt` alone, so three groups skip: fifteen that
 replay registry version history out of the gitignored `data/cache/`, one live Granite check
 that needs watsonx credentials, and one browser-geometry check that needs Playwright. That
-is **242 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
-alone and the browser-geometry check runs too: **243 passed, 16 skipped**. Add the cache and
-Playwright locally and sixteen of those run instead, giving **258 passed, 1 skipped**. The
+is **304 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
+alone and the browser-geometry check runs too: **305 passed, 16 skipped**. Add the cache and
+Playwright locally and sixteen of those run instead, giving **320 passed, 1 skipped**. The
 last skip is the credentialed Granite test; that configuration has not been re-measured for
 this commit, so no count is quoted for it. That test is verified not to pass on the stub:
 pointed at an invalid endpoint it fails on `source == "granite"`.
@@ -203,8 +203,9 @@ positions, is re-read a registry every week to catch the one sponsor that moved 
 fourteen months, then check whether that breaks something they wrote down in January. The
 failure is not a hard problem solved badly. It is an easy problem nobody is assigned to.
 
-So the system watches a written belief, detects when a change contradicts it, drafts the
-challenge in the analyst's own vocabulary, and stops. A human accepts or rejects, and the
+So the system records a written belief against a frozen evidence contract, detects when a
+rebuild contradicts a belief it already carries, drafts the challenge in the analyst's own
+vocabulary, and stops. A human accepts or rejects, and the
 decision hash-chains into a tamper-evident ledger. The judgement stays human. The
 vigilance is what gets automated.
 
@@ -216,12 +217,21 @@ IBM Granite on watsonx never produces a number. It reads the analyst's written r
 alongside the recomputed contract and reports which stated assumption a change breaks, and
 how badly. Every figure on screen comes from Python arithmetic over filed data.
 
-That rule is enforced rather than asserted. `_fabricated()` scans model output for any
-figure absent from its input and falls back to a deterministic stub if it finds one. The
-guard deliberately does not ban all digits: quoting a number from the belief's own claim
-text is quotation, not invention. The rule is "a number absent from the input".
+That rule is enforced rather than asserted. `_quantitative()` scans model output for any
+quantitative expression at all and falls back to a deterministic stub if it finds one. The
+guard bans quantities outright rather than only unsourced ones: digit forms, number words,
+percentages, ratios, signs, durations, and the dates a month and an ordinal compose without
+using a digit. A response carrying one is discarded whole, never edited, because a sentence
+with its number deleted is a sentence whose meaning nobody has checked.
 
-**Two structural guards, not one.** `_fabricated()` stops the model inventing a number.
+The earlier rule was "a number absent from the input", on the reasoning that quoting a
+figure from the belief's own claim is quotation rather than invention. An audit retired it.
+It carried no *field*, so any bare digit anywhere in the analyst's own prose authorised that
+magnitude in the metric's own unit: a thesis reading "Phase 3 readiness across 12 sites"
+licensed both "3 months" and "12 months". `docs/LIMITS.md` carries the full reasoning and
+the exact residual.
+
+**Two structural guards, not one.** `_quantitative()` stops the model measuring anything.
 `orchestrator/lexicon.py` stops it making a claim the evidence does not support: a
 feasibility verdict, an accusation of intent, a causal explanation for why a date moved, or
 silence asserted as fact. A rationale that trips either guard is discarded and the
@@ -290,7 +300,11 @@ cohort study: its store, the snapshot the published rates cite, the first amendm
 protected engine module, and the absorption rules in the lexicon. Most recently, the
 three-axis decision state model in `console/states.py` and `console/review.py`, which
 separates what the evidence says from what a human is doing and from whether the decision
-record is still intact.
+record is still intact, and then the non-quantitative Granite policy in
+`orchestrator/granite.py`: the rule that replaced "a number absent from the input" after an
+audit broke it, and the pass that closed the word-form dates the replacement still let
+through, aligned both prompts with the rule the runtime actually enforces, and corrected the
+test counts three earlier rows had published from memory rather than from a run.
 
 **Bob built the thing that works. What came after is mostly the project auditing itself**,
 which is the part that produced the finding about its own slip figures. Everything in the

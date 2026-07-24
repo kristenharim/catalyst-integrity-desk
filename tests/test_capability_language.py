@@ -27,17 +27,31 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 REPO = Path(__file__).resolve().parents[1]
 
-# Every surface that describes what the product does to a belief.
+# Every surface that describes what the product does to a belief. docs/SUBMISSION.md
+# was added after it was found carrying the same false sentence as README.md while
+# sitting outside the guard entirely.
 SURFACES = (
-    ["README.md", "docs/UI.md", "docs/WORKSPACE.md", "docs/DEMO.md"]
+    ["README.md", "docs/UI.md", "docs/WORKSPACE.md", "docs/DEMO.md",
+     "docs/SUBMISSION.md"]
     + [f"console/templates/{n}" for n in sorted(os.listdir(REPO / "console" / "templates"))
        if n.endswith(".html")]
 )
 
 # Each pattern is a claim the code does not support, with why it is false.
 FORBIDDEN = [
-    (r"picked up at the next rebuild|picks it up on the next run",
+    (r"picked up (at|on) the next (run|rebuild)|picks it up on the next run",
      "no rebuild reads the ledger; make_snapshot.py never opens decisions.jsonl"),
+    (r"watch(es|ed|ing) a (written |recorded |new )?belief",
+     "a belief is recorded against a frozen contract; nothing watches it"),
+    (r"begin(s|ning)? watching|start(s|ed)? watching",
+     "recording a belief starts no watcher"),
+    (r"enter(s|ed|ing)? monitoring",
+     "there is no monitoring state for a belief to enter"),
+    (r"(is|are|gets?|becomes?|being|then) automatically monitored",
+     "nothing is monitored automatically; the rebuild is manual and does not "
+     "read the ledger"),
+    (r"monitored after (the )?rebuild|monitored on (the )?rebuild",
+     "a rebuild does not pick a recorded belief up, so it cannot monitor one"),
     (r"monitored contract out",
      "the workspace records a contract, it does not begin watching one"),
     (r"start(s|ed)? monitoring|begin(s)? monitoring|monitoring (is )?enabled",
@@ -58,20 +72,88 @@ ALLOWED = {"contracts monitored"}
 
 
 def _lines(rel: str):
-    text = (REPO / rel).read_text()
-    return [(i, ln) for i, ln in enumerate(text.splitlines(), 1)]
+    """Each line joined to the one after it, so a wrapped claim is still one string.
+
+    Scanning single lines let the exact sentence this file exists to forbid sit
+    in `docs/SUBMISSION.md` unnoticed, because the prose wrapped between "the
+    system watches a written" and "belief". The identical sentence in README.md
+    happened to fall inside one line and was caught. A guard a line break can
+    switch off is the hollow kind, and the count guard in tests/test_console.py
+    already learned this lesson on its own numbers.
+
+    Two lines is enough: these are wrapped paragraphs, not phrases spanning
+    three lines of an eighty-column file. The line number reported is where the
+    match starts.
+    """
+    raw = (REPO / rel).read_text().splitlines()
+    return [(i, " ".join(raw[i - 1:i + 1]))
+            for i in range(1, len(raw) + 1)]
 
 
 @pytest.mark.parametrize("rel", SURFACES)
 def test_no_surface_claims_a_belief_is_watched(rel):
-    offenders = []
+    offenders = set()
     for pattern, why in FORBIDDEN:
-        for i, line in _lines(rel):
-            if any(a in line for a in ALLOWED):
+        for i, window in _lines(rel):
+            if any(a in window for a in ALLOWED):
                 continue
-            if re.search(pattern, line):
-                offenders.append(f"{rel}:{i} [{why}] {line.strip()[:90]}")
-    assert not offenders, "capability language outruns the code:\n  " + "\n  ".join(offenders)
+            m = re.search(pattern, window)
+            if m:
+                offenders.add(f"{rel}:{i} [{why}] {m.group(0)}")
+    assert not offenders, ("capability language outruns the code:\n  "
+                           + "\n  ".join(sorted(offenders)))
+
+
+# ---------------------------------------------------------------------------
+# The patterns themselves, checked against text rather than against the repo
+# ---------------------------------------------------------------------------
+# A pattern list is only worth what it catches. Scanning the repo proves the
+# repo is currently clean, which an empty pattern list also proves. These two
+# cases pin the patterns directly: every unsupported present-tense monitoring
+# claim must match something, and every accurate sentence must match nothing.
+
+UNSUPPORTED = [
+    "So the system watches a written belief, detects when a change contradicts it.",
+    "The contract begins watching once you approve it.",
+    "The belief enters monitoring immediately.",
+    "From here it is automatically monitored.",
+    "The card is monitored after rebuild.",
+    "A recorded belief is picked up on the next run.",
+    "A recorded belief is picked up at the next rebuild.",
+]
+
+# Accurate, or plainly about the intended product class rather than about what
+# happens to a belief today. A guard that fires on these is a guard that gets
+# switched off, and "monitoring queue" is the name of a shipped page.
+SUPPORTED = [
+    "Recorded, not yet watched.",
+    "The monitoring queue lists one row per contract per reason to look.",
+    "recorded yes, projected from the frozen snapshot yes, "
+    "**manually rebuildable** no for beliefs, **automatically monitored** no.",
+    "The system records a written belief against a frozen evidence contract.",
+    "The workspace records a contract.",
+    "Two states a monitoring queue should have are deliberately absent.",
+]
+
+
+def _matches(line: str):
+    return [why for pattern, why in FORBIDDEN if re.search(pattern, line)]
+
+
+@pytest.mark.parametrize("line", UNSUPPORTED)
+def test_an_unsupported_monitoring_claim_is_caught(line):
+    assert _matches(line), (
+        f"no FORBIDDEN pattern catches {line!r}; the guard would let this claim "
+        "ship on any surface"
+    )
+
+
+@pytest.mark.parametrize("line", SUPPORTED)
+def test_accurate_capability_language_is_not_caught(line):
+    assert not _matches(line), (
+        f"{line!r} was rejected by {_matches(line)}; the guard is firing on "
+        "language the code does support"
+    )
 
 
 def test_the_honest_sentence_is_still_there():

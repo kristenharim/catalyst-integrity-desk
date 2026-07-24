@@ -68,13 +68,27 @@ looks like an attack:
 further unit arithmetic was going to. **Any claim that it constituted semantic-field
 binding is withdrawn.**
 
-So the rule is now that the model does not measure. `_quantitative()` refuses any
-quantitative expression in Granite prose: digits in any shape, signed, decimal,
-percentage, ratio, scientific notation, the digits inside an identifier, and quantities
-written as words including the ordinals and month names by which a date arrives carrying
-no digit at all. A response containing one is discarded whole and the deterministic stub
-answers. Nothing is partially sanitised, because a sentence with its number deleted is a
-sentence whose meaning nobody has checked.
+So the rule is now that the model does not measure. **`_quantitative()` rejects
+model-authored quantitative expressions.** It covers digit forms, common number words,
+dates, durations, percentages, ratios, signs, and contextual word-form dates:
+
+- every decimal digit, signed, decimal, percentage, ratio, scientific notation, and the
+  digits inside an identifier. `\d` is Unicode-aware, so non-ASCII decimal digits are
+  caught with the ASCII ones;
+- quantities written as words, including the plurals and inflections of the roots already
+  on that list, so "the shortfall doubled" and "slipped by hundreds of days" are refused
+  alongside "double" and "hundred";
+- ordinals and month names, by which a date arrives carrying no digit at all;
+- **dates composed out of words that are individually allowed.** "may", "first" and
+  "second" are ordinary discourse in this vocabulary and are excluded from the word scan
+  on purpose. The exclusions used to compose: every part of "May first" was allowed, so a
+  registered completion date passed every scan. `_DATE_PHRASE` matches the composition
+  directly, which closes "May first", "May the second", "the first of May" and "Sept.
+  second" while leaving "the first assumption" and "the sponsor may revise it" clean.
+
+A response containing any of these is discarded whole and the deterministic stub answers.
+Nothing is partially sanitised, because a sentence with its number deleted is a sentence
+whose meaning nobody has checked.
 
 **What this proves, exactly:** that no quantity authored by the model reaches the page.
 
@@ -83,24 +97,58 @@ sentence whose meaning nobody has checked.
 - **It does not prove the qualitative judgment is correct.** "The approved funding
   assumption no longer holds" passes this guard whether or not it is true. The guard
   bounds the *form* of the model's output and says nothing about its accuracy.
-- **It does not prevent misleading causal or feasibility language.** "The sponsor is
-  concealing a delay" carries no quantity and passes here. `orchestrator/lexicon.py` is
-  the separate control for that, and it runs on the same response; neither guard covers
-  the other's failure.
+- **It does not independently prevent causal, feasibility or fraud language.** "The
+  sponsor is concealing a delay" carries no quantity and passes here. `orchestrator/
+  lexicon.py` is the separate control for that, and it runs on the same response; neither
+  guard covers the other's failure, and neither should be described as covering it.
+- **Comparative language stays allowed, without magnitude.** "widened", "moved later",
+  "above the threshold", "below the threshold", "the approved value", "the current value"
+  and "human review is required" all pass, by design. That is the vocabulary the model is
+  left with, and a guard that took it away would leave the model unable to say anything.
+  What is refused is the size of the move, never its direction.
 - **Deterministic fields remain the only displayed quantities.** Every figure on screen
   is rendered by Python and Jinja from a named snapshot field. That is what makes this
   policy affordable: the model never needed to carry a number.
 - **The stub fallback is quantitative by design and is not scanned.** It states
   engine-computed values because it is Python reading the fields the page renders.
   `Classification.source` records which of the two answered, and the page shows it.
-- **Two words are deliberately excluded from the word scan**, "first" and "second", along
-  with the month "May". All three are ordinary discourse in this vocabulary, and a guard
-  that fires on correct qualitative prose is a guard someone switches off. A real date
-  almost always carries a digit or a second month word, so the exclusions are narrow;
-  "March fifth", the case that motivated the word scan, is caught twice over.
+- **Some words and numeral forms are accepted on purpose, and here they are.** Nothing
+  below is an oversight; each was measured against the shipped guard rather than assumed.
+
+  *Ambiguous words, standing alone.* "may", "first" and "second" pass on their own,
+  because all three are ordinary discourse in this vocabulary and a guard that fires on
+  correct qualitative prose is a guard someone switches off. They no longer pass once
+  composed into a date. Also accepted: "couple", "score", "fortnight", "pair", "single",
+  "nil", "nought", and the vague counts "many", "several", "few". "a couple of issues
+  remain" is discourse rather than measurement, and blocking it globally would cost more
+  than it buys. "quadrupled" is accepted because its root is not on the word list; the
+  rule for that list is that a token belongs there only if its root is already on it, and
+  an ever-growing list of individually plausible words is how a guard stops being
+  reviewable.
+
+  *Numeral forms outside the decimal-digit category.* Vulgar fractions (`½ ¼ ¾`),
+  superscripts and subscripts (`² ₂`), enclosed forms (`② ➂`), and Roman numerals in
+  either alphabetic (`XII`, `iii`) or Unicode (`Ⅻ`) form all pass. `\d` matches the Nd
+  category and none of these are in it.
+
+  The residual is a real hole and it is bounded by the same thing that makes the whole
+  policy affordable: the model has no figure to launder in the first place, since the
+  brief hands it directions and the page renders every value from a named field.
 - **It is a backstop, not the primary control.** The prompt asks for non-quantitative
   prose in the first place. A model that complies never reaches this code, and the frozen
-  demo rationale is digit-free without it.
+  demo rationale is digit-free without it. Both prompts now state the same rule the guard
+  enforces. `ACTION_PROMPT` previously instructed the model to write quantities in words
+  while the guard refused number words, so a compliant model produced a draft the runtime
+  was built to discard; `test_prompt_examples_agree_with_the_guard` runs every worked
+  example in both prompts through `_quantitative()` so that contradiction cannot recur.
+- **`_draft_once` is dormant, and now follows the same scan-and-return invariant.**
+  `draft_action` has no callers outside `orchestrator/granite.py`, so no model-authored
+  Action prose ships today. It carried a real defect regardless: the guard scanned
+  list-marker-stripped text and returned the unstripped original, so "2028. The registered
+  expectation moved later." went out with its year intact. The exemption is deleted rather
+  than narrowed, because narrowing it to two digits still ships "12. Human review is
+  required." **The text scanned is now exactly the text returned**, and a test pins both
+  the refusals and the byte-identity of an accepted draft.
 
 ## The provenance test detects unintended displayed literals
 

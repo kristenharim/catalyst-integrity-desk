@@ -205,9 +205,11 @@ project's central rule applied to a new input.
 ```
 
 Every number continues to come from SEC XBRL and from a specific registry version.
-`_fabricated()` already enforces that a model cannot introduce a figure absent from its
-input, and it is ported byte for byte from the prior project. Document intake does not
-change it.
+`_quantitative()` already enforces that model prose carries no quantity at all, which is
+stricter than the ported `_fabricated()` rule it replaced on 2026-07-23; that rule
+authorised any magnitude whose digits appeared anywhere in the input and was retired for
+it. Document intake does not change that, and would have to be built to hand the model
+directions rather than values in the same way.
 
 What the model returns is a checklist for a human:
 

@@ -147,10 +147,12 @@ committed bundles and a live fetch are the same schema.
 **Python computes. Granite judges prose. Humans decide.**
 
 Granite never produces a number. It is given the direction a metric moved, never the
-value, so it has nothing to echo and nothing to do arithmetic on. `_fabricated()` scans
-model output for any figure absent from its input and discards the response in favour of a
-deterministic stub if it finds one. That guard is tested against live Granite, and the test
-is itself checked by pointing it at an invalid endpoint, where it fails rather than
+value, so it has nothing to echo and nothing to do arithmetic on. `_quantitative()` scans
+model output for any quantitative expression at all, not merely one absent from its input,
+and discards the whole response in favour of a deterministic stub if it finds one. Digit
+forms, number words, percentages, ratios, signs, durations and word-form dates are all
+refused, and nothing is partially sanitised. That guard is tested against live Granite, and
+the test is itself checked by pointing it at an invalid endpoint, where it fails rather than
 silently passing on the stub.
 
 Two supporting rules: every displayed number names the XBRL tag or registry version it came
@@ -193,9 +195,10 @@ The work being automated is not analysis. It is **noticing**.
 An analyst can compute a funding gap in ten minutes. What no analyst does, across forty
 positions, is re-read a registry every week to catch the one sponsor whose date moved, then
 check whether that breaks something they wrote down in January. It is not a hard problem
-solved badly, it is an easy problem nobody is assigned to. So the system watches a written
-belief, detects when a change contradicts it, drafts the challenge in the analyst's own
-vocabulary, and stops. The judgement stays human; the vigilance is what gets automated.
+solved badly, it is an easy problem nobody is assigned to. So the system records a written
+belief against a frozen evidence contract, detects when a rebuild contradicts a belief it
+already carries, drafts the challenge in the analyst's own vocabulary, and stops. The
+judgement stays human; the vigilance is what gets automated.
 
 ## How IBM Bob was used
 
@@ -249,7 +252,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 242 passed, 17 skipped
+python3 -m pytest tests/ -q   # 304 passed, 17 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -258,9 +261,9 @@ judge can clone and run it with no IBM account.
 The count depends on what the machine carries. A clone installs `requirements.txt` and
 nothing else, so three groups skip: fifteen tests that replay registry version history out
 of the gitignored `data/cache/`, one credential-gated live Granite check, and one
-browser-geometry check needing Playwright. That is **242 passed, 17 skipped**. Install
-Playwright alone and the geometry check runs too: **243 passed, 16 skipped**. Add the cache
-and Playwright locally and sixteen of them run instead: **258 passed, 1 skipped**. The last
+browser-geometry check needing Playwright. That is **304 passed, 17 skipped**. Install
+Playwright alone and the geometry check runs too: **305 passed, 16 skipped**. Add the cache
+and Playwright locally and sixteen of them run instead: **320 passed, 1 skipped**. The last
 skip is the credentialed Granite test; that configuration has not been re-measured for this
 commit, so no count is quoted for it. The fifteen verify the cohort research rather than the
 console, so nothing on the demo path depends on them.
