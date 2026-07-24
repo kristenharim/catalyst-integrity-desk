@@ -59,6 +59,16 @@
   }
   .event-time { font-size: 12px; color: var(--cds-text-secondary);
                 font-variant-numeric: tabular-nums; }
+  /* The note a timestamp carries when it is not a time. Composed by
+     review.ts_display, never by this file. */
+  .ts-note { margin-left: 8px; }
+
+  /* How the list is ordered, stated where a reader meets the list. Quiet,
+     because it is a scope label and not an event. Not uppercased like the
+     field labels: this one is a sentence a reader reads rather than a caption
+     over a value, and case-mapping it changes the words on screen. */
+  .ordering { font-size: 12px; color: var(--cds-text-secondary);
+              margin-bottom: var(--cds-spacing-03); }
   /* The human action. The workflow wire, and the only wire on a row here:
      nothing on this page states what the evidence says about a contract. */
   .chip {
@@ -144,11 +154,23 @@
 {% endif %}
 
 {% if rows %}
+{# What the order is. The list has always been chronological and said so
+   nowhere, and a history screen that does not name its order asks the reader to
+   infer it from the rows. No control is offered beside it, because a sort this
+   page cannot perform is a claim about capability the desk cannot keep. #}
+<p class="ordering">Oldest to newest &middot; follows the recorded chain</p>
 <ol class="activity">
   {% for row in rows %}
   <li class="event ev-{{ row.event or row.source }}">
     <div class="event-head">
-      <span class="event-time">{{ row.ts_display }}</span>
+      {# Label and note both come from review.ts_display. This file renders what
+         it is given: what a stored zero means is decided in one place, so the
+         receipt cannot read it differently. #}
+      <span class="event-time">{{ row.ts_display.label }}
+        {%- if row.ts_display.note %}
+        <span class="ts-note">{{ row.ts_display.note }}</span>
+        {%- endif %}
+      </span>
       {# The human action, in words. #}
       <span class="chip">{{ row.action }}</span>
       <span class="tag">{{ row.card_id }}</span>

@@ -133,7 +133,13 @@
       </tr>
       <tr>
         <th scope="row">Timestamp</th>
-        <td>{{ receipt.ts_display }}</td>
+        {# Same renderer the activity list uses, and the same two fields, so the
+           two pages cannot describe one entry's timestamp differently. #}
+        <td>{{ receipt.ts_display.label }}
+          {%- if receipt.ts_display.note %}
+          <span class="unavailable">{{ receipt.ts_display.note }}</span>
+          {%- endif %}
+        </td>
       </tr>
       <tr>
         <th scope="row">Card</th>

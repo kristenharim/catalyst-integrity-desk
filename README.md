@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 422 passed, 19 skipped
+python3 -m pytest tests/ -q       # 429 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -160,10 +160,10 @@ above it, and each has its own command, so a number here is traceable to what pr
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **422 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **423 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **425 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **438 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **429 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **430 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **432 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **445 passed, 3 skipped** |
 
 Base is the tier a judge gets and the number printed above; on a clone with nothing extra
 installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
@@ -178,7 +178,7 @@ cohort field, and `tests/test_prose_figures.py` cannot tell a test count from a 
 cohort figure, so it reported the collision either way. That is the right way round for a
 guard to be wrong. Two screens later the counts have moved twice more and neither collides,
 so both stay printed: the cache-backed tier is in the table above, and running the axe
-command with the cache present gives 440 passed and 1 skipped. Every printed tier reconciles to the same
+command with the cache present gives 447 passed and 1 skipped. Every printed tier reconciles to the same
 total, which is what the count guard enforces. The Granite check is verified not to pass on
 the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
@@ -409,7 +409,12 @@ at `/activity`, which lists the ledger's own events and the rejections that neve
 in the order the record holds them, each row bound to its own entry hash rather than to
 whichever entry is last. It is decision history and not evidence-change history, and it
 says which of the two it is on the page, because nothing here has a history of evidence runs
-to show.
+to show. Most recently, the seeded ledger entry stopped reading as a decision taken in 1970:
+the `ts=0.0` the approve path writes is a marker rather than a moment, and the renderer both
+screens share returns a display state that names it as one, with the stored entry left
+byte-identical, because the alternative repair is to write a better timestamp into the
+record. The same extraction had already found that every receipt ever rendered stamped the
+host machine's local wall time under a UTC label.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

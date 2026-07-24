@@ -536,9 +536,17 @@ def test_confirm_ignores_forged_receipt(tmp_path, monkeypatch):
         real_author = real_entry["author"]
 
         # Craft a confirm URL with completely forged receipt values.
+        #
+        # The forged timestamp used to be "1970-01-01 00:00:00 UTC", which is
+        # now the one string the product cannot produce at all: `ts == 0.0` is
+        # a seed marker and renders as words. A forgery the code could never
+        # emit is absent from the page whether or not the URL is ignored, so the
+        # test would have kept passing for the wrong reason. This one is a
+        # well-formed timestamp of exactly the shape a real entry renders, so
+        # its absence is evidence that the parameter was dropped.
         forged_receipt = _json.dumps({
             "author": "nobody:forged",
-            "ts_display": "1970-01-01 00:00:00 UTC",
+            "ts_display": "2011-11-11 11:11:11 UTC",
             "card_id": "FAKE-card",
             "what_changed": "nothing",
             "thesis_state": "funded to catalyst, no financing required",
@@ -561,6 +569,9 @@ def test_confirm_ignores_forged_receipt(tmp_path, monkeypatch):
         )
         assert "deadbeef" * 8 not in text, (
             "confirm page must not render a forged hash from the URL"
+        )
+        assert "2011-11-11 11:11:11 UTC" not in text, (
+            "confirm page must not render a forged timestamp from the URL"
         )
 
 

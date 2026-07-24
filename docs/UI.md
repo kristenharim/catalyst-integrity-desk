@@ -160,7 +160,15 @@ history, and it says so on the page, because there are no historical evidence ru
 be a history of. Every row is one entry in the decision record; a rejection appears as a row
 with no entry hash and no receipt, because it writes to the review log and leaves the ledger
 untouched. The one challenge the snapshot carries is a computed state rather than something
-a human did, and it is not rendered here at all.
+a human did, and it is not rendered here at all. The list is oldest to newest and says so
+above itself; no sorting control is offered, because this page cannot reorder anything.
+
+Timestamps on Activity and on the receipt are both composed by `review.ts_display`, which
+returns a display state rather than a string. The card the approve path seeds carries
+`ts=0.0`, a marker rather than a moment, and it now reads "Seeded baseline / Original
+timestamp unavailable" instead of a date in 1970. The stored entry is unchanged: the
+interpretation is in the projection, and the templates render the label and the note they
+are given rather than deciding for themselves what a zero means.
 
 The Decision Review reads in one order at every width: what changed, why that needs a
 human, the approved belief, the current contract, then the evidence under all four. Above

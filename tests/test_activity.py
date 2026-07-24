@@ -23,13 +23,20 @@ What these tests are for, in the order they run:
      of what the file now says.
   5. The empty state reports the two files it read, and does not imply anything
      is being checked between snapshots.
+  6. The seeded `ts=0.0` is rendered as the sentinel it is rather than as a date
+     in 1970, in the formatter both screens share, with the stored entry left
+     byte-identical. A record edited to make its own screen read better is the
+     failure this page exists to make visible.
 """
 from __future__ import annotations
 
+import hashlib
+import html
 import json
 import os
 import re
 import sys
+import time
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -551,11 +558,252 @@ def test_one_timestamp_rendering_serves_both_pages_that_show_an_entry():
     denies, which is a discrepancy in the record rather than in the layout. The
     zone is asserted because the label says UTC and `fromtimestamp` with no
     timezone reads the machine's local clock.
+
+    This used to pin `ts_display(0.0) == "1970-01-01 00:00:00 UTC"`, and that
+    assertion was the defect written down as a requirement. The zero is a seed
+    marker `console/app.py` writes on purpose, not a moment, and rendering it as
+    a date puts a decision in 1970 on the one screen whose subject is whether
+    the record can be relied on. The formatter returns a display state now, so
+    the three cases are three different answers rather than three strings a
+    caller has to tell apart, and the stored entry is untouched.
     """
-    assert review.ts_display(0.0) == "1970-01-01 00:00:00 UTC"
-    assert review.ts_display(None) == "unavailable"
+    seeded = review.ts_display(0.0)
+    assert seeded.label == review.SEEDED_LABEL
+    assert seeded.note == review.SEEDED_NOTE
+    assert seeded.is_sentinel and seeded.value is None
+    assert "1970" not in str(seeded) + seeded.note, (
+        "the seed marker is rendered as a date, so the record reads as though a "
+        "decision was taken at the epoch"
+    )
+
+    missing = review.ts_display(None)
+    assert missing.label == "unavailable" and not missing.is_sentinel
+
+    real = review.ts_display(1_753_300_000.0)
+    assert real.label == "2025-07-23 19:46:40 UTC"
+    assert real.value == 1_753_300_000.0 and not real.is_sentinel
+    assert not real.note, "a real timestamp carries no note to qualify it"
+
     src = (REPO / "console" / "app.py").read_text()
     assert "review.ts_display(entry[\"ts\"])" in src, (
         "the receipt no longer composes its timestamp through the shared "
         "renderer, so the two pages can disagree about one entry"
+    )
+
+
+# ---------------------------------------------------------------------------
+# The seeded timestamp, rendered as the sentinel it is
+# ---------------------------------------------------------------------------
+# `console/app.py` seeds the original card with `ts=0.0` so the approve path has
+# something to bump. That zero is a marker and not a moment, and it reached both
+# screens as `1970-01-01 00:00:00 UTC`. On a history and a receipt, a date is
+# the field a reader checks the record against, so an epoch there reads as
+# corrupted data on the two pages that exist to be relied on.
+#
+# The fix is in the projection and nowhere else. The ledger keeps the bytes it
+# was written with: an entry edited to make a screen read better is a record
+# that has been changed to suit its display, which is the thing this project is
+# about not doing.
+
+TEMPLATES = REPO / "console" / "templates"
+
+
+def _seed_entry(tmp_path: Path) -> dict:
+    """The entry the approve path seeds, proven to be the sentinel case."""
+    seeds = [e for e in _entries(tmp_path) if e["author"] == "snapshot:seed"]
+    assert len(seeds) == 1, f"expected one seeded entry, found {len(seeds)}"
+    assert seeds[0]["ts"] == 0.0, (
+        "the fixture no longer writes the seed marker, so these tests would "
+        "pass without the sentinel ever being rendered"
+    )
+    return seeds[0]
+
+
+def _row_for(body: str, entry_hash: str) -> dict:
+    rows = [r for r in _rows(body) if f"this entry {entry_hash}" in r["flat"]]
+    assert len(rows) == 1, f"{entry_hash[:12]} is named by {len(rows)} rows"
+    return rows[0]
+
+
+def test_the_seeded_timestamp_renders_no_1970_date_on_any_surface(isolated):
+    """The whole point, stated as the absence a reader would notice.
+
+    Verified failing: returning the epoch string for `ts == 0.0` puts
+    "1970-01-01 00:00:00 UTC" on the activity row and on that entry's receipt,
+    and this names both.
+    """
+    c, tmp = isolated
+    _approve(c)
+    seed = _seed_entry(tmp)
+
+    surfaces = {
+        "/activity": c.get("/activity").get_data(as_text=True),
+        f"/receipts/{seed['entry_hash']}":
+            c.get(f"/receipts/{seed['entry_hash']}").get_data(as_text=True),
+        "/redline/confirm":
+            c.get("/redline/confirm?verdict=approve").get_data(as_text=True),
+    }
+    for where, body in surfaces.items():
+        assert "1970" not in body, (
+            f"{where} renders a 1970 date, so the seed marker is being shown as "
+            "a moment somebody recorded"
+        )
+
+
+def test_the_seeded_timestamp_reads_as_a_seeded_baseline(isolated):
+    """The sentinel says what it is, in the same words on both screens.
+
+    The words are composed by `review.ts_display` and are asserted absent from
+    every template, because a label typed into a template is a second definition
+    of what a stored zero means and the two can drift apart.
+    """
+    c, tmp = isolated
+    _approve(c)
+    seed = _seed_entry(tmp)
+
+    row = _row_for(c.get("/activity").get_data(as_text=True), seed["entry_hash"])
+    assert review.SEEDED_LABEL in row["flat"], (
+        f"the seeded row reads {row['flat']!r}"
+    )
+    receipt = c.get(f"/receipts/{seed['entry_hash']}").get_data(as_text=True)
+    assert review.SEEDED_LABEL in receipt
+
+    typed = [p.name for p in sorted(TEMPLATES.glob("*.html"))
+             if review.SEEDED_LABEL in p.read_text()
+             or review.SEEDED_NOTE in p.read_text()]
+    assert not typed, (
+        f"{typed} type the sentinel's words, so what a stored zero means is "
+        "decided in a template as well as in the formatter"
+    )
+
+
+def test_the_seeded_timestamp_says_the_original_is_unavailable(isolated):
+    """A label alone would leave a reader guessing what was seeded.
+
+    "Seeded baseline" says where the row came from. It does not say that no
+    timestamp was ever recorded for it, and that is the part a reader checking
+    the order of events needs.
+    """
+    c, tmp = isolated
+    _approve(c)
+    seed = _seed_entry(tmp)
+
+    row = _row_for(c.get("/activity").get_data(as_text=True), seed["entry_hash"])
+    assert review.SEEDED_NOTE in row["flat"], (
+        f"the seeded row reads {row['flat']!r}"
+    )
+    receipt = c.get(f"/receipts/{seed['entry_hash']}").get_data(as_text=True)
+    assert review.SEEDED_NOTE in receipt
+
+
+def test_a_real_timestamp_reads_identically_on_activity_and_the_receipt(isolated):
+    """One entry, two screens, one string.
+
+    The reason the formatter is shared at all. Both surfaces are read for the
+    same entry and compared against the value recomputed from the stored field,
+    so a page that formatted its own copy fails here rather than in a demo.
+    """
+    c, tmp = isolated
+    _approve(c)
+
+    real = [e for e in _entries(tmp) if e["ts"] != 0.0]
+    assert real, "the fixture recorded no entry carrying a real timestamp"
+    for e in real:
+        expected = review.ts_display(e["ts"])
+        assert not expected.is_sentinel and "1970" not in expected.label
+
+        row = _row_for(c.get("/activity").get_data(as_text=True), e["entry_hash"])
+        assert expected.label in row["flat"], (
+            f"the activity row for {e['entry_hash'][:12]} does not carry "
+            f"{expected.label!r}: {row['flat']!r}"
+        )
+        receipt = c.get(f"/receipts/{e['entry_hash']}").get_data(as_text=True)
+        assert expected.label in receipt, (
+            f"the receipt for {e['entry_hash'][:12]} dates it differently from "
+            "the activity row"
+        )
+
+
+def test_the_utc_conversion_does_not_move_with_the_host_timezone():
+    """The label says UTC, so the machine's zone must not reach the output.
+
+    `fromtimestamp` with no timezone reads the host clock, which is how the
+    receipt spent every render stamping local wall time under a UTC suffix.
+    Three zones: one west, one far enough east that a naive conversion of the
+    fixed timestamp lands on the following calendar day, and one whose offset is
+    not a whole number of hours, because an hours-only bug survives two of those
+    three.
+    """
+    fixed = 1_753_300_000.0
+    expected = "2025-07-23 19:46:40 UTC"
+
+    original = os.environ.get("TZ")
+    try:
+        for zone in ["America/Los_Angeles", "Pacific/Kiritimati", "Asia/Kolkata"]:
+            os.environ["TZ"] = zone
+            time.tzset()
+            assert review.ts_display(fixed).label == expected, (
+                f"under TZ={zone} the entry is dated "
+                f"{review.ts_display(fixed).label!r}, not {expected!r}"
+            )
+            seeded = review.ts_display(0.0)
+            assert seeded.label == review.SEEDED_LABEL and seeded.is_sentinel, (
+                f"under TZ={zone} the seed marker renders {seeded.label!r}"
+            )
+    finally:
+        if original is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = original
+        time.tzset()
+
+
+def test_rendering_the_sentinel_leaves_the_stored_entry_untouched(isolated):
+    """The interpretation is in the projection, and only there.
+
+    The other way to clear a 1970 date is to write a better timestamp into the
+    record, which would make the screen read well by editing the thing the
+    screen exists to report. So both halves are asserted together: the pages
+    render the sentinel in words, and the ledger is byte-identical afterwards
+    with its zero still in it.
+    """
+    c, tmp = isolated
+    _approve(c)
+    path = tmp / "decisions.jsonl"
+    before = hashlib.sha256(path.read_bytes()).hexdigest()
+    seed = _seed_entry(tmp)
+
+    body = c.get("/activity").get_data(as_text=True)
+    receipt = c.get(f"/receipts/{seed['entry_hash']}").get_data(as_text=True)
+    assert review.SEEDED_LABEL in body and review.SEEDED_LABEL in receipt
+
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == before, (
+        "rendering rewrote the decision ledger"
+    )
+    assert _seed_entry(tmp)["ts"] == 0.0, (
+        "the seed marker was rewritten to make a screen read better"
+    )
+
+
+def test_the_ordering_is_stated_where_a_reader_meets_the_list(isolated):
+    """Chronological, said out loud, with no control beside it.
+
+    The list has always been oldest first and named its order nowhere, which
+    leaves a reader inferring it from the rows. No sort control is offered: this
+    page cannot reorder anything, and a control that cannot complete is a claim
+    about capability the desk cannot keep.
+    """
+    c, _ = isolated
+    _approve(c)
+    body = c.get("/activity").get_data(as_text=True)
+    flat = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", body)).split())
+    assert "Oldest to newest · follows the recorded chain" in flat
+
+    label = body.find('class="ordering"')
+    listing = body.find('<ol class="activity">')
+    assert label != -1 and label < listing, (
+        "the ordering label is not rendered above the list it describes"
+    )
+    assert "<select" not in body and 'type="radio"' not in body, (
+        "a sorting control was added; this pass adds none"
     )

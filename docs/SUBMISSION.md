@@ -270,7 +270,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 422 passed, 19 skipped
+python3 -m pytest tests/ -q   # 429 passed, 19 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -285,15 +285,15 @@ command:
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **422 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **423 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **425 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **438 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **429 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **430 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **432 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **445 passed, 3 skipped** |
 
 Base is what a judge gets, and on a clone with nothing extra installed the plain command
 produces it. The last tier shares a command with the second because the cache is data
 rather than a dependency. Running the axe command with the cache present runs both and
-leaves the credentialed Granite check as the only skip, at 440 passed and 1 skipped. That
+leaves the credentialed Granite check as the only skip, at 447 passed and 1 skipped. That
 figure and the cache-backed row were off this page for two commits, because at the counts
 they carried then both passed counts were also renderings of a cohort field and
 `tests/test_prose_figures.py` cannot tell the two apart. The decision review screen and the

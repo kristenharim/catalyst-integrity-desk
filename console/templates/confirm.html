@@ -73,7 +73,12 @@
         </tr>
         <tr>
           <td style="color:#8b949e; padding:5px 12px 5px 0; white-space:nowrap;">Timestamp</td>
-          <td>{{ receipt.ts_display }}</td>
+          {# review.ts_display composes both fields; this page renders them. #}
+          <td>{{ receipt.ts_display.label }}
+            {%- if receipt.ts_display.note %}
+            <span style="color:#8b949e;">{{ receipt.ts_display.note }}</span>
+            {%- endif %}
+          </td>
         </tr>
         <tr>
           <td style="color:#8b949e; padding:5px 12px 5px 0; white-space:nowrap;">Card</td>

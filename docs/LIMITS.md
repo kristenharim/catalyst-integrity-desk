@@ -1051,6 +1051,50 @@ hashes the three real files before the session and after it and fails the run on
 difference or on a file that appeared, from any writer, including one this file does not know
 about. Prevention is scoped to the seam; detection is not scoped at all.
 
+## Every receipt ever rendered stamped local wall time and called it UTC
+
+Found while extracting one timestamp renderer for the activity screen, fixed in the same
+pass, recorded here because it was live on a shipped page rather than caught in review.
+`console/app.py::_receipt` built its timestamp with `datetime.fromtimestamp(ts)` and no
+timezone, and labelled the result `UTC`. `fromtimestamp` with no `tz` argument reads the
+host clock, so the field said UTC and showed whatever wall time the machine rendering it
+happened to be on. On the machine this repo is developed on that is seven or eight hours
+off, depending on the season, and the season is part of the defect: the error is not a
+constant, so two receipts for the same entry rendered either side of a DST boundary
+disagree with each other as well as with the label.
+
+Nothing downstream consumed the string, and the ledger stores epoch seconds, so no stored
+value was ever wrong and no figure elsewhere in the product was derived from it. That is
+why this is a defect note and not a numbered research correction: the affected surface is
+the timestamp on the Decision Integrity Receipt, and its magnitude is a fixed offset from
+the value that was always correct in the file.
+
+The conversion is now explicit, in `review.ts_display`, which both screens compose through.
+`tests/test_activity.py::test_the_utc_conversion_does_not_move_with_the_host_timezone` sets
+`TZ` to three zones, one west, one east of the date line's return and one on a half-hour
+offset, and asserts the rendered label does not move. What that does not prove: it pins the
+formatter, not every future caller, and a page that formats a timestamp of its own is caught
+only by the source check beside it.
+
+## The seeded ledger entry has no timestamp, and now says so
+
+`console/app.py` seeds the original belief card with `ts=0.0` so the approve path has an
+entry to bump. That zero is a sentinel written into a field that is not optional, and both
+screens rendered it as `1970-01-01 00:00:00 UTC`, which on a decision history and a receipt
+reads as a corrupted record.
+
+The stored entry is not touched. `review.ts_display` returns a `TimestampDisplay` carrying a
+label, a note and an `is_sentinel` flag, so the zero is interpreted once, in the projection,
+and both screens agree by construction rather than by two templates being written the same
+way. `tests/test_activity.py` asserts the ledger bytes are identical after a render and that
+the entry still carries its zero, because the other way to clear a 1970 date is to write a
+better timestamp into the record, and a record edited to make its own screen read well is
+the failure this console exists to make visible.
+
+What that does not establish: when the seeded card was actually created. Nothing recorded
+it, the page says nothing recorded it, and the row keeps its position at the head of the
+list because that is where the hash chain puts it, not because a time was inferred.
+
 ## Where these came from
 
 The first four sections were produced by a three-model adversarial review (Claude, Cursor,

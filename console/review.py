@@ -501,7 +501,45 @@ def inbox_rows(snapshot: dict, ledger, review_log, snapshot_id: str) -> list[dic
 # ---------------------------------------------------------------------------
 
 
-def ts_display(ts) -> str:
+# The seed marker. `console/app.py` writes `ts=0.0` deliberately when the
+# approve path has to seed the original card before it can bump it, so the epoch
+# is not a time anybody recorded: it is the absence of one, written as a value
+# because the ledger field is not optional. Named here because the formatter is
+# the one place that decides what the stored value means, and both screens read
+# this formatter.
+SEED_TS = 0.0
+SEEDED_LABEL = "Seeded baseline"
+SEEDED_NOTE = "Original timestamp unavailable"
+MISSING_LABEL = "unavailable"
+
+
+@dataclass(frozen=True)
+class TimestampDisplay:
+    """What a stored timestamp should read as, decided once.
+
+    A string cannot carry the difference between a time and a sentinel, so the
+    screens got the epoch and rendered `1970-01-01 00:00:00 UTC`, which on the
+    one page whose subject is the integrity of the record reads as corrupted
+    data. The interpretation belongs here rather than in a template: two
+    templates deciding separately what a zero means is the shape that lets one
+    screen date an entry in a way the other denies.
+
+    `value` is the timestamp this was built from and is None when there is no
+    time to name, so a consumer can tell the two apart without parsing `label`.
+    `__str__` is the label, so a surface that renders the whole object still
+    renders words rather than a repr, and never a 1970 date.
+    """
+
+    value: float | None
+    label: str
+    note: str = ""
+    is_sentinel: bool = False
+
+    def __str__(self) -> str:
+        return self.label
+
+
+def ts_display(ts) -> TimestampDisplay:
     """One timestamp rendering, so two pages cannot date the same entry
     differently.
 
@@ -509,17 +547,24 @@ def ts_display(ts) -> str:
     the activity screen lists the same entries, so the format is shared rather
     than copied.
 
-    The conversion is to UTC, which is what the label has always said and not
-    what the code did: `fromtimestamp` with no timezone reads the machine's
-    local clock, so the receipt has been stamping local wall time with a UTC
-    suffix. On a page whose subject is the order events happened in, a timestamp
-    that names the wrong zone is the field a reader would use to check the
-    order. Fixed here rather than beside it, because both pages read this.
+    Three cases and they are different facts. A real timestamp is converted to
+    UTC, which is what the label has always said and not what the code did:
+    `fromtimestamp` with no timezone reads the machine's local clock, so the
+    receipt was stamping local wall time with a UTC suffix. `SEED_TS` is the
+    seed marker and is rendered as one; the stored entry keeps the zero it was
+    written with, because the record is not edited to make a screen read better.
+    None is a field that is not there at all.
     """
     if ts is None:
-        return "unavailable"
-    return datetime.datetime.fromtimestamp(
-        ts, datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        return TimestampDisplay(value=None, label=MISSING_LABEL)
+    if ts == SEED_TS:
+        return TimestampDisplay(value=None, label=SEEDED_LABEL,
+                                note=SEEDED_NOTE, is_sentinel=True)
+    return TimestampDisplay(
+        value=ts,
+        label=datetime.datetime.fromtimestamp(
+            ts, datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+    )
 
 
 def activity_rows(ledger, review_log, tickers) -> list[dict]:
