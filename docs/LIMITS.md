@@ -942,6 +942,56 @@ What this does not cover, stated rather than implied:
   behind the head. That reads as `truncated` and not as `tampered`, and it
   resolves on the next successful record.
 
+## The registry-reconciliation line is derived, and it is bounded by one trial's stored history
+
+**Found 2026-07-23.** The centre column of `/redline` states that no later registry version
+reconciled the lapsed expectation before its date passed. It used to state that on the
+authority of `no_amendment_filed: True`, a literal typed into `console/make_snapshot.py` and
+serialised into the snapshot. Deleting or flipping the literal changed the sentence while the
+version history it claimed to summarise sat unchanged, which is the wrong way round: a
+date-integrity claim whose truth value is typed is a caption, not a finding.
+
+It is now computed by `console.review.registry_reconciliation` at render time, from the
+committed version history of the trial the redline is anchored to and the snapshot's own
+`as_of`. The field is renamed to the narrower fact it proves,
+`no_later_registry_version_before_expiry`. What is computed, stated exactly: **among the
+registry versions stored for that one trial, the version that last set the lapsed expectation
+had no later stored version, submitted before that expectation's date, that moved it.** The
+engine already carries the shape this rests on. A version that replaced a date after it had
+already passed is `carried_expired`, so the negation of `carried_expired` on the version after
+the setter is a reconciliation inside the window, and the predicate reuses that field rather
+than recomputing it.
+
+What it does not establish, and cannot:
+
+- **Nothing about external disclosures.** An amendment can be filed with a regulator, a press
+  wire, or an investor deck without any registry version moving. This reads the registry
+  version history and only that. It does not show that no press release, 8-K, 10-K/Q, or
+  correspondence existed, and it says nothing about whether anyone acted or what a sponsor
+  knew or believed. The rendered wording names the registry-history bound for that reason, and
+  `orchestrator/lexicon.py`'s silence rules hold the surrounding prose to the same line.
+- **Only as far as `as_of`.** When no later version is stored, absence of one has two causes
+  that a frozen artifact cannot separate: none was filed, or the snapshot was taken before one
+  appeared. So the claim is bounded at the day the artifact froze. If the expectation had not
+  yet passed at `as_of`, the window this claim describes has not closed and the state is
+  `unknown`, never the claim.
+- **Only when the history is complete.** The derivation refuses to answer unless the trial's
+  stored revisions account for every registry version the fetch reported
+  (`n_versions == len(revisions)`). A version this snapshot never kept cannot be shown not to
+  have moved the date, so an incomplete or absent history yields `unknown`. Here the anchored
+  trial's `n_versions` equals its four stored revisions, so the history is complete and the
+  state is the claim; the incomplete case is handled rather than assumed away.
+
+The three states are `no_later_registry_version_before_expiry`, `reconciled_before_expiry`, and
+`unknown`, and the template renders a sentence for each, including `unknown`. A screen that
+goes quiet when its evidence runs out reads exactly like one whose evidence held, which is the
+failure the whole desk exists to catch, so the refusal is shown rather than hidden. The frozen
+snapshot still carries the retired `no_amendment_filed` key; it is byte-identical evidence and
+was not rewritten, and nothing reads it. `tests/test_console.py` derives the state against
+mutated copies of the snapshot: deleting or flipping the literal changes nothing, a later
+reconciliation added to the history withdraws the claim, and an incomplete, absent, or
+not-yet-lapsed history produces `unknown`.
+
 ## Where these came from
 
 The first four sections were produced by a three-model adversarial review (Claude, Cursor,

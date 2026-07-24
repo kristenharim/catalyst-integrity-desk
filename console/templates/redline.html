@@ -56,11 +56,35 @@
     <div style="font-size:11px; color:#d29922; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">What changed</div>
     <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
-      {% if redline.no_amendment_filed %}
+      {# Derived in console/review.py from the stored version history of this
+         trial, never read off a stored verdict. Three states, three sentences:
+         the claim, its contradiction, and the refusal to make either. The
+         refusal is rendered rather than hidden, because a screen that goes
+         quiet when its evidence runs out reads exactly like one whose evidence
+         held. #}
+      {% if reconciliation.state == "no_later_registry_version_before_expiry" %}
       <div style="background:#2d1f00; border:1px solid #d29922; border-radius:4px;
                   padding:8px 12px; margin-bottom:12px; font-size:11px; color:#d29922;">
         No later registry version reconciled the registered expectation before
         the date passed.
+        <div style="color:#8b949e; margin-top:6px; line-height:1.5;">
+          Read from the registry version history stored for
+          {{ reconciliation.trial }} in this snapshot, as of
+          {{ reconciliation.as_of }}. Registry versions only: press wires and
+          SEC filings were outside what this desk queried.
+        </div>
+      </div>
+      {% elif reconciliation.state == "reconciled_before_expiry" %}
+      <div style="background:#161b22; border:1px solid #30363d; border-radius:4px;
+                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#8b949e;">
+        A later registry version moved the registered expectation before the
+        date passed, in the history stored for {{ reconciliation.trial }}.
+      </div>
+      {% else %}
+      <div style="background:#161b22; border:1px solid #30363d; border-radius:4px;
+                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#8b949e;">
+        Registry reconciliation unavailable for {{ reconciliation.trial }}:
+        {{ reconciliation.why }}.
       </div>
       {% endif %}
       <div style="margin-bottom:12px;">

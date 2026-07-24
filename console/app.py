@@ -148,10 +148,18 @@ def redline_view():
     # The contract the redline is about, so its derivation can be shown behind
     # the headline figure without keeping a second copy of it in the snapshot.
     contract = SNAPSHOT["contracts"].get(redline.get("ticker"))
+    # Whether the registry ever reconciled the lapsed expectation, derived from
+    # that trial's committed version history at render time rather than read off
+    # a stored verdict. Same reason record integrity is joined here: a claim
+    # nobody recomputes is a claim nobody can falsify.
+    reconciliation = review.registry_reconciliation(
+        redline, contract or {}, SNAPSHOT.get("as_of")
+    )
     # The memo is the model's narrative and Python's figures in one string. The
     # figures stay; the model's own confidence does not, because no
     # model-produced number reaches the user.
     return render_template("redline.html", redline=redline, c=contract,
+                           reconciliation=reconciliation,
                            memo=without_model_confidence(redline["memo"]))
 
 

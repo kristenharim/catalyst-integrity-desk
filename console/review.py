@@ -10,6 +10,12 @@ and its record state is a statement about whether the history of those human
 actions is still intact. They fail independently and they have to be able to
 say so, which is why states.py cannot import the ledger and why nothing here
 feeds back into the evidence state.
+
+`registry_reconciliation` joined them for a different reason. It reads only the
+snapshot, so it could have been a stored field, and it was one: a hardcoded
+`no_amendment_filed: True`. A date-integrity claim whose truth value is typed
+rather than read is a caption, not a finding, and it is computed here so that
+moving the evidence moves the sentence.
 """
 from __future__ import annotations
 
@@ -17,6 +23,7 @@ import hashlib
 import os
 from dataclasses import dataclass, field
 
+from engine.ctgov_history import _parse_date
 from orchestrator.anchor import check as anchor_check
 
 # ---------------------------------------------------------------------------
@@ -85,6 +92,108 @@ def record_integrity(ledger, anchor_path: str) -> dict:
         "label": RECORD_LABELS.get(state, state),
         "failed": state != RECORD_INTACT,
     }
+
+
+# ---------------------------------------------------------------------------
+# Registry reconciliation
+# ---------------------------------------------------------------------------
+# Whether any registry version moved a registered expectation before that
+# expectation's own date arrived. The centre column of /redline says so, and
+# until now it said so on the authority of a literal in the snapshot builder:
+# deleting the literal deleted the sentence while the version history behind it
+# sat unchanged, which is the wrong way round.
+#
+# The state names are the claim. `no_amendment_filed` named a fact about the
+# world that a registry diff cannot reach, because an amendment can be filed
+# with a regulator, a wire, or an investor deck without any registry version
+# moving. What is actually proved is narrower and is now what it is called.
+
+NO_LATER_VERSION = "no_later_registry_version_before_expiry"
+RECONCILED_BEFORE_EXPIRY = "reconciled_before_expiry"
+RECONCILIATION_UNKNOWN = "unknown"
+
+
+def _stored_history(contract: dict, nct: str) -> dict | None:
+    """The committed version history for one trial, binding or lapsed.
+
+    A lapsed trial's history lives in `lapsed_history`, which is where the trial
+    a redline is anchored to will be by the time the redline exists.
+    """
+    for h in [contract.get("history"), *(contract.get("lapsed_history") or [])]:
+        if h and h.get("nct") == nct:
+            return h
+    return None
+
+
+def registry_reconciliation(redline: dict, contract: dict, as_of: str) -> dict:
+    """Did a registry version move this expectation before its date arrived?
+
+    Read from the committed version history of `redline["prior_trial"]` and the
+    snapshot's own `as_of`. Three outcomes, of which only one is an assertion:
+
+      NO_LATER_VERSION          the date passed, and no stored version submitted
+                                before it moved it
+      RECONCILED_BEFORE_EXPIRY  a stored version moved it while it was still ahead
+      RECONCILIATION_UNKNOWN    the committed history cannot answer
+
+    Every gap in the evidence returns unknown rather than folding into an answer.
+    Absence of a later version in a frozen artifact has two causes -- none was
+    filed, or the artifact does not hold them all -- and they are not separable
+    from inside the artifact. Only one of them supports the claim, so the pair
+    has to be refused rather than resolved by default.
+
+    What this establishes is bounded by the registry and by `as_of`. It says
+    nothing about press releases, SEC filings, correspondence, or what anyone
+    knew, and it cannot: none of those were queried.
+    """
+    nct = (redline or {}).get("prior_trial")
+    pcd = (redline or {}).get("prior_pcd")
+    out = {
+        "state": RECONCILIATION_UNKNOWN,
+        "trial": nct,
+        "expectation": pcd,
+        "as_of": as_of,
+        "why": "no registry-version history for this trial is stored here",
+    }
+
+    history = _stored_history(contract or {}, nct) if nct else None
+    revisions = (history or {}).get("revisions") or []
+    if not revisions or not pcd or not as_of:
+        return out
+
+    # Every registry version the fetch saw has to be stored, or the question
+    # stays open: a version this snapshot never kept cannot be shown not to have
+    # moved the date.
+    if history.get("n_versions") != len(revisions):
+        out["why"] = "the stored history does not cover every registry version"
+        return out
+
+    setters = [i for i, r in enumerate(revisions) if r.get("pcd") == pcd]
+    if not setters:
+        out["why"] = "no stored version sets the expectation this claim is about"
+        return out
+    later = revisions[setters[-1] + 1:]
+
+    if later:
+        # The engine already computes this shape and the snapshot already carries
+        # it. `carried_expired` on the version that replaced a date means the
+        # date had already passed when it was replaced, so its negation is a
+        # reconciliation inside the window, which is the whole question.
+        out["state"] = (NO_LATER_VERSION if later[0].get("carried_expired")
+                        else RECONCILED_BEFORE_EXPIRY)
+        return out
+
+    # Nothing later is stored, so the snapshot's own as_of stands in for the next
+    # submission date, and the claim is bounded at the day the artifact froze.
+    expected, frozen = _parse_date(pcd), _parse_date(as_of)
+    if expected is None or frozen is None:
+        out["why"] = "the stored dates cannot be read"
+    elif expected < frozen:
+        out["state"] = NO_LATER_VERSION
+        out["why"] = ""
+    else:
+        out["why"] = "the expectation had not passed when this snapshot was taken"
+    return out
 
 
 # ---------------------------------------------------------------------------

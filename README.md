@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 332 passed, 17 skipped
+python3 -m pytest tests/ -q       # 340 passed, 17 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -155,9 +155,9 @@ Nothing else.
 tracked files only and installs `requirements.txt` alone, so three groups skip: fifteen that
 replay registry version history out of the gitignored `data/cache/`, one live Granite check
 that needs watsonx credentials, and one browser-geometry check that needs Playwright. That
-is **332 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
-alone and the browser-geometry check runs too: **333 passed, 16 skipped**. Add the cache and
-Playwright locally and sixteen of those run instead, giving **348 passed, 1 skipped**. The
+is **340 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
+alone and the browser-geometry check runs too: **341 passed, 16 skipped**. Add the cache and
+Playwright locally and sixteen of those run instead, giving **356 passed, 1 skipped**. The
 last skip is the credentialed Granite test; that configuration has not been re-measured for
 this commit, so no count is quoted for it. That test is verified not to pass on the stub:
 pointed at an invalid endpoint it fails on `source == "granite"`.
@@ -319,7 +319,12 @@ test counts three earlier rows had published from memory rather than from a run.
 submission reconciliation: the classification's confidence stopped being rendered, the
 lexicon's silence rules stopped being keyed on three exact phrasings, and the claims this
 file makes about its own percentile, its own retracted audit, and its own Bob counts were
-put under `tests/test_claim_integrity.py` rather than left to review.
+put under `tests/test_claim_integrity.py` rather than left to review. Most recently, the
+registry-reconciliation line on `/redline` stopped resting on a typed Boolean: whether a
+later registry version ever reconciled the lapsed expectation is now derived in
+`console/review.py` from the anchored trial's committed version history and the snapshot's
+own `as_of`, renamed to the narrower fact it proves, and rendered as one of three sentences
+including an explicit unavailable when the stored history cannot answer.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

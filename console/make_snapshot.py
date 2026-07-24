@@ -792,12 +792,13 @@ def _build_rckt_redline(rckt: CatalystContract) -> dict:
         "current_trial": recomputed.trial["nct"],
         "current_pcd": _iso(recomputed.catalyst_date),
         "current_gap_months": current_gap,
-        # The date lapsing is the event: no later registry version reconciled
-        # the registered expectation before it passed. The field name is the
-        # one the frozen snapshot carries and is kept for that reason; what it
-        # licenses on screen is a statement about the registry history this
-        # project reads, never about disclosures it never queried.
-        "no_amendment_filed": True,
+        # Whether the registry ever reconciled the lapsed expectation is NOT
+        # serialised here. It used to be, as a hardcoded True, which made the
+        # sentence on /redline a caption rather than a reading: the literal and
+        # the version history it summarised could disagree and only the literal
+        # reached the page. `console.review.registry_reconciliation` derives it
+        # from `lapsed_history` at render time instead. The frozen snapshot still
+        # carries the retired key and nothing reads it.
     }
 
 

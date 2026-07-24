@@ -1210,3 +1210,192 @@ def test_unrankable_rows_carry_no_gap_figure(client, route):
                 f"{route} prints gap {gap!r} in a row for {ticker}, whose burn "
                 f"estimate is unreliable:\n  {row}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Registry reconciliation: derived, not stored
+# ---------------------------------------------------------------------------
+# The centre column of /redline states that no later registry version reconciled
+# the registered expectation before its date passed. That statement used to rest
+# on `no_amendment_filed: True`, a literal typed into the snapshot builder. A
+# date-integrity claim whose truth value is typed is not a finding, it is a
+# caption, and the three tests below are the demonstration of that: each one
+# moves the registry evidence (or the literal) and asserts the page follows the
+# evidence.
+#
+# Failure verification at 0c70b5a, before console/review.py grew the derivation:
+#
+#   test_the_claim_survives_deleting_the_stored_flag
+#       AssertionError: /redline drops the registry-reconciliation claim when a
+#       stored flag is removed, though the version history behind it is unchanged
+#   test_a_later_reconciliation_withdraws_the_claim
+#       AssertionError: /redline still claims no later registry version
+#       reconciled the expectation after one was added to the stored history
+#   test_incomplete_history_yields_unavailable_never_a_claim
+#       AssertionError: /redline still makes the claim from a version history
+#       that does not cover every registry version
+
+_CLAIM = "No later registry version reconciled"
+_RECONCILED = "A later registry version moved"
+_UNAVAILABLE = "Registry reconciliation unavailable"
+
+
+def _patched_snapshot(monkeypatch, mutate):
+    """Render /redline against a mutated copy of the snapshot.
+
+    The file on disk is frozen, so the mutation happens on a deep copy of the
+    loaded dict. Returns the rendered body.
+    """
+    import copy
+
+    from console import app as app_module
+
+    snap = copy.deepcopy(app_module.SNAPSHOT)
+    mutate(snap)
+    monkeypatch.setattr(app_module, "SNAPSHOT", snap)
+
+    flask_app.config["TESTING"] = True
+    with flask_app.test_client() as c:
+        return c.get("/redline").data.decode()
+
+
+def _rckt_revisions(snap):
+    return snap["contracts"]["RCKT"]["lapsed_history"][0]
+
+
+def test_the_claim_survives_deleting_the_stored_flag(monkeypatch):
+    """Removing the stored Boolean must not change what the page asserts.
+
+    The registry evidence is untouched, so the claim it supports is untouched.
+    A page that goes quiet here was reading the caption, not the history.
+    """
+    body = _patched_snapshot(
+        monkeypatch, lambda s: s["redline"].pop("no_amendment_filed", None)
+    )
+    assert _CLAIM in body, (
+        "/redline drops the registry-reconciliation claim when a stored flag is "
+        "removed, though the version history behind it is unchanged"
+    )
+
+
+def test_flipping_the_stored_flag_changes_nothing(monkeypatch):
+    """The other direction: a stored False must not silence a supported claim."""
+    body = _patched_snapshot(
+        monkeypatch, lambda s: s["redline"].update(no_amendment_filed=False)
+    )
+    assert _CLAIM in body, (
+        "/redline reads a stored flag rather than the registry version history"
+    )
+
+
+def test_a_later_reconciliation_withdraws_the_claim(monkeypatch):
+    """A registry version that moved the expectation before it passed makes the
+    claim false, and the page must say the other thing instead."""
+
+    def add_reconciliation(snap):
+        h = _rckt_revisions(snap)
+        last = h["revisions"][-1]
+        h["revisions"].append({
+            **last,
+            "version": last["version"] + 1,
+            # Submitted while the 2026-05-05 expectation was still in the future,
+            # and moved it: the engine's own shape for that is carried_expired
+            # False on the version that replaced the date.
+            "submitted": "2026-02-02",
+            "pcd": "2027-01-01",
+            "carried_expired": False,
+            "days_expired": 0,
+        })
+        h["n_versions"] = len(h["revisions"])
+
+    body = _patched_snapshot(monkeypatch, add_reconciliation)
+    assert _CLAIM not in body, (
+        "/redline still claims no later registry version reconciled the "
+        "expectation after one was added to the stored history"
+    )
+    assert _RECONCILED in body, (
+        "/redline must state the reconciliation it found, not go silent"
+    )
+
+
+def test_incomplete_history_yields_unavailable_never_a_claim(monkeypatch):
+    """A stored history that does not cover every registry version cannot answer.
+
+    Absence of a later version in a frozen artifact has two causes: none was
+    filed, or the artifact does not hold them all. Only the first supports the
+    claim, so an uncovered history must produce unavailable rather than either
+    answer.
+    """
+
+    def truncate(snap):
+        h = _rckt_revisions(snap)
+        h["n_versions"] = len(h["revisions"]) + 1
+
+    body = _patched_snapshot(monkeypatch, truncate)
+    assert _CLAIM not in body, (
+        "/redline still makes the claim from a version history that does not "
+        "cover every registry version"
+    )
+    assert _UNAVAILABLE in body
+
+
+def test_missing_history_yields_unavailable(monkeypatch):
+    """The same, with the history absent rather than short."""
+    body = _patched_snapshot(
+        monkeypatch, lambda s: s["contracts"]["RCKT"].update(lapsed_history=[])
+    )
+    assert _CLAIM not in body
+    assert _UNAVAILABLE in body
+
+
+def test_an_unexpired_expectation_yields_unavailable(monkeypatch):
+    """Nothing later is stored and the date has not arrived, so the window this
+    claim describes has not closed at the snapshot's own as_of."""
+
+    def push_past_as_of(snap):
+        h = _rckt_revisions(snap)
+        h["revisions"][-1]["pcd"] = "2027-05-05"
+        snap["redline"]["prior_pcd"] = "2027-05-05"
+
+    body = _patched_snapshot(monkeypatch, push_past_as_of)
+    assert _CLAIM not in body
+    assert _UNAVAILABLE in body
+
+
+def test_the_claim_is_rendered_from_the_committed_history(client):
+    """The unmutated case: the real snapshot supports the real sentence."""
+    from console import review
+
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    state = review.registry_reconciliation(
+        snap["redline"], snap["contracts"]["RCKT"], snap["as_of"]
+    )
+    assert state["state"] == review.NO_LATER_VERSION
+    assert state["trial"] == snap["redline"]["prior_trial"]
+    assert state["expectation"] == snap["redline"]["prior_pcd"]
+
+    body = client.get("/redline").data.decode()
+    assert _CLAIM in body
+    # The wording must carry the bound the derivation actually has: one trial's
+    # stored version history, read at one date.
+    assert state["trial"] in body
+    assert snap["as_of"] in body
+
+
+def test_no_stored_truth_flag_is_read_anywhere():
+    """The literal is gone from the builder and from the template.
+
+    Leaving it in either place leaves a second answer on the page that the
+    derivation does not control.
+    """
+    offenders = []
+    for rel in ("console/make_snapshot.py", "console/templates/redline.html"):
+        path = os.path.join(os.path.dirname(__file__), "..", rel)
+        with open(path) as f:
+            if "no_amendment_filed" in f.read():
+                offenders.append(rel)
+    assert not offenders, (
+        f"a hardcoded reconciliation flag survives in {offenders}; the claim on "
+        f"/redline must have exactly one source, the committed history"
+    )
