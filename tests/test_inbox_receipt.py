@@ -779,25 +779,13 @@ A11Y_NOT_SCANNED = {
     "/belief/new": "Phase 1 belief form, outside the Phase 2 surface",
 }
 
-# Violations already present on a scanned page, each entry the exact pairing that
-# produces it. A page with a known violation stays scanned rather than dropping
-# out of the inventory, because dropping out is how these survived: the commit
-# before this one repaired `#10b981` on `#1a4731` and `#6b7280` on `#161b22` on
-# `/redline`, and the identical pairings live on `/redline/confirm`, which no
-# scan reached. Repairing them is a template change and belongs to a commit
-# allowed to touch the UI; this one makes the page measured and the residual
-# written down. Both directions are asserted below, so the list cannot rot: a
-# violation outside it fails, and an entry in it that no longer fires fails too.
-KNOWN_VIOLATIONS = {
-    "/redline/confirm": {
-        # The record-integrity badge. #10b981 on #1a4731, 4.16:1, floor 4.5:1.
-        "color-contrast div:nth-child(1) > div:nth-child(2) > div > span",
-        # The hash-verified chip, the same pairing.
-        "color-contrast span:nth-child(7)",
-        # The entry hash in the receipt table. #6b7280 on #161b22, 3.57:1.
-        "color-contrast div:nth-child(5) > table > tbody > tr:nth-child(1) > td:nth-child(2)",
-    },
-}
+# There is no exception map here on purpose. The three colour-contrast nodes on
+# `/redline/confirm` that used to be declared in one are repaired in the
+# template, and the mechanism that declared them is gone with them rather than
+# left standing empty. An empty map plus an assertion that it is empty is one
+# line away from a licence again; re-introducing an exception now means
+# re-introducing the subtraction, which is a change a reader of the diff can see
+# for what it is. The scan below asserts zero violations outright.
 
 # Every axe.run that actually executed, appended by the test below and read by
 # the guard at the end of this file. A skipped accessibility test and a passing
@@ -857,6 +845,8 @@ def test_the_phase_2_screens_pass_axe_core(live_server):
     the two screens either side of it were clean, which is what a check scoped
     to the newest work looks like from the outside; `/redline/confirm` then
     carried the same two, for the same reason, until this scan reached it.
+    Those are repaired now, so every declared page is held to zero violations
+    and there is no exception map left for a fourth one to be filed in.
     """
     if os.environ.get("CID_BASE_DEPS_ONLY"):
         pytest.skip("base dependencies only; playwright is a development extra")
@@ -912,18 +902,86 @@ def test_the_phase_2_screens_pass_axe_core(live_server):
         finally:
             browser.close()
 
-    new = {rule: sorted(found - KNOWN_VIOLATIONS.get(rule, set()))
-           for rule, found in findings.items()}
-    assert not any(new.values()), (
+    assert not any(findings.values()), (
         "axe-core violations:\n  "
-        + "\n  ".join(f"{rule}: {v}" for rule, vs in new.items() for v in vs)
+        + "\n  ".join(f"{rule}: {v}"
+                      for rule, vs in findings.items() for v in sorted(vs))
     )
-    stale = {rule: sorted(known - findings.get(rule, set()))
-             for rule, known in KNOWN_VIOLATIONS.items()}
-    assert not any(stale.values()), (
-        "these violations are declared known and no longer fire, so the page is "
-        "being held to a weaker check than it passes; delete them:\n  "
-        + "\n  ".join(f"{rule}: {v}" for rule, vs in stale.items() for v in vs)
+
+
+# The colour language of the record-integrity states, and the elements that
+# speak it. Two elements per state on /redline/confirm: the badge at the top and
+# the last link of the hash chain. The label is what the reader sees, so the map
+# is keyed on it.
+INTEGRITY_MEANING = {
+    "intact": "green",
+    "hash verified": "green",
+    "tampered": "red",
+    "hash FAILED": "red",
+    "truncated or replaced": "amber",
+    "chain replaced": "amber",
+}
+MEANING_COLOUR = {"green": "#10b981", "red": "#f85149", "amber": "#f59e0b"}
+
+_SPAN = re.compile(r'<span style="([^"]+)"[^>]*>(.*?)</span>', re.S)
+
+
+def _luminance(hex_colour: str) -> float:
+    channels = [int(hex_colour[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+              for c in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast(foreground: str, background: str) -> float:
+    lo, hi = sorted((_luminance(foreground), _luminance(background)))
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def test_the_three_record_integrity_states_stay_visually_distinct():
+    """The repair must not be made by flattening the colour language.
+
+    The cheapest way to clear a contrast failure is to move every state onto
+    whichever token passes, and on this page the token that passed was the green
+    one. Colour is never the only signal here -- each state carries its own
+    glyph and its own words -- but it is a signal, and green has to keep meaning
+    intact while red means tampered and amber means truncated or replaced.
+
+    Read off the template rather than off a render, because the template is what
+    assigns a colour to a state, and because this then runs in the base tier
+    instead of only where a browser and axe-core exist. The contrast floor is
+    checked here too, so reverting a token fails without waiting for the
+    accessibility tier to be installed.
+    """
+    source = (REPO / "console" / "templates" / "confirm.html").read_text()
+    found = {}
+    for style, body in _SPAN.findall(source):
+        label = " ".join(re.sub(r"&#\d+;", " ", body).split())
+        if label not in INTEGRITY_MEANING:
+            continue
+        foreground = re.search(r"color:\s*(#[0-9a-f]{6})", style)
+        background = re.search(r"background:\s*(#[0-9a-f]{6})", style)
+        assert foreground and background, f"{label} declares no colour pair"
+        found[label] = (foreground.group(1), background.group(1))
+
+    assert set(found) == set(INTEGRITY_MEANING), (
+        "confirm.html no longer renders one span per record-integrity state; "
+        f"found {sorted(found)}"
+    )
+    for label, (foreground, background) in found.items():
+        meaning = INTEGRITY_MEANING[label]
+        assert foreground == MEANING_COLOUR[meaning], (
+            f"{label} means {meaning} and is drawn {foreground}, not "
+            f"{MEANING_COLOUR[meaning]}"
+        )
+        ratio = _contrast(foreground, background)
+        assert ratio >= 4.5, (
+            f"{label} is {foreground} on {background}, {ratio:.2f}:1, under the "
+            "4.5:1 floor"
+        )
+    assert len(set(found.values())) == 3, (
+        "the three states must be three colour pairs, and both elements of a "
+        f"state must agree: {sorted(set(found.values()))}"
     )
 
 

@@ -27,13 +27,19 @@
       </div>
     </div>
     {# Ledger integrity badge -- calls anchor.check() at render time.
-       Three states: intact, tampered (hash fails), truncated (anchor mismatch). #}
+       Three states: intact, tampered (hash fails), truncated (anchor mismatch).
+       Each keeps its meaning colour: green intact, red tampered, amber
+       truncated or replaced. Only the ground under green moved, to the darker
+       success tint base.html declares as --cds-tint-success, the same
+       substitution /redline took: #10b981 on #1a4731 is 4.16:1 against a 4.5:1
+       floor and on #0f2417 it is 6.44:1. The other two already clear it,
+       #f85149 on #3d1414 at 4.79:1 and #f59e0b on #2d1a00 at 7.76:1. #}
     <div>
       <span style="font-size:11px; color:#8b949e; text-transform:uppercase;
                    letter-spacing:0.07em;">Ledger integrity</span>
       <div style="margin-top:4px;">
         {% if integrity_status == "intact" %}
-          <span style="background:#1a4731; color:#10b981; border:1px solid #10b981;
+          <span style="background:#0f2417; color:#10b981; border:1px solid #10b981;
                        font-size:12px; padding:4px 14px; border-radius:3px; font-weight:bold;">
             &#10003; intact
           </span>
@@ -112,7 +118,8 @@
                    padding:4px 10px; color:#c9d1d9;">human decision</span>
       <span style="color:#30363d;">&#8594;</span>
       {% if integrity_status == "intact" %}
-        <span style="background:#1a4731; border:1px solid #10b981; border-radius:3px;
+        {# Same pairing as the badge above, and the same substitution. #}
+        <span style="background:#0f2417; border:1px solid #10b981; border-radius:3px;
                      padding:4px 10px; color:#10b981; font-weight:bold;">hash verified</span>
       {% elif integrity_status == "tampered" %}
         <span style="background:#3d1414; border:1px solid #f85149; border-radius:3px;
@@ -127,7 +134,11 @@
       <tbody>
         <tr>
           <td style="color:#8b949e; padding:4px 12px 4px 0; white-space:nowrap;">Prev hash</td>
-          <td style="font-family:ui-monospace,monospace; color:#6b7280;
+          {# The page's own secondary text colour rather than the dimmer grey it
+             used to carry, which was 3.57:1 on this layer and so was subordinate
+             by being unreadable. It stays subordinate to the entry hash below by
+             colour meaning: green is the hash this receipt is addressed by. #}
+          <td style="font-family:ui-monospace,monospace; color:#8b949e;
                      word-break:break-all;">{{ receipt.prev_hash }}</td>
         </tr>
         <tr>

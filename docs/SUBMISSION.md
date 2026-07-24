@@ -270,7 +270,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 370 passed, 19 skipped
+python3 -m pytest tests/ -q   # 371 passed, 19 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -285,18 +285,20 @@ command:
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **370 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **371 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **373 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **386 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **371 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **372 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **374 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | measured, not printed |
 
 Base is what a judge gets, and on a clone with nothing extra installed the plain command
 produces it. The last tier shares a command with the second because the cache is data
 rather than a dependency. Running the axe command with the cache present runs both and
-leaves the credentialed Granite check as the only skip; that combined pair is not printed
-here, because its passed count is also a rendering of a cohort field and
-`tests/test_prose_figures.py` cannot tell the two apart. The fifteen cache tests verify the
-cohort research rather than the console, so nothing on the demo path depends on them.
+leaves the credentialed Granite check as the only skip. Neither the cache-backed tier nor
+that combined pair is printed here, because both passed counts are also renderings of a
+cohort field and `tests/test_prose_figures.py` cannot tell the two apart; both were run, and
+both figures are in `docs/BOB_LOG.md` beside the run that produced them. The fifteen cache
+tests verify the cohort research rather than the console, so nothing on the demo path
+depends on them.
 
 `package.json` and `package-lock.json` pin axe-core and nothing else, so `npm ci` installs
 the exact version these numbers were measured against. No frontend build step, no bundler,

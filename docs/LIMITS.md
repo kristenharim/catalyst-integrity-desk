@@ -992,7 +992,7 @@ mutated copies of the snapshot: deleting or flipping the literal changes nothing
 reconciliation added to the history withdraws the claim, and an incomplete, absent, or
 not-yet-lapsed history produces `unknown`.
 
-## The accessibility tier covers the Phase 2 spine, and one of those pages still fails
+## The accessibility tier covers the Phase 2 spine and nothing else
 
 The scan is keyed on the app's own `url_map`, so no route can go unclassified, but the set it
 actually drives is four pages: `/inbox`, `/receipts/<entry_id>`, `/redline` and
@@ -1007,21 +1007,49 @@ reported at least one, including a `select` with no accessible name on the belie
 of those five is scanned, so those readings are a snapshot from one run rather than a
 guarantee in either direction.
 
-`/redline/confirm` is scanned and does not pass. It carries three colour-contrast failures:
-the record-integrity badge and the hash-verified chip at `#10b981` on `#1a4731`, `4.16:1`
-against a `4.5:1` floor, and the entry hash in the receipt table at `#6b7280` on `#161b22`,
-`3.57:1`. They are the same two pairings the commit before this one repaired on `/redline`,
-and they survived exactly because `/redline` was scanned and `/redline/confirm` was not, which
-is the hole this inventory closes. They are declared in `KNOWN_VIOLATIONS` in
-`tests/test_inbox_receipt.py` rather than excused by dropping the page: a fourth violation on
-that page fails, and an entry in the list that stops firing fails too, so the list cannot
-quietly become a licence. Repairing them is a template change and belongs to a commit allowed
-to touch the UI. Until then the page is measured and failing on the record rather than
-unmeasured.
+All four scanned pages now report zero violations, and there is no declared-exception map
+left. `/redline/confirm` carried three colour-contrast failures when the inventory first
+reached it: the record-integrity badge and the hash-verified chip at `#10b981` on `#1a4731`,
+`4.16:1` against a `4.5:1` floor, and the prev hash in the receipt table at `#6b7280` on
+`#161b22`, `3.57:1`. They were the same two pairings repaired on `/redline` one commit
+earlier, and they survived exactly because `/redline` was scanned and `/redline/confirm` was
+not. They are repaired with the same two substitutions: the green sits on the darker success
+tint `base.html` already declares, `6.44:1`, and the dim grey becomes the page's own secondary
+text colour, `5.62:1`. `KNOWN_VIOLATIONS` is deleted rather than emptied, because an empty map
+with an assertion that it is empty is one line away from being a licence again, while
+re-introducing an exception now means re-introducing the subtraction the scan no longer does.
+
+The repair had one obvious wrong shape, which is to clear a contrast failure by moving every
+state onto whichever token passes. Green would have won, and intact, tampered and truncated
+would have become one colour with three words. So the colour language is asserted separately
+from the contrast, off the template rather than off a render, so it holds in the base tier
+where no browser exists: each of the three states keeps its own foreground, both the badge and
+the hash-chain chip of a state agree, and every pair clears the floor by computed ratio.
 
 What the tier does not establish, at the strength it holds: axe is a mechanical check at one
 viewport in one browser. It does not read a screen, and a page can clear every rule in it and
 still be unusable.
+
+## The suite no longer writes the repo's live console state, and what that rests on
+
+`data/decisions.jsonl`, `data/review_log.jsonl` and `data/ledger.anchor` are live demo state.
+Eight test modules redirected them into `tmp_path` by hand and one path was missed:
+`test_badge_flips_on_tampered_ledger` redirected the ledger and the review log but not the
+anchor, so `POST /redline/decide` reached `anchor_record` on the real path and `pytest tests/`
+on a clean tree created `data/ledger.anchor`. Per-test patching is fail-open by shape. It
+holds for the tests that remembered, and the correction is always written after the leak.
+
+`tests/conftest.py` redirects all three for every test, autouse, so a test written from here
+on is isolated without doing anything and a test that patches them itself still wins. It also
+redirects `orchestrator.anchor.ANCHOR_PATH`, whose default was bound into the signature at
+import and so could not be redirected at all; the functions now resolve it per call, same path
+for every caller that passes nothing.
+
+What that does not prove: it redirects two named modules, so a test that opens `data/` by a
+literal path of its own is not prevented. The second fixture is why that is still caught. It
+hashes the three real files before the session and after it and fails the run on a byte of
+difference or on a file that appeared, from any writer, including one this file does not know
+about. Prevention is scoped to the seam; detection is not scoped at all.
 
 ## Where these came from
 

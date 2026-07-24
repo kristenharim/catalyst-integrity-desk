@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 370 passed, 19 skipped
+python3 -m pytest tests/ -q       # 371 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -160,21 +160,26 @@ above it, and each has its own command, so a number here is traceable to what pr
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **370 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **371 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **373 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **386 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **371 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **372 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **374 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | measured, not printed |
 
 Base is the tier a judge gets and the number printed above; on a clone with nothing extra
 installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
 that carries the extras. The last tier shares a command with the second because the cache
 is data rather than a dependency: it changes what an existing command reports instead of
 adding one. Running the axe command with the cache present runs both, and leaves the
-credentialed Granite check as the only skip. That combined pair is deliberately not printed
-here: its passed count is also a rendering of a cohort field, and
-`tests/test_prose_figures.py` cannot tell a test count from a retyped cohort figure, which
-is the right way round for a guard to be wrong. The Granite check is verified not to pass
-on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+credentialed Granite check as the only skip.
+
+Two results are measured and deliberately not printed here: the cache-backed tier, and the
+combined cache-plus-axe pair. Both passed counts are also renderings of a cohort field, and
+`tests/test_prose_figures.py` cannot tell a test count from a retyped cohort figure, so it
+reports the collision either way. That is the right way round for a guard to be wrong, and
+the price is that these two figures live in `docs/BOB_LOG.md` with the run that produced
+them rather than on this page. The three printed tiers reconcile to the same total, which is
+what the count guard enforces. The Granite check is verified not to pass on the stub:
+pointed at an invalid endpoint it fails on `source == "granite"`.
 
 The fifteen cache-dependent tests verify the cohort research rather than the console, the
 browser check verifies the demo's opening frame is where the script says it is, and the
@@ -197,10 +202,12 @@ remembering a variable, and with it set a run that scans nothing fails instead o
 green, because a `skip` and a `pass` look identical in a summary line. It exits nonzero on a
 missing axe-core, on zero scans executed, and on any violation. And the pages scanned are
 keyed on the app's own `url_map`: a route is either scanned or named in `A11Y_NOT_SCANNED`
-with a reason, so adding a screen fails the suite until someone classifies it. That covers
-the Phase 2 surfaces and is not whole-app accessibility coverage; the Phase 1 screens are
-named as unscanned, and `docs/LIMITS.md` records what was measured on them and what is still
-open on `/redline/confirm`.
+with a reason, so adding a screen fails the suite until someone classifies it. All four
+scanned pages report zero violations, and there is no map of declared exceptions to file a
+fifth one in; the one that existed held three colour-contrast nodes on `/redline/confirm`
+and went with them when the template was repaired. That covers the Phase 2 surfaces and is
+not whole-app accessibility coverage; the Phase 1 screens are named as unscanned, and
+`docs/LIMITS.md` records what was measured on them.
 
 **The 90 second tour:**
 
@@ -371,9 +378,14 @@ that check stopped choosing its own pages: which routes it scans is keyed on the
 `url_map`, so a screen cannot be added without being scanned or named as out of scope with a
 reason, and `npm run test:a11y` sets the strict requirement itself rather than asking anyone
 to remember a variable. The first thing the inventory caught was `/redline/confirm`, the page
-the demo ends on, which no scan had ever reached and which carries the same two pairings; it
-is now scanned, with those three violations declared and failing on the record rather than
-unmeasured.
+the demo ends on, which no scan had ever reached and which carried the same two pairings; it
+was scanned with those three violations declared and failing on the record rather than
+unmeasured, and they are now repaired by the same two token substitutions `/redline` took,
+with the mechanism that declared them deleted rather than left standing empty. In the same
+pass the suite stopped writing the repository's own runtime state: one test reached the
+ledger anchor on the real path and a plain `pytest tests/` created `data/ledger.anchor`, so
+the three console paths are redirected once for every test in `tests/conftest.py` and a
+session-scoped guard fails the run if any of the three real files is created or changed.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

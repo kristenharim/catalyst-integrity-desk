@@ -27,13 +27,20 @@ from engine.ledger import BeliefLedger
 
 ANCHOR_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "ledger.anchor")
 
+# The default is resolved on each call rather than bound into the signature.
+# Same path, same behaviour for every caller that passes nothing; the difference
+# is that redirecting ANCHOR_PATH now redirects the default too, which is what
+# lets tests/conftest.py send the whole suite's anchor writes to a temp
+# directory instead of the repository's real data/ledger.anchor.
 
-def record(ledger: BeliefLedger, anchor_path: str = ANCHOR_PATH) -> None:
+
+def record(ledger: BeliefLedger, anchor_path: str | None = None) -> None:
     """Write the current head hash and entry count to the anchor file.
 
     Called right after a successful ledger append, so the anchor always
     reflects the last known good state of the chain.
     """
+    anchor_path = anchor_path or ANCHOR_PATH
     entries = ledger._entries()
     if not entries:
         return
@@ -44,7 +51,7 @@ def record(ledger: BeliefLedger, anchor_path: str = ANCHOR_PATH) -> None:
         json.dump({"head": head, "count": count}, f)
 
 
-def check(ledger: BeliefLedger, anchor_path: str = ANCHOR_PATH) -> str:
+def check(ledger: BeliefLedger, anchor_path: str | None = None) -> str:
     """Compare the live chain against the anchor file.
 
     Returns one of three strings:
@@ -57,6 +64,7 @@ def check(ledger: BeliefLedger, anchor_path: str = ANCHOR_PATH) -> str:
     is True and there are no entries; otherwise returns "truncated", because
     a missing anchor when decisions have been recorded is itself a signal.
     """
+    anchor_path = anchor_path or ANCHOR_PATH
     chain_ok = ledger.verify()
 
     if not chain_ok:
