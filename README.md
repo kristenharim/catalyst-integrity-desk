@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 366 passed, 18 skipped
+python3 -m pytest tests/ -q       # 369 passed, 18 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -155,10 +155,10 @@ Nothing else.
 tracked files only and installs `requirements.txt` alone, so four groups skip: fifteen that
 replay registry version history out of the gitignored `data/cache/`, one live Granite check
 that needs watsonx credentials, one browser-geometry check that needs Playwright, and one
-accessibility check that needs Playwright and an axe-core source. That is **366 passed, 18
+accessibility check that needs Playwright and an axe-core source. That is **369 passed, 18
 skipped**, the number above, and the one a judge sees. Install Playwright alone and the
-browser-geometry check runs too: **367 passed, 17 skipped**. Add the cache and Playwright
-locally and sixteen of those run instead, giving **382 passed, 2 skipped**. The two
+browser-geometry check runs too: **370 passed, 17 skipped**. Add the cache and Playwright
+locally and sixteen of those run instead, giving **385 passed, 2 skipped**. The two
 remaining skips are the credentialed Granite test and the accessibility check, which
 resolves axe-core from `CID_AXE_CORE` or a local `node_modules` and is skipped rather than
 vendoring a JavaScript dependency into this repo. Neither configuration is quoted with a
@@ -336,7 +336,11 @@ Phase 2 screens: the decision inbox at `/inbox`, which surfaces the task machine
 been wired to no route, and the decision integrity receipt at `/receipts/<entry_id>`,
 addressed by the ledger entry's own hash, with IBM Carbon g100 tokens declared in CSS rather
 than imported, an axe-core accessibility check over both screens, and the elements nothing
-in this repo stores asserted absent from the rendered page.
+in this repo stores asserted absent from the rendered page. Most recently, that receipt got
+a way in: `/redline/confirm` links to the address of the entry it just rendered, selected by
+`card_id` like the receipt itself, so a later unrelated write cannot move it, and the
+accessibility check was widened to `/redline`, which had been carrying two colour-contrast
+failures of its own while the two screens either side of it measured clean.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

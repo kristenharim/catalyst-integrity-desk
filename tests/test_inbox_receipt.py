@@ -598,6 +598,111 @@ def test_the_receipt_makes_no_forbidden_claim(isolated):
 
 
 # ---------------------------------------------------------------------------
+# The way in: /redline/confirm -> /receipts/<entry_hash>
+# ---------------------------------------------------------------------------
+# The receipt had an address and no door. These three say the door opens on the
+# decision the page is about, that it exists only after a human ruled, and that a
+# later write cannot move it, which is the defect Commit E fixed for the receipt
+# itself and would be free to reintroduce through the link.
+
+
+def _receipt_links(html: str) -> list[str]:
+    """Every entry id the page links a receipt for.
+
+    An empty id counts. A link to `/receipts/` with nothing after it is still a
+    receipt offered, and the first draft of this helper required at least one
+    character, so a page that always linked and simply had no entry to name read
+    as a page that did not link at all.
+    """
+    return re.findall(r'href="/receipts/([^"]*)"', html)
+
+
+def test_the_confirm_link_points_at_the_entry_the_page_rendered(isolated):
+    """One link, to the entry whose hashes are in the table above it.
+
+    Verified failing by pointing the href at `receipt.prev_hash`: the link then
+    resolves to the seeded predecessor and this names the hash it got.
+    """
+    c, tmp = isolated
+    _approve(c)
+    entry = _redline_entry(tmp)
+
+    body = c.get("/redline/confirm?verdict=approve").get_data(as_text=True)
+    assert _receipt_links(body) == [entry["entry_hash"]], (
+        "the confirm page must link exactly one receipt, the one for the entry "
+        "it just rendered"
+    )
+
+    # And the door opens on that entry, not merely on a receipt-shaped page.
+    fields = _receipt_fields(
+        c.get(f"/receipts/{entry['entry_hash']}").get_data(as_text=True))
+    assert fields["This entry hash"] == entry["entry_hash"]
+    assert fields["Card"] == entry["card"]["card_id"]
+
+
+def test_no_receipt_link_exists_until_a_human_has_decided(isolated):
+    """A receipt exists only after a recorded human action, and so does its link.
+
+    Two ways there is nothing to link to: nobody has ruled yet, and a rejection,
+    which leaves the belief standing and writes to the review log rather than the
+    ledger. Neither may offer a receipt.
+
+    Verified failing by adding a standing "Receipt" link to the page footer, the
+    shape this would take by accident: it names the link rendered with no
+    decision behind it.
+    """
+    c, tmp = isolated
+    assert not _receipt_links(c.get("/redline").get_data(as_text=True)), (
+        "the pending challenge is undecided; it cannot carry a receipt link"
+    )
+    assert not _receipt_links(
+        c.get("/redline/confirm?verdict=approve").get_data(as_text=True)), (
+        "no decision has been recorded, so there is no entry to link"
+    )
+
+    c.post("/redline/decide", data={"verdict": "reject", "reason": "not persuaded"})
+    assert not _entries(tmp), "a rejection must not write a ledger entry"
+    body = c.get("/redline/confirm?verdict=reject").get_data(as_text=True)
+    assert "Rejected" in body
+    assert not _receipt_links(body), (
+        "a rejection wrote no ledger entry; a receipt link would point at a "
+        "record that does not exist"
+    )
+
+
+def test_a_later_unrelated_entry_does_not_move_the_link(isolated):
+    """The Commit E defect, by the other route.
+
+    Recording a belief after the approval makes that belief the chain's last
+    entry. The link is derived from the receipt the page composed, which is
+    selected by card_id, so it stays on the decision this page is about.
+
+    Verified failing by composing the confirm receipt from `_entries()[-1]`,
+    which is what the handler did before Commit E: the link then follows the
+    belief and this names the wrong hash.
+    """
+    c, tmp = isolated
+    _approve(c)
+    entry = _redline_entry(tmp)
+
+    c.post("/belief/new", data={
+        "stage": "commit", "ticker": "RCKT", "nct": "NCT06092034",
+        "thesis": THESIS, "invalidation": "", "min_gap": "0"})
+    newest = _entries(tmp)[-1]
+    assert newest["entry_hash"] != entry["entry_hash"], (
+        "the fixture did not produce a later entry"
+    )
+
+    links = _receipt_links(
+        c.get("/redline/confirm?verdict=approve").get_data(as_text=True))
+    assert links == [entry["entry_hash"]], (
+        f"the receipt link follows the chain tail rather than this decision: "
+        f"{links}"
+    )
+    assert newest["entry_hash"] not in links
+
+
+# ---------------------------------------------------------------------------
 # What was not changed
 # ---------------------------------------------------------------------------
 
@@ -668,14 +773,19 @@ def live_server(tmp_path, monkeypatch):
         server.shutdown()
 
 
-def test_both_new_screens_pass_axe_core(live_server):
-    """The accessibility regression for the two screens this pass built.
+def test_the_decision_screens_pass_axe_core(live_server):
+    """The accessibility regression for the three screens of the decision spine.
 
     Colour is never the only signal, contrast clears the Carbon floor on both
     the quiet and the alarm state, landmarks and heading order are real, and the
     keyboard path reaches every control. axe asserts the mechanical half; the
     structural half is asserted beside it, because axe cannot know that a badge
     which drops its text still has a colour.
+
+    `/redline` is measured here rather than in a second harness of its own. It
+    is the demo centrepiece and it carried two colour-contrast violations of its
+    own while the two screens either side of it were clean, which is what a
+    check scoped to the newest work looks like from the outside.
     """
     if os.environ.get("CID_BASE_DEPS_ONLY"):
         pytest.skip("base dependencies only; playwright is a development extra")
@@ -704,7 +814,8 @@ def test_both_new_screens_pass_axe_core(live_server):
         try:
             page = browser.new_page(viewport={"width": 1280, "height": 800})
             for name, url in [("inbox", f"{base}/inbox"),
-                              ("receipt", f"{base}/receipts/{entry_hash}")]:
+                              ("receipt", f"{base}/receipts/{entry_hash}"),
+                              ("redline", f"{base}/redline")]:
                 page.goto(url, wait_until="load")
                 page.add_script_tag(content=axe)
                 result = page.evaluate(

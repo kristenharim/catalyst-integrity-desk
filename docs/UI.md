@@ -81,10 +81,14 @@ The inbox is at `/inbox` and not at `/`. The root redirect to the Rocket detail 
 documented in README.md as the demo's opening frame and measured at 1280x800 by
 `tests/test_demo_frame.py`. Moving the front door would falsify a claim the submission
 makes about itself, and the inbox needs no help from the address to be found.
-`/redline/confirm` keeps rendering the receipt for the decision just taken, unchanged;
+`/redline/confirm` keeps rendering the receipt for the decision just taken;
 `/receipts/<entry_id>` is the addressable form of the same record, selected by the entry's
 own hash. Both compose the receipt through one function, so they cannot describe the same
-entry differently.
+entry differently. The confirm page links to that address, using the hash of the receipt it
+already rendered, so the link is the same selection by `card_id` rather than a second path
+to the same fact and a later unrelated write cannot move it. The link exists only where the
+receipt does: nothing to link to before a ruling, and nothing after a rejection, which
+writes to the review log and not to the ledger.
 
 Legacy routes may redirect once the destinations render. They are not removed until
 compatibility tests exist.

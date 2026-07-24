@@ -137,6 +137,15 @@
         </tr>
       </tbody>
     </table>
+
+    {# The addressable form of the receipt above, reached by the hash of the
+       entry this page already rendered. `receipt` is composed from the ledger
+       entry selected by card_id, so a later unrelated write cannot move where
+       this points, and the whole block renders only when a receipt exists: a
+       rejection writes no ledger entry, so there is nothing to link to. #}
+    <p style="font-size:11px; margin-top:14px;">
+      <a href="/receipts/{{ receipt.entry_hash }}">Decision integrity receipt for this entry &rarr;</a>
+    </p>
   </div>
   {% endif %}
 

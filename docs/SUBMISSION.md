@@ -270,7 +270,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 366 passed, 18 skipped
+python3 -m pytest tests/ -q   # 369 passed, 18 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -280,9 +280,9 @@ The count depends on what the machine carries. A clone installs `requirements.tx
 nothing else, so four groups skip: fifteen tests that replay registry version history out
 of the gitignored `data/cache/`, one credential-gated live Granite check, one
 browser-geometry check needing Playwright, and one accessibility check needing Playwright
-and an axe-core source. That is **366 passed, 18 skipped**. Install Playwright alone and the
-geometry check runs too: **367 passed, 17 skipped**. Add the cache and Playwright locally
-and sixteen of them run instead: **382 passed, 2 skipped**. The two remaining skips are the
+and an axe-core source. That is **369 passed, 18 skipped**. Install Playwright alone and the
+geometry check runs too: **370 passed, 17 skipped**. Add the cache and Playwright locally
+and sixteen of them run instead: **385 passed, 2 skipped**. The two remaining skips are the
 credentialed Granite test and the accessibility check, which resolves axe-core from
 `CID_AXE_CORE` or a local `node_modules` rather than vendoring a JavaScript dependency into
 the repo; neither configuration is quoted with a count, because neither has been measured

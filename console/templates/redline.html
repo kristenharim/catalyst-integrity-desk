@@ -129,8 +129,13 @@
         {# Funding gap: flipped from green to red when the binding catalyst moved #}
         <div style="font-size:11px; color:#8b949e; margin-bottom:4px;">Funding gap</div>
         <div style="display:flex; align-items:center; gap:10px;">
-          {# Previous state: positive (within band) #}
-          <span style="color:#6b7280; text-decoration:line-through; font-size:13px;">
+          {# Previous state: positive (within band). The page's secondary text
+             colour rather than the dimmer grey it used to carry, which was
+             3.57:1 on this layer against a 4.5:1 floor and so was quiet by
+             being unreadable. Subordinate to the current figure by size,
+             weight and the strikethrough, which is where that ranking belongs;
+             a superseded number nobody can read is not a hierarchy. #}
+          <span style="color:#8b949e; text-decoration:line-through; font-size:13px;">
             +{{ redline.lapse_display.prior_gap_1f }} months
           </span>
           <span style="color:#8b949e;">&#8594;</span>
@@ -256,8 +261,12 @@
       </label>
     </div>
     <div style="display:flex; gap:12px;">
+      {# Accept keeps its green. The tint under it is the darker one base.html
+         declares as --cds-tint-success: the same green on the old tint was
+         4.16:1, under the floor, and on this one it is 6.44:1. The colour
+         carries the same meaning it did; only the ground it sits on moved. #}
       <button type="submit" name="verdict" value="approve"
-              style="background:#1a4731; color:#10b981; border:1px solid #10b981;
+              style="background:#0f2417; color:#10b981; border:1px solid #10b981;
                      padding:7px 20px; border-radius:4px; cursor:pointer;
                      font-family:inherit; font-size:12px; font-weight:bold;">
         &#10003; Accept
