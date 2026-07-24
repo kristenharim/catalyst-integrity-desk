@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 340 passed, 17 skipped
+python3 -m pytest tests/ -q       # 366 passed, 18 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -152,23 +152,28 @@ it renders comes from `data/snapshot.json`, which is committed. Clone, install F
 Nothing else.
 
 **Three tiers, because the result depends on what your machine carries.** A clone gets
-tracked files only and installs `requirements.txt` alone, so three groups skip: fifteen that
+tracked files only and installs `requirements.txt` alone, so four groups skip: fifteen that
 replay registry version history out of the gitignored `data/cache/`, one live Granite check
-that needs watsonx credentials, and one browser-geometry check that needs Playwright. That
-is **340 passed, 17 skipped**, the number above, and the one a judge sees. Install Playwright
-alone and the browser-geometry check runs too: **341 passed, 16 skipped**. Add the cache and
-Playwright locally and sixteen of those run instead, giving **356 passed, 1 skipped**. The
-last skip is the credentialed Granite test; that configuration has not been re-measured for
-this commit, so no count is quoted for it. That test is verified not to pass on the stub:
-pointed at an invalid endpoint it fails on `source == "granite"`.
+that needs watsonx credentials, one browser-geometry check that needs Playwright, and one
+accessibility check that needs Playwright and an axe-core source. That is **366 passed, 18
+skipped**, the number above, and the one a judge sees. Install Playwright alone and the
+browser-geometry check runs too: **367 passed, 17 skipped**. Add the cache and Playwright
+locally and sixteen of those run instead, giving **382 passed, 2 skipped**. The two
+remaining skips are the credentialed Granite test and the accessibility check, which
+resolves axe-core from `CID_AXE_CORE` or a local `node_modules` and is skipped rather than
+vendoring a JavaScript dependency into this repo. Neither configuration is quoted with a
+count, because neither has been measured for this commit. The Granite test is verified not
+to pass on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
-The fifteen cache-dependent tests verify the cohort research rather than the console, and
-the browser check verifies the demo's opening frame is where the script says it is. Nothing
-on the demo path depends on either, which is why a clone can run the whole product with
-seventeen tests skipped and still be running the real thing. For the geometry check:
+The fifteen cache-dependent tests verify the cohort research rather than the console, the
+browser check verifies the demo's opening frame is where the script says it is, and the
+accessibility check runs axe-core over the decision inbox and the receipt. Nothing on the
+demo path depends on any of them, which is why a clone can run the whole product with
+eighteen tests skipped and still be running the real thing. For the browser checks:
 
 ```bash
 pip install playwright && python3 -m playwright install chromium
+npm install axe-core && CID_AXE_CORE=node_modules/axe-core/axe.min.js python3 -m pytest tests/ -q
 ```
 
 **The 90 second tour:**
@@ -183,6 +188,8 @@ pip install playwright && python3 -m playwright install chromium
 | `/workspace` | ticker in, recorded contract out. Identity and the empty queries are shown before any candidate; a lapsed date is listed and cannot be chosen |
 | `/belief/new` | where a belief comes from. The analyst writes the thesis, the trial, and the gap below which they would stop believing it |
 | Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
+| `/inbox` | the same states as a morning's work: one item per decision, worst first, every reason grouped under it, and the unreliable row shown without a position |
+| `/receipts/<entry hash>` | one recorded decision, addressed by its own hash, with the record-integrity badge recomputed at render |
 
 **The tamper demo:** accept the redline, edit any byte inside the `card` object in
 `data/decisions.jsonl`, reload the confirm page. The badge goes from `✓ intact` to
@@ -324,7 +331,12 @@ registry-reconciliation line on `/redline` stopped resting on a typed Boolean: w
 later registry version ever reconciled the lapsed expectation is now derived in
 `console/review.py` from the anchored trial's committed version history and the snapshot's
 own `as_of`, renamed to the narrower fact it proves, and rendered as one of three sentences
-including an explicit unavailable when the stored history cannot answer.
+including an explicit unavailable when the stored history cannot answer. Then the first two
+Phase 2 screens: the decision inbox at `/inbox`, which surfaces the task machinery that had
+been wired to no route, and the decision integrity receipt at `/receipts/<entry_id>`,
+addressed by the ledger entry's own hash, with IBM Carbon g100 tokens declared in CSS rather
+than imported, an axe-core accessibility check over both screens, and the elements nothing
+in this repo stores asserted absent from the rendered page.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

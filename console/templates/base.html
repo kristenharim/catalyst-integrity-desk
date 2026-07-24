@@ -5,6 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Catalyst Integrity Desk{% endblock %}</title>
   <style>
+    /* -------------------------------------------------------------------
+       IBM Carbon Gray 100 tokens, declared rather than imported.
+
+       Carbon is the grammar here: the token names, the type scale, the
+       spacing step and the contrast floor. No Carbon package is installed
+       and no stylesheet is fetched, because the console must render with
+       flask alone and no network call. The values are the published g100
+       theme; the semantic role each one plays is the one this product
+       already used, so a colour does not change meaning on the way over.
+
+       Alarm colours are stated twice: once as the token, once as the dark
+       tint they sit on. $support-error on $layer-01 is 4.26:1, under the
+       4.5:1 body floor, and on its own tint it clears it. A palette that
+       fails contrast on the state that matters most is the wrong palette.
+    ------------------------------------------------------------------- */
+    :root {
+      --cds-background: #161616;
+      --cds-layer-01: #262626;
+      --cds-layer-02: #393939;
+      --cds-border-subtle: #393939;
+      --cds-text-primary: #f4f4f4;
+      --cds-text-secondary: #c6c6c6;
+      --cds-support-success: #42be65;
+      --cds-support-error: #fa4d56;
+      --cds-support-warning: #f1c21b;
+      --cds-support-info: #4589ff;
+      --cds-link-primary: #78a9ff;
+      --cds-focus: #ffffff;
+      --cds-tint-success: #0f2417;
+      --cds-tint-error: #2d0f11;
+      --cds-tint-warning: #2d2400;
+      --cds-tint-info: #0f1a2d;
+      --cds-spacing-02: 4px;
+      --cds-spacing-03: 8px;
+      --cds-spacing-05: 16px;
+      --cds-spacing-06: 24px;
+      --cds-spacing-07: 32px;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: ui-monospace, "Cascadia Code", "Menlo", monospace;
@@ -107,11 +145,21 @@
     .verdict-alert  { color: #f85149; }   /* red: breach / financing required */
     .granite-accent { color: #60a5fa; }   /* electric blue: Granite provenance */
     .lapsed-label   { color: #f87171; font-size: 11px; }
+
+    /* A visible focus ring on every interactive element. Carbon $focus, 2px.
+       The keyboard path through the inbox and the receipt is asserted by the
+       axe run in tests/test_inbox_receipt.py. */
+    a:focus-visible, summary:focus-visible, button:focus-visible {
+      outline: 2px solid var(--cds-focus);
+      outline-offset: 2px;
+    }
   </style>
+  {% block styles %}{% endblock %}
 </head>
 <body>
   <nav>
     <span class="brand">Catalyst Integrity Desk</span>
+    <a href="/inbox">Inbox</a>
     <a href="/workspace">Workspace</a>
     <a href="/queue">Queue</a>
     <a href="/contracts">Contracts</a>
@@ -122,7 +170,7 @@
   {# Command bar: operational counts. Snapshot supplies all three numbers. #}
   {% set cb = snapshot_cmd_bar %}
   {% if cb %}
-  <div class="cmd-bar">
+  <div class="cmd-bar" role="region" aria-label="Snapshot counts">
     <div class="cmd-bar-item">
       <span class="cmd-bar-count count-ok">{{ cb.monitored }}</span>
       <span class="cmd-bar-label">contracts monitored</span>

@@ -58,6 +58,14 @@ WORKFLOW_LABELS = dict(WORKFLOW_STATES)
 # waiting for a store.
 COMPUTABLE = {UNRECORDED, OPEN, RESOLVED, RETIRED}
 
+# Ledger events, in the words a reader gets. A belief written here is recorded
+# and nothing rereads it, so the label says recorded and never monitored.
+EVENT_LABELS = {
+    "CREATE": "belief recorded",
+    "UPDATE": "belief revised",
+    "RETIRE": "belief retired",
+}
+
 # ---------------------------------------------------------------------------
 # Record integrity
 # ---------------------------------------------------------------------------
@@ -372,6 +380,34 @@ def build_tasks(snapshot: dict, ledger, review_log, snapshot_id: str) -> list[di
 
 def open_tasks(tasks: list[dict]) -> list[dict]:
     return [t for t in tasks if t["task"]["state"] in (OPEN, UNRECORDED)]
+
+
+def _action(row: dict, redline: dict) -> dict:
+    """The one primary action for an inbox item, and only the backed one.
+
+    Adjudicating needs a challenge: a breach scanned against a recorded belief,
+    a memo about it, and a form that writes the ruling to the ledger. Exactly
+    one exists, written in Python inside `make_snapshot.py`, and no rebuild
+    reads the ledger, so no other row has a challenge to rule on. Offering
+    "Adjudicate" on those would put a button on screen with nothing behind it,
+    so they link to the evidence instead. See docs/plans/phase2-inbox-spec.md
+    section 8.
+    """
+    if redline.get("ticker") == row["ticker"]:
+        return {"label": "Adjudicate", "href": "/redline"}
+    return {"label": "Review evidence", "href": f"/contract/{row['ticker']}"}
+
+
+def inbox_rows(snapshot: dict, ledger, review_log, snapshot_id: str) -> list[dict]:
+    """Open decisions, worst first, each carrying its single primary action.
+
+    The route slices this and renders it. Which action an item gets depends on
+    what the backend can do about that item, which is a question for this module
+    rather than for a template.
+    """
+    rows = open_tasks(build_tasks(snapshot, ledger, review_log, snapshot_id))
+    redline = snapshot.get("redline") or {}
+    return [{**r, "action": _action(r, redline)} for r in rows]
 
 
 def snapshot_digest(path: str) -> str:

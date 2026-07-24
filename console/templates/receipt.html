@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Decision integrity receipt &middot; Catalyst Integrity Desk{% endblock %}
+
+{% block styles %}
+<style>
+  /* Carbon g100 tokens from base.html. Nothing imported, nothing fetched. */
+  .receipt-panel {
+    max-width: 820px; background: var(--cds-layer-01);
+    border: 1px solid var(--cds-border-subtle);
+    padding: var(--cds-spacing-06); margin-bottom: var(--cds-spacing-06);
+  }
+  .record-head {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    gap: var(--cds-spacing-05); margin-bottom: var(--cds-spacing-05);
+  }
+  .field-label { font-size: 11px; color: var(--cds-text-secondary);
+                 text-transform: uppercase; letter-spacing: 0.07em; }
+  .chain { display: flex; flex-wrap: wrap; align-items: center;
+           gap: var(--cds-spacing-02); font-size: 11px;
+           margin: var(--cds-spacing-05) 0; }
+  .chain-step { background: var(--cds-background); color: var(--cds-text-primary);
+                border: 1px solid var(--cds-border-subtle); padding: var(--cds-spacing-02) 10px; }
+  .chain-arrow { color: var(--cds-text-secondary); }
+
+  /* Record integrity: one wire, quiet while it holds. Colour never carries the
+     state on its own -- each badge states it in words as well. Declared after
+     the chain so a chain step showing the record state takes these colours;
+     each pairing clears the Carbon AA floor on the tint it sits on. */
+  .record-badge {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    padding: var(--cds-spacing-02) 12px; border: 1px solid;
+  }
+  .record-intact    { background: var(--cds-tint-success);
+                      border-color: var(--cds-support-success);
+                      color: var(--cds-support-success); }
+  .record-tampered  { background: var(--cds-tint-error);
+                      border-color: var(--cds-support-error);
+                      color: var(--cds-support-error); }
+  .record-truncated { background: var(--cds-tint-warning);
+                      border-color: var(--cds-support-warning);
+                      color: var(--cds-support-warning); }
+
+  /* The thesis state, on this page's own layer. base.html's verdict colours are
+     tuned to the page background and fall under the AA floor on $layer-01. */
+  .state-alert { color: var(--cds-support-error); background: var(--cds-tint-error);
+                 padding: 1px 6px; }
+  .state-ok    { color: var(--cds-support-success); background: var(--cds-tint-success);
+                 padding: 1px 6px; }
+
+  .receipt-table { max-width: 780px; font-size: 12px; }
+  .receipt-table th { color: var(--cds-text-secondary); white-space: nowrap;
+                      border-bottom: 1px solid var(--cds-border-subtle);
+                      text-align: left; width: 190px; font-weight: 400;
+                      text-transform: none; letter-spacing: 0; font-size: 12px; }
+  .receipt-table td { color: var(--cds-text-primary);
+                      border-bottom: 1px solid var(--cds-border-subtle); }
+  .hash { font-family: ui-monospace, monospace; word-break: break-all;
+          color: var(--cds-text-secondary); }
+  .unavailable { color: var(--cds-text-secondary); }
+  .miss { max-width: 820px; background: var(--cds-layer-01);
+          border: 1px solid var(--cds-border-subtle);
+          padding: var(--cds-spacing-06); line-height: 1.7; font-size: 13px;
+          color: var(--cds-text-primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1>Decision integrity receipt</h1>
+
+<p class="note">
+  What one recorded decision says about itself, addressed by its own entry hash so the page
+  names the decision it is a receipt for rather than whichever entry happens to be last.
+  The record state below is recomputed from the decision file and its anchor on every
+  render; it is never carried in the link that brought you here.
+</p>
+
+<div class="{% if receipt %}receipt-panel{% else %}miss{% endif %}">
+
+  <div class="record-head">
+    <div>
+      <div class="field-label">Record integrity</div>
+      <div style="margin-top:4px;">
+        {% if integrity_status == "intact" %}
+          <span class="record-badge record-intact">&#10003; record intact</span>
+        {% elif integrity_status == "tampered" %}
+          <span class="record-badge record-tampered">&#10007; record tampered</span>
+        {% else %}
+          <span class="record-badge record-truncated">&#9888; record truncated or replaced</span>
+        {% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="field-label">Entry requested</div>
+      <div class="hash" style="margin-top:4px; max-width:520px;">{{ entry_id }}</div>
+    </div>
+  </div>
+
+  {% if receipt %}
+  {# The chain a challenged decision travels, made visible. Drawn only for an
+     entry that came out of the challenge loop: a belief written on the form
+     reaches the ledger with no breach scan and no memo behind it, and a strip
+     naming both over that entry would describe a path it never took. The last
+     step reads the record state, so a receipt on a chain that no longer
+     verifies says so on the strip as well as on the badge. #}
+  {% if receipt.from_challenge %}
+  <div class="chain">
+    <span class="chain-step">observation</span>
+    <span class="chain-arrow" aria-hidden="true">&rarr;</span>
+    <span class="chain-step">Granite memo</span>
+    <span class="chain-arrow" aria-hidden="true">&rarr;</span>
+    <span class="chain-step">human decision</span>
+    <span class="chain-arrow" aria-hidden="true">&rarr;</span>
+    {% if integrity_status == "intact" %}
+      <span class="chain-step record-intact">hash verified</span>
+    {% elif integrity_status == "tampered" %}
+      <span class="chain-step record-tampered">hash FAILED</span>
+    {% else %}
+      <span class="chain-step record-truncated">chain replaced</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <table class="receipt-table">
+    <tbody>
+      <tr>
+        <th scope="row">Event</th>
+        <td>{{ receipt.event_label }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Author</th>
+        <td>{{ receipt.author }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Timestamp</th>
+        <td>{{ receipt.ts_display }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Card</th>
+        <td><span class="tag">{{ receipt.card_id }}</span></td>
+      </tr>
+      <tr>
+        <th scope="row">What changed</th>
+        <td>
+          {% if receipt.what_changed %}
+            {{ receipt.what_changed }}
+          {% else %}
+            {# Composed from the one challenge this snapshot carries, so it can
+               only describe that decision. Borrowing it for any other entry
+               would put another decision's summary under these hashes. #}
+            <span class="unavailable">unavailable for this entry: the description of what
+              changed is composed from the challenge in this snapshot, and this entry
+              records a different decision</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Thesis state</th>
+        <td>
+          {% if receipt.thesis_state == "financing required before catalyst" %}
+            <span class="state-alert">{{ receipt.thesis_state }}</span>
+          {% else %}
+            <span class="state-ok">{{ receipt.thesis_state }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Reason given</th>
+        <td>
+          {% if receipt.reason %}
+            {{ receipt.reason }}
+          {% else %}
+            <span class="unavailable">none recorded</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Previous entry hash</th>
+        <td class="hash">{{ receipt.prev_hash }}</td>
+      </tr>
+      <tr>
+        <th scope="row">This entry hash</th>
+        <td class="hash">{{ receipt.entry_hash }}</td>
+      </tr>
+    </tbody>
+  </table>
+  {% else %}
+  <p style="margin-top:16px;">
+    <strong>No entry with this id is in the decision record.</strong>
+  </p>
+  <p style="margin-top:10px;">
+    Either the id is not one this record ever held, or the entry that carried it is no
+    longer there. Those two are not distinguishable from the id alone, which is what the
+    badge above is for: a record that still agrees with its anchor has lost nothing, and
+    one that does not has the reader's answer.
+  </p>
+  {% endif %}
+
+</div>
+
+<p class="note">
+  The decision record is tamper evident rather than tamper proof: an edit inside a hashed
+  payload, a deleted entry and a replaced chain are each detectable given the anchor beside
+  it was not rewritten in the same pass.
+</p>
+
+<p style="font-size:12px;">
+  <a href="/inbox">&larr; Decision inbox</a>
+  &nbsp;|&nbsp;
+  <a href="/contracts">Contract list</a>
+</p>
+
+{% endblock %}

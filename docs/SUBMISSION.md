@@ -270,21 +270,24 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 340 passed, 17 skipped
+python3 -m pytest tests/ -q   # 366 passed, 18 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
 judge can clone and run it with no IBM account.
 
 The count depends on what the machine carries. A clone installs `requirements.txt` and
-nothing else, so three groups skip: fifteen tests that replay registry version history out
-of the gitignored `data/cache/`, one credential-gated live Granite check, and one
-browser-geometry check needing Playwright. That is **340 passed, 17 skipped**. Install
-Playwright alone and the geometry check runs too: **341 passed, 16 skipped**. Add the cache
-and Playwright locally and sixteen of them run instead: **356 passed, 1 skipped**. The last
-skip is the credentialed Granite test; that configuration has not been re-measured for this
-commit, so no count is quoted for it. The fifteen verify the cohort research rather than the
-console, so nothing on the demo path depends on them.
+nothing else, so four groups skip: fifteen tests that replay registry version history out
+of the gitignored `data/cache/`, one credential-gated live Granite check, one
+browser-geometry check needing Playwright, and one accessibility check needing Playwright
+and an axe-core source. That is **366 passed, 18 skipped**. Install Playwright alone and the
+geometry check runs too: **367 passed, 17 skipped**. Add the cache and Playwright locally
+and sixteen of them run instead: **382 passed, 2 skipped**. The two remaining skips are the
+credentialed Granite test and the accessibility check, which resolves axe-core from
+`CID_AXE_CORE` or a local `node_modules` rather than vendoring a JavaScript dependency into
+the repo; neither configuration is quoted with a count, because neither has been measured
+for this commit. The fifteen verify the cohort research rather than the console, so nothing
+on the demo path depends on them.
 
 ## Links
 

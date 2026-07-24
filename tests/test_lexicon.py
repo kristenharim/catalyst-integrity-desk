@@ -60,6 +60,13 @@ NON_CLAIM_ROUTES = {
 PARAMETERISED = {
     "/contract/<ticker>": ["/contract/RCKT", "/contract/BEAM",
                            "/contract/PRME", "/contract/SRPT"],
+    # A receipt is addressed by a ledger entry hash, and a clean checkout has no
+    # ledger, so the only state this route can be driven into from here is the
+    # one where the id resolves to nothing. That state is a page a human reads
+    # and is scanned as one. The populated receipt is driven for real against an
+    # isolated ledger in tests/test_inbox_receipt.py, which is where the writes
+    # belong.
+    "/receipts/<entry_id>": ["/receipts/no-entry-with-this-id"],
 }
 
 TEMPLATE_DIR = os.path.join(REPO, "console", "templates")

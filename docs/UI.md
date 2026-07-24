@@ -58,22 +58,33 @@ Current status as of the Phase 1 commit.
 |---|---|---|
 | `/` | unchanged | redirects to `/contract/RCKT` |
 | `/demo` | added | redirects to `/contract/RCKT`, deterministically |
+| `/inbox` | added | the decision inbox, one item per decision, triggers grouped |
+| `/receipts/<entry_id>` | added | the decision integrity receipt for one ledger entry |
 | `/queue` | unchanged | serves the queue rows |
 | `/redline` | unchanged | serves the pending challenge |
 | `/contracts`, `/contract/<ticker>` | unchanged | list and detail |
 | `/belief/new`, `/workspace` | unchanged | belief entry and intake |
 
-Intended structure, to be built in Phase 2:
+Intended structure. The first three are built; the rest are Phase 2 work not yet done:
 
 ```text
-/                          Decision Inbox
-/demo                      deterministic Rocket demonstration
+/inbox                     Decision Inbox                          built
+/demo                      deterministic Rocket demonstration      built
+/receipts/<entry_id>       Decision Integrity Receipt              built
 /decisions                 decision portfolio
 /decisions/<card_id>/review    decision review
-/receipts/<entry_id>       Decision Integrity Receipt
 /evidence/<contract_id>    Evidence Explorer
 /activity                  decision history
 ```
+
+The inbox is at `/inbox` and not at `/`. The root redirect to the Rocket detail is
+documented in README.md as the demo's opening frame and measured at 1280x800 by
+`tests/test_demo_frame.py`. Moving the front door would falsify a claim the submission
+makes about itself, and the inbox needs no help from the address to be found.
+`/redline/confirm` keeps rendering the receipt for the decision just taken, unchanged;
+`/receipts/<entry_id>` is the addressable form of the same record, selected by the entry's
+own hash. Both compose the receipt through one function, so they cannot describe the same
+entry differently.
 
 Legacy routes may redirect once the destinations render. They are not removed until
 compatibility tests exist.
@@ -121,14 +132,22 @@ The precise capability today: **recorded** yes, **projected from the frozen snap
 
 ## Phase 2 direction
 
-Not started.
+Specified in `docs/plans/phase2-inbox-spec.md`, which maps every proposed element to the
+backend field that feeds it and lists in its section 8 the elements nothing feeds. Two
+screens of it are built: the Decision Inbox with its empty state, and the Decision
+Integrity Receipt with its tampered and truncated states. The rest is not started.
 
-- Figma is the interaction-design source of truth.
-- IBM Carbon is the visual and accessibility grammar.
+- No Figma file exists. The specification is the interaction-design source of truth, and
+  it says so and why.
+- IBM Carbon is the visual and accessibility grammar. The g100 tokens are declared as CSS
+  custom properties in `base.html`; no Carbon package is installed and nothing is fetched
+  at render time.
 - Flask and Jinja remain the authoritative renderer. No React rewrite.
 - HTMX only later, for bounded server-driven interactions.
 - A server-rendered `/_components` gallery.
-- Playwright screenshot tests and axe-core accessibility checks.
+- Playwright screenshot tests and axe-core accessibility checks. Built for the two screens
+  above in `tests/test_inbox_receipt.py`, skipped rather than vendored when the browser or
+  the axe source is absent.
 - IBM Bob for one bounded component at a time.
 
 ### Components to design before any page template

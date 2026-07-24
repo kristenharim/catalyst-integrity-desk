@@ -113,6 +113,30 @@ def demo():
     return redirect(url_for("contract_detail", ticker="RCKT"))
 
 
+@app.get("/inbox")
+def inbox():
+    """This morning's work: one item per decision, worst first.
+
+    Not at `/`. The root redirects to the Rocket detail, README.md documents
+    that redirect as deliberate and `tests/test_demo_frame.py` measures the page
+    it lands on at 1280x800. Moving the front door would falsify a claim the
+    submission makes about itself, so the inbox gets its own address.
+
+    Three wires, three reads, kept apart on the page as they are in the code:
+    the evidence axis comes off the frozen snapshot, the workflow axis off the
+    ledger and the review log, and record integrity off the anchor. A row can
+    say the thesis broke while the record behind it is intact, and both
+    statements have to survive the other being false.
+    """
+    ledger = BeliefLedger(DECISIONS_PATH)
+    review_log = ReviewLog(REVIEW_LOG_PATH)
+    return render_template(
+        "inbox.html",
+        rows=review.inbox_rows(SNAPSHOT, ledger, review_log, SNAPSHOT_ID),
+        record=review.record_integrity(ledger, ANCHOR_PATH),
+    )
+
+
 @app.get("/contracts")
 def contract_list():
     contracts = SNAPSHOT["contracts"]
@@ -469,6 +493,73 @@ def redline_decide():
     return redirect(url_for("redline_confirm", verdict=verdict))
 
 
+def _receipt(entry: dict) -> dict:
+    """The receipt for one ledger entry, composed at render time.
+
+    Shared by `/redline/confirm` and `/receipts/<entry_id>` so two pages cannot
+    describe the same recorded decision differently. Everything here is read
+    from the entry; nothing is carried in a URL, because a receipt that travels
+    in a query string is not evidence of anything.
+
+    `what_changed` is composed from the one challenge this snapshot carries and
+    can only describe that card. A belief recorded through `/belief/new` has a
+    ledger entry and no breach behind it, so the field is left empty and the
+    page says the description is unavailable rather than borrowing another
+    decision's. See docs/plans/phase2-inbox-spec.md section 8.
+    """
+    card = entry.get("card", {})
+    expected_low = card.get("expected_low", 0)
+    snap_redline = SNAPSHOT.get("redline", {})
+    what_changed = ""
+    if snap_redline and card.get("card_id") == snap_redline.get("card_id"):
+        what_changed = (snap_redline.get("breach", {}).get("metric", "") + ": "
+                        + snap_redline.get("classification", {}).get("label", "")
+                        ).strip(": ")
+    return {
+        "event": entry.get("event", ""),
+        "event_label": review.EVENT_LABELS.get(entry.get("event", ""), ""),
+        # Whether this entry came out of the challenge loop. A belief written on
+        # the form reaches the ledger without a breach scan and without a memo,
+        # so the chain strip that names one is not drawn over it.
+        "from_challenge": (entry.get("triggered_by") or "").startswith("breach:"),
+        "author": entry["author"],
+        "ts_display": datetime.datetime.fromtimestamp(entry["ts"]).strftime(
+            "%Y-%m-%d %H:%M:%S UTC"
+        ),
+        "card_id": card.get("card_id", ""),
+        "what_changed": what_changed,
+        "thesis_state": ("funded to catalyst" if expected_low >= 0
+                         else "financing required before catalyst"),
+        "reason": entry.get("reason") or "",
+        "prev_hash": entry["prev_hash"],
+        "entry_hash": entry["entry_hash"],
+    }
+
+
+@app.get("/receipts/<entry_id>")
+def receipt_view(entry_id):
+    """The Decision Integrity Receipt for one recorded decision, by entry hash.
+
+    Addressed by the entry's own hash, so the page names the decision it is a
+    receipt for rather than whichever entry happens to be last. Record integrity
+    is read fresh from the anchor on every render; the badge never trusts what
+    brought the reader here.
+
+    An id that resolves to nothing renders as a miss rather than a 404, because
+    on this page "no entry with this id is in the record" is an answer worth
+    reading: it is what a truncated chain looks like from the receipt's side,
+    and the integrity badge beside it says which of the two happened.
+    """
+    ledger = BeliefLedger(DECISIONS_PATH)
+    entry = next((e for e in ledger._entries()
+                  if e.get("entry_hash") == entry_id), None)
+    return render_template(
+        "receipt.html", entry_id=entry_id,
+        receipt=_receipt(entry) if entry else None,
+        integrity_status=anchor_check(ledger, anchor_path=ANCHOR_PATH),
+    )
+
+
 @app.get("/redline/confirm")
 def redline_confirm():
     verdict = request.args.get("verdict", "")
@@ -493,30 +584,7 @@ def redline_confirm():
             if e.get("card", {}).get("card_id") == redline_card_id]
     last = mine[-1] if mine else None
     if last and verdict == "approve":
-        proposed_card = last.get("card", {})
-        expected_low = proposed_card.get("expected_low", 0)
-        thesis_state = (
-            "funded to catalyst" if expected_low >= 0
-            else "financing required before catalyst"
-        )
-        ts_display = datetime.datetime.fromtimestamp(last["ts"]).strftime(
-            "%Y-%m-%d %H:%M:%S UTC"
-        )
-        breach_metric = ""
-        classification_label = ""
-        if snap_redline:
-            breach_metric = snap_redline.get("breach", {}).get("metric", "")
-            classification_label = snap_redline.get("classification", {}).get("label", "")
-        what_changed = (breach_metric + ": " + classification_label).strip(": ")
-        receipt = {
-            "author": last["author"],
-            "ts_display": ts_display,
-            "card_id": proposed_card.get("card_id", ""),
-            "what_changed": what_changed,
-            "thesis_state": thesis_state,
-            "prev_hash": last["prev_hash"],
-            "entry_hash": last["entry_hash"],
-        }
+        receipt = _receipt(last)
 
     return render_template("confirm.html", verdict=verdict,
                            integrity_status=integrity_status, receipt=receipt)

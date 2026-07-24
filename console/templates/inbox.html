@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Decision inbox &middot; Catalyst Integrity Desk{% endblock %}
+
+{% block styles %}
+<style>
+  /* Carbon g100 tokens from base.html. Nothing is imported and nothing is
+     fetched; the tokens are declared once and used here. */
+  .inbox-list { list-style: none; max-width: 1100px; }
+  .inbox-item {
+    background: var(--cds-layer-01);
+    border: 1px solid var(--cds-border-subtle);
+    border-left: 4px solid var(--cds-border-subtle);
+    padding: var(--cds-spacing-05);
+    margin-bottom: var(--cds-spacing-05);
+  }
+  .inbox-item.ev-review_required { border-left-color: var(--cds-support-error); }
+  .inbox-item.ev-contingent      { border-left-color: var(--cds-support-warning); }
+  .inbox-item.ev-unavailable     { border-left-color: var(--cds-layer-02); }
+  .inbox-item.ev-intact          { border-left-color: var(--cds-support-success); }
+
+  .item-head {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    gap: var(--cds-spacing-05); margin-bottom: var(--cds-spacing-03);
+  }
+  .item-title { font-size: 15px; font-weight: 600; color: var(--cds-text-primary);
+                text-transform: none; letter-spacing: 0; margin: 0; }
+  .item-title a { color: var(--cds-link-primary); }
+  .item-company { color: var(--cds-text-secondary); font-weight: 400; font-size: 13px; }
+
+  /* Evidence, workflow and record integrity are three wires. They are three
+     separate elements on the page for the same reason they are three separate
+     functions in the code: a tampered record must never be able to render as a
+     broken thesis. */
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border: 1px solid var(--cds-border-subtle); color: var(--cds-text-primary);
+    background: var(--cds-layer-02);
+  }
+  .badge-review_required { background: var(--cds-tint-error);
+                           border-color: var(--cds-support-error);
+                           color: var(--cds-support-error); font-weight: 700; }
+  .badge-contingent      { background: var(--cds-tint-warning);
+                           border-color: var(--cds-support-warning);
+                           color: var(--cds-support-warning); }
+  .badge-intact          { background: var(--cds-tint-success);
+                           border-color: var(--cds-support-success);
+                           color: var(--cds-support-success); }
+  .chip {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border: 1px dashed var(--cds-border-subtle); color: var(--cds-text-secondary);
+  }
+  .figure { color: var(--cds-text-primary); font-variant-numeric: tabular-nums; }
+  .figure-label { font-size: 11px; color: var(--cds-text-secondary);
+                  text-transform: uppercase; letter-spacing: 0.07em; }
+  .unranked { color: var(--cds-text-secondary); }
+
+  .triggers { list-style: none; margin: var(--cds-spacing-03) 0 0; }
+  .trigger {
+    border-top: 1px solid var(--cds-border-subtle);
+    padding: var(--cds-spacing-03) 0 var(--cds-spacing-03) var(--cds-spacing-03);
+    border-left: 3px solid var(--cds-layer-02);
+  }
+  .trigger.tr-deterministic { border-left-color: var(--cds-support-error); }
+  .trigger.tr-contingent    { border-left-color: var(--cds-support-warning); }
+  .trigger.tr-watch         { border-left-color: var(--cds-support-warning); }
+  .trigger.tr-unavailable   { border-left-color: var(--cds-layer-02); }
+  /* The refusal outweighs the number it refuses: heavier, never smaller, and
+     always first. A UI invariant, not a style choice. */
+  .trigger-label { font-weight: 700; font-size: 12px; color: var(--cds-text-primary); }
+  .trigger-sev { font-size: 11px; color: var(--cds-text-secondary); }
+  .trigger-detail { font-size: 12px; font-weight: 400;
+                    color: var(--cds-text-secondary); margin-top: 2px;
+                    line-height: 1.6; max-width: 820px; }
+
+  .action {
+    display: inline-block; margin-top: var(--cds-spacing-05);
+    padding: var(--cds-spacing-03) var(--cds-spacing-05);
+    background: var(--cds-layer-02); color: var(--cds-text-primary);
+    border: 1px solid var(--cds-border-subtle); font-size: 12px;
+  }
+  .action:hover { background: var(--cds-border-subtle); text-decoration: none; }
+
+  .record-notice {
+    max-width: 1100px; margin-bottom: var(--cds-spacing-05);
+    padding: var(--cds-spacing-05); font-size: 12px; line-height: 1.6;
+    background: var(--cds-tint-error);
+    border: 1px solid var(--cds-support-error);
+    color: var(--cds-text-primary);
+  }
+  .empty {
+    max-width: 860px; padding: var(--cds-spacing-06);
+    background: var(--cds-layer-01);
+    border: 1px solid var(--cds-border-subtle);
+    color: var(--cds-text-primary); line-height: 1.7; font-size: 13px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h1>Decision inbox</h1>
+
+<p class="note">
+  One item per decision, worst first, with every reason grouped under it. A decision
+  carrying three reasons is one item with three rows beneath it, because three reasons to
+  look at one belief is one piece of work, and splitting it into three rows turns a
+  decision queue back into an alert feed.
+</p>
+<p class="note">
+  Order is what needs a judgement today, then severity, then how many reasons the item
+  carries. An item whose burn estimate is not usable is shown and never ranked: its
+  evidence has to be repaired before it can be compared with the rest, so it carries no
+  gap figure and no position worth reading.
+</p>
+
+{# Record integrity: the third wire, read from the anchor at request time and
+   kept quiet unless it fails. It is a statement about the decision history, not
+   about any thesis on this page, and it says so. #}
+{% if record.failed %}
+<div class="record-notice" role="status">
+  <strong>Decision record: {{ record.label }}.</strong>
+  The recorded decision history does not agree with its anchor. That is a statement about
+  the record of what humans decided, not about the evidence below: every state on this page
+  is computed from the frozen snapshot and is unchanged by it.
+</div>
+{% endif %}
+
+{% if rows %}
+<ul class="inbox-list">
+  {% for row in rows %}
+  {# One item per decision. Never one per trigger. #}
+  <li class="inbox-item ev-{{ row.decision.evidence }}">
+    <div class="item-head">
+      <h2 class="item-title">
+        <a href="/contract/{{ row.ticker }}">{{ row.ticker }}</a>
+        <span class="item-company">{{ row.name }}</span>
+      </h2>
+      {# Evidence axis: what the public record says about the contract. #}
+      <span class="badge badge-{{ row.decision.evidence }}">
+        <span aria-hidden="true">&#9679;</span>
+        {{ row.decision.evidence_label }}
+      </span>
+      {# Workflow axis: what a human has done about it. Two of the six declared
+         workflow states are never rendered, because nothing stores a human
+         picking a task up or pushing it out. #}
+      <span class="chip">{{ row.task.label }}</span>
+      <span>
+        <span class="figure-label">worst severity</span>
+        <span class="figure">{{ row.decision.severity }}</span>
+      </span>
+      <span>
+        <span class="figure-label">funding gap</span>
+        {% if row.gap_1f is not none %}
+          <span class="figure">{{ row.gap_1f }} months</span>
+        {% else %}
+          <span class="unranked">not rankable</span>
+        {% endif %}
+      </span>
+    </div>
+
+    <ul class="triggers">
+      {% for t in row.decision.triggers %}
+      <li class="trigger tr-{{ t.state }}">
+        <span class="trigger-label">{{ t.label }}</span>
+        <span class="trigger-sev">&middot; {{ t.severity }}</span>
+        <div class="trigger-detail">{{ t.detail }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {# One primary action per item, and only the one the backend can carry out.
+       See console/review.py::_action. #}
+    <a class="action" href="{{ row.action.href }}">{{ row.action.label }} &rarr;</a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty">
+  <p><strong>No decision in this snapshot has an open reason to look.</strong></p>
+  <p style="margin-top:10px;">
+    That is a statement about the snapshot taken on {{ snapshot_as_of }} and about the
+    decisions recorded against it. Nothing here rereads the evidence between snapshots:
+    a snapshot is rebuilt by hand, and an empty inbox means the last rebuild found no
+    open reason, not that anything is being checked right now.
+  </p>
+</div>
+{% endif %}
+
+<p class="note" style="margin-top:20px;">
+  Evidence states are computed from the snapshot taken on {{ snapshot_as_of }}. Whether a
+  belief was recorded, and whether a human has ruled on it, is read from the decision
+  record instead. The two are shown apart because they fail apart.
+</p>
+
+{% endblock %}
