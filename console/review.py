@@ -324,6 +324,52 @@ def workflow_state(card: dict | None, resolved_at) -> str:
     return OPEN
 
 
+def _cards_by_ticker(latest: dict[str, dict]) -> dict[str, str]:
+    """ticker -> the first card_id recorded for it."""
+    by_ticker: dict[str, str] = {}
+    for card_id in latest:
+        by_ticker.setdefault(card_ticker(card_id), card_id)
+    return by_ticker
+
+
+def _task_row(ticker: str, c: dict, entries: list[dict], rejects: list[dict],
+              latest: dict[str, dict], by_ticker: dict[str, str],
+              snapshot_id: str) -> dict:
+    """One decision, projected: its evidence, its workflow state, its gap.
+
+    Split out of `build_tasks` so one decision can be looked up without going
+    through the inbox's filter. The inbox skips a contract carrying no trigger,
+    which is right for a work queue and wrong for a page addressed by the
+    decision's own id: a contract nobody needs to look at still has a state, and
+    a review screen that 404s on it would be reporting that it has none.
+    """
+    d = c.get("decision") or {}
+    card_id = by_ticker.get(ticker)
+    card = latest.get(card_id) if card_id else None
+    resolved_at, entry_hash = (
+        _resolution(entries, rejects, card_id) if card_id else (None, None)
+    )
+    task = ReviewTask(
+        task_id=f"{ticker}:{snapshot_id[:12]}",
+        ticker=ticker,
+        card_id=card_id,
+        baseline_version=card.get("version") if card else None,
+        current_snapshot_id=snapshot_id,
+        trigger_kinds=[t["kind"] for t in (d.get("triggers") or [])],
+        state=workflow_state(card, resolved_at),
+        resolved_at=resolved_at,
+        decision_entry_id=entry_hash,
+    )
+    return {
+        "task": task.as_dict(),
+        "ticker": ticker,
+        "name": c["runway"]["name"],
+        "decision": d,
+        "gap_1f": c.get("gap_months_1f") if c["runway"].get("reliable") else None,
+        "sort_key": d.get("sort_key") or [],
+    }
+
+
 def build_tasks(snapshot: dict, ledger, review_log, snapshot_id: str) -> list[dict]:
     """One review task per decision, worst first.
 
@@ -335,51 +381,32 @@ def build_tasks(snapshot: dict, ledger, review_log, snapshot_id: str) -> list[di
     entries = ledger._entries()
     rejects = review_log.all()
     latest = _latest_cards(entries)
+    by_ticker = _cards_by_ticker(latest)
 
-    by_ticker: dict[str, str] = {}
-    for card_id in latest:
-        by_ticker.setdefault(card_ticker(card_id), card_id)
-
-    tasks = []
-    for ticker, c in (snapshot.get("contracts") or {}).items():
-        d = c.get("decision") or {}
-        triggers = d.get("triggers") or []
-        if not triggers:
-            continue
-
-        card_id = by_ticker.get(ticker)
-        card = latest.get(card_id) if card_id else None
-        resolved_at, entry_hash = (
-            _resolution(entries, rejects, card_id) if card_id else (None, None)
-        )
-        state = workflow_state(card, resolved_at)
-
-        task = ReviewTask(
-            task_id=f"{ticker}:{snapshot_id[:12]}",
-            ticker=ticker,
-            card_id=card_id,
-            baseline_version=card.get("version") if card else None,
-            current_snapshot_id=snapshot_id,
-            trigger_kinds=[t["kind"] for t in triggers],
-            state=state,
-            resolved_at=resolved_at,
-            decision_entry_id=entry_hash,
-        )
-        tasks.append({
-            "task": task.as_dict(),
-            "ticker": ticker,
-            "name": c["runway"]["name"],
-            "decision": d,
-            "gap_1f": c.get("gap_months_1f") if c["runway"].get("reliable") else None,
-            "sort_key": d.get("sort_key") or [],
-        })
-
+    tasks = [
+        _task_row(ticker, c, entries, rejects, latest, by_ticker, snapshot_id)
+        for ticker, c in (snapshot.get("contracts") or {}).items()
+        if (c.get("decision") or {}).get("triggers")
+    ]
     tasks.sort(key=lambda t: (t["sort_key"], t["ticker"]))
     return tasks
 
 
 def open_tasks(tasks: list[dict]) -> list[dict]:
     return [t for t in tasks if t["task"]["state"] in (OPEN, UNRECORDED)]
+
+
+def decision_id_for(ticker: str, redline: dict) -> str:
+    """How one decision is addressed in a URL.
+
+    The recorded card's id when a challenge names one, and the ticker when
+    nothing does. Exactly one challenge exists and it is written in Python
+    inside `make_snapshot.py`, so every other decision has no card id to carry;
+    minting one would put an identifier on screen that names no record. Both
+    shapes read back through `card_ticker`, which is why they can share a route.
+    """
+    return (redline.get("card_id") or ticker
+            if redline.get("ticker") == ticker else ticker)
 
 
 def _action(row: dict, redline: dict) -> dict:
@@ -390,12 +417,63 @@ def _action(row: dict, redline: dict) -> dict:
     one exists, written in Python inside `make_snapshot.py`, and no rebuild
     reads the ledger, so no other row has a challenge to rule on. Offering
     "Adjudicate" on those would put a button on screen with nothing behind it,
-    so they link to the evidence instead. See docs/plans/phase2-inbox-spec.md
-    section 8.
+    so they open the same review screen with the evidence only. See
+    docs/plans/phase2-inbox-spec.md section 8.
+
+    Both labels now lead to `/decisions/<card_id>/review`, which is the
+    adjudication surface for the one challenge and the evidence surface for
+    everything else. `/redline` is unchanged and still serves the challenge.
     """
+    href = f"/decisions/{decision_id_for(row['ticker'], redline)}/review"
     if redline.get("ticker") == row["ticker"]:
-        return {"label": "Adjudicate", "href": "/redline"}
-    return {"label": "Review evidence", "href": f"/contract/{row['ticker']}"}
+        return {"label": "Adjudicate", "href": href}
+    return {"label": "Review evidence", "href": href}
+
+
+def decision_review(snapshot: dict, card_id: str, ledger, review_log,
+                    snapshot_id: str, anchor_path: str) -> dict | None:
+    """Everything the decision review screen renders for one decision.
+
+    `card_id` is the recorded card's id where one exists and the ticker where
+    none does; see `decision_id_for`. `card_ticker` reads both, so the route
+    resolves either without a lookup table. An id naming no contract in this
+    snapshot returns None, which the route renders as a miss rather than
+    guessing at the nearest decision.
+
+    The three axes come back as three keys and are never combined into a fourth.
+    `decision.evidence` is what the public record says, `task.state` is what a
+    human has done about it, `record` is whether the history of those human
+    actions still agrees with its anchor. A page that merged them could render a
+    tampered ledger as a broken thesis, which is the failure the split exists to
+    prevent.
+    """
+    ticker = card_ticker(card_id)
+    c = (snapshot.get("contracts") or {}).get(ticker)
+    if c is None:
+        return None
+
+    entries = ledger._entries()
+    latest = _latest_cards(entries)
+    row = _task_row(ticker, c, entries, review_log.all(), latest,
+                    _cards_by_ticker(latest), snapshot_id)
+
+    # Adjudication is offered only where a challenge exists to adjudicate. The
+    # snapshot carries one, keyed by its own card id, and matching on that id
+    # rather than on the ticker means a second decision recorded against the
+    # same company cannot inherit the form.
+    redline = snapshot.get("redline") or {}
+    adjudicable = bool(redline.get("card_id")) and redline["card_id"] == card_id
+
+    return {
+        **row,
+        "decision_id": card_id,
+        "c": c,
+        "record": record_integrity(ledger, anchor_path),
+        "adjudicable": adjudicable,
+        "redline": redline if adjudicable else None,
+        "reconciliation": (registry_reconciliation(redline, c, snapshot.get("as_of"))
+                           if adjudicable else None),
+    }
 
 
 def inbox_rows(snapshot: dict, ledger, review_log, snapshot_id: str) -> list[dict]:

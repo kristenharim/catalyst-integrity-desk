@@ -137,6 +137,38 @@ def inbox():
     )
 
 
+@app.get("/decisions/<card_id>/review")
+def decision_review(card_id):
+    """One decision, read end to end: what changed, why it needs a human, and
+    the evidence under both.
+
+    Two shapes of page, one route, because they are the same decision seen with
+    and without a challenge behind it. The snapshot carries exactly one
+    challenge, so exactly one decision can be ruled on here; every other one
+    renders its evidence and offers no control that cannot complete. A disabled
+    Accept button is a claim the desk could accept if you asked nicely, and it
+    could not.
+
+    The ruling posts to `/redline/decide`, which is the write path that already
+    exists. A second one would be a second place for the ledger to be wrong.
+    """
+    ledger = BeliefLedger(DECISIONS_PATH)
+    view = review.decision_review(
+        SNAPSHOT, card_id, ledger, ReviewLog(REVIEW_LOG_PATH),
+        SNAPSHOT_ID, ANCHOR_PATH,
+    )
+    if view is None:
+        return render_template("decision_review.html", decision_id=card_id,
+                               c=None, adjudicable=False), 404
+    return render_template(
+        "decision_review.html", **view,
+        # The model's narrative, with its own confidence stripped. Same
+        # treatment as /redline: the figures in it are Python's and stay.
+        memo=(without_model_confidence(view["redline"]["memo"])
+              if view["adjudicable"] else None),
+    )
+
+
 @app.get("/contracts")
 def contract_list():
     contracts = SNAPSHOT["contracts"]

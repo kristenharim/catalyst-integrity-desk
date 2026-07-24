@@ -1,0 +1,678 @@
+{% extends "base.html" %}
+{% block title %}Decision review &middot; Catalyst Integrity Desk{% endblock %}
+
+{% block styles %}
+<style>
+  /* Carbon g100 tokens from base.html. Nothing imported, nothing fetched. */
+
+  /* Reading order is the DOM order and it is the order the page is argued in:
+     what changed, why that needs a human, what was approved, what holds now,
+     then the evidence under all four. Below 1024px that is exactly what a
+     reader gets, one column, "What changed" first.
+
+     At 1024px and up the three panels are PLACED into a 25/45/30 row without
+     moving in the DOM, so the centre panel is the widest thing on the page and
+     the two it is measured against sit either side of it. The "why" band spans
+     the row beneath. Grid placement rather than reordered markup: a screen
+     reader and a keyboard still travel the argument in the order it is made. */
+  .review-grid { max-width: 1180px; margin-bottom: var(--cds-spacing-06); }
+  .panel {
+    background: var(--cds-layer-01);
+    border: 1px solid var(--cds-border-subtle);
+    padding: var(--cds-spacing-05);
+    margin-bottom: var(--cds-spacing-05);
+  }
+  .p-changed { border: 2px solid var(--cds-support-warning); }
+  .p-why     { border-left: 4px solid var(--cds-support-error); }
+  .panel h2 {
+    font-size: 11px; color: var(--cds-text-secondary); margin: 0 0 12px;
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+  .p-changed h2 { font-size: 13px; color: var(--cds-support-warning); }
+  .panel h3 { font-size: 11px; color: var(--cds-text-secondary); font-weight: 400;
+              text-transform: uppercase; letter-spacing: 0.07em; margin: 14px 0 6px; }
+
+  @media (min-width: 1024px) {
+    .review-grid {
+      display: grid; gap: var(--cds-spacing-05);
+      grid-template-columns: 25fr 45fr 30fr;
+      align-items: start;
+    }
+    .p-changed  { grid-area: 1 / 2 / 2 / 3; }
+    .p-why      { grid-area: 2 / 1 / 3 / 4; }
+    .p-approved { grid-area: 1 / 1 / 2 / 2; }
+    .p-current  { grid-area: 1 / 3 / 2 / 4; }
+    .panel { margin-bottom: 0; }
+  }
+
+  .field { margin-bottom: 10px; font-size: 12px; line-height: 1.7;
+           color: var(--cds-text-primary); }
+  .field-label { font-size: 11px; color: var(--cds-text-secondary);
+                 text-transform: uppercase; letter-spacing: 0.07em; }
+  .figure { color: var(--cds-text-primary); font-variant-numeric: tabular-nums; }
+  .figure-alert { color: var(--cds-support-error); background: var(--cds-tint-error);
+                  padding: 1px 6px; font-weight: 700; font-size: 16px;
+                  font-variant-numeric: tabular-nums; }
+  .figure-ok { color: var(--cds-support-success); background: var(--cds-tint-success);
+               padding: 1px 6px; font-variant-numeric: tabular-nums; }
+  /* A superseded figure is subordinate by weight, size and the strikethrough,
+     never by being too faint to read. */
+  .figure-was { color: var(--cds-text-secondary); text-decoration: line-through;
+                font-size: 12px; font-variant-numeric: tabular-nums; }
+  .ident { font-family: ui-monospace, monospace; word-break: break-all;
+           background: var(--cds-background); color: var(--cds-text-primary);
+           padding: 1px 6px; }
+  .ident-gone { background: var(--cds-tint-error); color: var(--cds-support-error);
+                text-decoration: line-through; }
+  .ident-now  { background: var(--cds-tint-error); color: var(--cds-support-error);
+                border: 1px solid var(--cds-support-error); font-weight: 700; }
+  .unavailable { color: var(--cds-text-secondary); }
+  .claim { border-left: 3px solid var(--cds-border-subtle); padding-left: 10px;
+           font-size: 12px; line-height: 1.7; color: var(--cds-text-primary);
+           max-width: 60em; }
+
+  /* The three axes, three elements, never one badge. */
+  .states { display: flex; flex-wrap: wrap; gap: var(--cds-spacing-06);
+            margin-bottom: var(--cds-spacing-05); }
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border: 1px solid var(--cds-border-subtle); color: var(--cds-text-primary);
+    background: var(--cds-layer-02);
+  }
+  .badge-review_required { background: var(--cds-tint-error);
+                           border-color: var(--cds-support-error);
+                           color: var(--cds-support-error); font-weight: 700; }
+  .badge-contingent      { background: var(--cds-tint-warning);
+                           border-color: var(--cds-support-warning);
+                           color: var(--cds-support-warning); }
+  .badge-intact          { background: var(--cds-tint-success);
+                           border-color: var(--cds-support-success);
+                           color: var(--cds-support-success); }
+  /* The classification is the challenge's own label and not the evidence axis.
+     It gets its own class rather than borrowing the evidence badge's, so a
+     reader cannot mistake one for the other and a test asserting on the
+     evidence badge cannot match this instead. */
+  .badge-classification { background: var(--cds-tint-error);
+                          border-color: var(--cds-support-error);
+                          color: var(--cds-support-error); font-weight: 700; }
+  .chip { display: inline-block; font-size: 11px; padding: 2px 8px;
+          border: 1px dashed var(--cds-border-subtle); color: var(--cds-text-secondary); }
+  .record-badge { display: inline-block; font-size: 11px; padding: 2px 8px;
+                  border: 1px solid; }
+  .record-intact    { background: var(--cds-tint-success);
+                      border-color: var(--cds-support-success);
+                      color: var(--cds-support-success); }
+  .record-tampered  { background: var(--cds-tint-error);
+                      border-color: var(--cds-support-error);
+                      color: var(--cds-support-error); font-weight: 700; }
+  .record-truncated { background: var(--cds-tint-warning);
+                      border-color: var(--cds-support-warning);
+                      color: var(--cds-support-warning); font-weight: 700; }
+  .record-notice {
+    max-width: 1180px; margin-bottom: var(--cds-spacing-05);
+    padding: var(--cds-spacing-05); font-size: 12px; line-height: 1.6;
+    background: var(--cds-tint-error); border: 1px solid var(--cds-support-error);
+    color: var(--cds-text-primary);
+  }
+
+  /* Trigger rows. The refusal outweighs the number it refuses: heavier, never
+     smaller, and always first. A UI invariant, not a style choice. */
+  .triggers { list-style: none; margin: var(--cds-spacing-03) 0 0; }
+  .trigger { border-top: 1px solid var(--cds-border-subtle);
+             padding: var(--cds-spacing-03) 0 var(--cds-spacing-03) var(--cds-spacing-03);
+             border-left: 3px solid var(--cds-layer-02); }
+  .trigger.tr-deterministic { border-left-color: var(--cds-support-error); }
+  .trigger.tr-contingent    { border-left-color: var(--cds-support-warning); }
+  .trigger.tr-watch         { border-left-color: var(--cds-support-warning); }
+  .trigger.tr-unavailable   { border-left-color: var(--cds-layer-02); }
+  .trigger-label { font-weight: 700; font-size: 12px; color: var(--cds-text-primary); }
+  .trigger-sev { font-size: 11px; color: var(--cds-text-secondary); }
+  .trigger-detail { font-size: 12px; font-weight: 400; color: var(--cds-text-secondary);
+                    margin-top: 2px; line-height: 1.6; max-width: 60em; }
+  .asks-human { font-size: 12px; color: var(--cds-support-warning);
+                background: var(--cds-tint-warning); padding: 6px 10px;
+                margin-top: 6px; max-width: 60em; line-height: 1.6; }
+
+  .explain { font-size: 13px; line-height: 1.75; color: var(--cds-text-primary);
+             max-width: 62em; }
+  .memo-panel { max-width: 1180px; background: var(--cds-layer-01);
+                border: 1px solid var(--cds-support-info);
+                padding: var(--cds-spacing-05); margin-bottom: var(--cds-spacing-06); }
+  .memo-body { background: var(--cds-background); border: 1px solid var(--cds-border-subtle);
+               padding: 14px; font-size: 12px; line-height: 1.6; white-space: pre-wrap;
+               color: var(--cds-text-primary); overflow-x: auto; }
+  .memo-source { color: var(--cds-support-info); font-size: 11px;
+                 text-transform: uppercase; letter-spacing: 0.07em; }
+
+  .drawer { max-width: 1180px; border-top: 1px solid var(--cds-border-subtle);
+            padding: var(--cds-spacing-03) 0; }
+  .drawer summary { cursor: pointer; color: var(--cds-link-primary); font-size: 12px;
+                    padding: 4px 0; }
+  .drawer-body { padding: var(--cds-spacing-05) 0 var(--cds-spacing-05) 14px;
+                 border-left: 2px solid var(--cds-border-subtle);
+                 font-size: 12px; line-height: 1.7; color: var(--cds-text-secondary);
+                 overflow-x: auto; }
+  .drawer-body strong { color: var(--cds-text-primary); }
+  .refusal { display: block; color: var(--cds-text-primary);
+             background: var(--cds-tint-error); padding: 6px 10px;
+             font-weight: 700; font-size: 13px; margin-bottom: 6px; max-width: 60em; }
+  .refused-figure { color: var(--cds-text-secondary); font-size: 12px; }
+
+  .decide { max-width: 1180px; margin-bottom: var(--cds-spacing-06); }
+  .decide input[type=text] {
+    background: var(--cds-background); border: 1px solid var(--cds-border-subtle);
+    color: var(--cds-text-primary); padding: 5px 8px; font-family: inherit;
+    font-size: 12px; max-width: 380px; width: 100%;
+  }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .btn { padding: 7px 20px; cursor: pointer; font-family: inherit; font-size: 12px;
+         font-weight: 700; border: 1px solid; }
+  .btn-accept { background: var(--cds-tint-success); color: var(--cds-support-success);
+                border-color: var(--cds-support-success); }
+  .btn-reject { background: var(--cds-tint-error); color: var(--cds-support-error);
+                border-color: var(--cds-support-error); }
+  /* The way onward. Every separator is an ordinary space rather than a
+     non-breaking one: a row of links joined by &nbsp; cannot break, and on a
+     390px screen it pushed the whole page 148px sideways. Measured, not
+     guessed. */
+  .back { font-size: 12px; margin-top: var(--cds-spacing-06); line-height: 2.2; }
+  .back a { display: inline-block; }
+  .back .sep { color: var(--cds-text-secondary); padding: 0 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if c is none %}
+<h1>Decision review</h1>
+<div class="panel" style="max-width:820px;">
+  <p><strong>No decision with this id is in this snapshot.</strong></p>
+  <p style="margin-top:10px; color:var(--cds-text-secondary);">
+    A decision is addressed here by the id of the belief card recorded for it, or by the
+    ticker when no belief is recorded. <span class="ident">{{ decision_id }}</span> resolves
+    to neither, and the nearest one is not shown, because a review screen that guesses which
+    decision you meant is worse than one that says it does not know.
+  </p>
+  <p class="back"><a href="/inbox">&larr; Decision inbox</a></p>
+</div>
+{% else %}
+
+<h1>Decision review &middot; {{ ticker }}</h1>
+
+<p class="note">
+  {{ name }}. Evidence states are computed from the snapshot taken on {{ snapshot_as_of }}.
+  Whether a belief was recorded and whether a human has ruled on it are read from the
+  decision record instead. The two are shown apart because they fail apart.
+</p>
+
+{# The three axes. Three elements, never one badge: a tampered decision record
+   is not a statement about this thesis, and a breached thesis is not a
+   statement about the record. #}
+<div class="states">
+  <div>
+    <div class="field-label">Evidence</div>
+    <div style="margin-top:4px;">
+      <span class="badge badge-{{ decision.evidence }}">
+        <span aria-hidden="true">&#9679;</span> {{ decision.evidence_label }}
+      </span>
+    </div>
+  </div>
+  <div>
+    <div class="field-label">Workflow</div>
+    <div style="margin-top:4px;"><span class="chip">{{ task.label }}</span></div>
+  </div>
+  <div>
+    <div class="field-label">Decision record</div>
+    <div style="margin-top:4px;">
+      {% if record.state == "intact" %}
+        <span class="record-badge record-intact">&#10003; {{ record.label }}</span>
+      {% elif record.state == "tampered" %}
+        <span class="record-badge record-tampered">&#10007; {{ record.label }}</span>
+      {% else %}
+        <span class="record-badge record-truncated">&#9888; {{ record.label }}</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if record.failed %}
+<div class="record-notice" role="status">
+  <strong>Decision record: {{ record.label }}.</strong>
+  The recorded decision history does not agree with its anchor. That is a statement about
+  the record of what humans decided, not about the evidence on this page: every state below
+  is computed from the frozen snapshot and is unchanged by it.
+</div>
+{% endif %}
+
+<div class="review-grid">
+
+  {# ---------------- 1. What changed ---------------- #}
+  <section class="panel p-changed" aria-labelledby="h-changed">
+    <h2 id="h-changed">What changed</h2>
+    {% if adjudicable %}
+    <div class="field">
+      <span class="field-label">Binding trial before</span><br>
+      <span class="ident ident-gone">{{ redline.prior_trial }} ({{ redline.prior_pcd }})</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Binding trial now</span><br>
+      <span class="ident ident-now">{{ redline.current_trial }} ({{ redline.current_pcd }})</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Registered primary-completion expectation</span><br>
+      <span class="figure-was">{{ redline.prior_pcd }}</span>
+      <span aria-hidden="true">&#8594;</span>
+      <span class="figure">{{ redline.current_pcd }}</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Funding gap</span><br>
+      <span class="figure-was">+{{ redline.lapse_display.prior_gap_1f }} months</span>
+      <span aria-hidden="true">&#8594;</span>
+      <span class="figure-alert">{{ redline.lapse_display.current_gap_1f }} months</span>
+    </div>
+
+    {# Derived in console/review.py from this trial's stored version history,
+       never read off a stored verdict. Three states, three sentences: the
+       claim, its contradiction, and the refusal to make either. The refusal is
+       rendered rather than hidden, because a screen that goes quiet when its
+       evidence runs out reads exactly like one whose evidence held. #}
+    <h3>Registry reconciliation</h3>
+    {% if reconciliation.state == "no_later_registry_version_before_expiry" %}
+    <p class="field">
+      No later registry version reconciled the registered expectation before the date
+      passed.
+      <span class="unavailable">Read from the registry version history stored for
+      {{ reconciliation.trial }} in this snapshot, as of {{ reconciliation.as_of }}.
+      Registry versions only: press wires and SEC filings were outside what this desk
+      queried.</span>
+    </p>
+    {% elif reconciliation.state == "reconciled_before_expiry" %}
+    <p class="field">
+      A later registry version moved the registered expectation before the date passed, in
+      the history stored for {{ reconciliation.trial }}.
+    </p>
+    {% else %}
+    <p class="field">
+      Registry reconciliation unavailable for {{ reconciliation.trial }}:
+      {{ reconciliation.why }}.
+    </p>
+    {% endif %}
+    {% else %}
+    <p class="field">
+      <strong>No change is recorded for this decision.</strong>
+    </p>
+    <p class="field unavailable">
+      A change is a difference between two readings, and this desk holds one: the snapshot
+      taken on {{ snapshot_as_of }}. What follows is what the evidence says now, not a
+      movement from an earlier state. The one decision carrying a recorded change is the
+      challenge written into this snapshot, and it is the only one this screen can offer a
+      ruling on.
+    </p>
+    {% endif %}
+  </section>
+
+  {# ---------------- 2. Why this requires review ---------------- #}
+  <section class="panel p-why" aria-labelledby="h-why">
+    <h2 id="h-why">Why this requires review</h2>
+
+    {# The deterministic explanation. Every figure in it is a named snapshot
+       field rendered by Jinja; nothing here is arithmetic and nothing here is
+       the model's. It sits above the memo on purpose: a reader should have
+       Python's account of what happened before they read prose about it. #}
+    {% if adjudicable %}
+    <p class="explain">
+      The registered primary completion this belief was approved against,
+      <span class="ident">{{ redline.prior_trial }}</span> on {{ redline.prior_pcd }}, has
+      passed. A date that has already arrived cannot be a funding target, so the binding
+      catalyst is the nearest registered primary completion still ahead,
+      <span class="ident">{{ redline.current_trial }}</span> on {{ redline.current_pcd }}.
+      Against the same runway that gave +{{ redline.lapse_display.prior_gap_1f }} months at
+      approval, the gap to that date is
+      <span class="figure">{{ redline.lapse_display.current_gap_1f }} months</span>, below
+      the approved floor of {{ redline.breach.display.expected_low_1f }} on
+      <span class="tag">{{ redline.breach.metric }}</span>. The lapsed date is kept and
+      reported as a date-integrity signal rather than dropped.
+    </p>
+    {% elif gap_1f is not none %}
+    <p class="explain">
+      The nearest registered primary completion still ahead is
+      <span class="ident">{{ c.trial.nct }}</span> on {{ c.catalyst_date }}. Against the
+      runway computed from the filing as of {{ c.runway.as_of }}, the gap to that date is
+      <span class="figure">{{ gap_1f }} months</span>. Each figure is derived below, step
+      by step, from a named XBRL tag or a numbered registry version.
+    </p>
+    {% else %}
+    <p class="explain">
+      The nearest registered primary completion still ahead is
+      <span class="ident">{{ c.trial.nct }}</span> on {{ c.catalyst_date }}. No funding gap
+      is stated for this decision: the burn estimate it would rest on is
+      <strong>unavailable</strong> for the reason given below, and a gap computed from an
+      unusable burn is a figure that looks comparable and is not.
+    </p>
+    {% endif %}
+
+    <h3>Triggers, grouped under this one decision</h3>
+    {% if decision.triggers %}
+    <ul class="triggers">
+      {% for t in decision.triggers %}
+      <li class="trigger tr-{{ t.state }}">
+        <span class="trigger-label">{{ t.label }}</span>
+        <span class="trigger-sev">&middot; {{ t.severity }}</span>
+        <div class="trigger-detail">{{ t.detail }}</div>
+        {% if t.state == "contingent" %}
+        {# The contingent case asks for a human reading and says so. Nothing
+           here can resolve it: recording that two endpoint descriptions name
+           the same commitment has no store. See
+           docs/plans/phase2-inbox-spec.md section 8. #}
+        <div class="asks-human">
+          A human has to read the two descriptions and say whether they name the same
+          commitment. This screen cannot settle it and does not record an answer, so the
+          movement stays outside every established total on this page.
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="field unavailable">
+      No trigger fired for this decision in this snapshot. That is a statement about the
+      snapshot taken on {{ snapshot_as_of }} and about the conditions this desk computes,
+      not a finding that nothing is wrong.
+    </p>
+    {% endif %}
+  </section>
+
+  {# ---------------- 3. Approved belief ---------------- #}
+  <section class="panel p-approved" aria-labelledby="h-approved">
+    <h2 id="h-approved">Approved belief</h2>
+    {% if adjudicable %}
+    <div class="field">
+      <span class="field-label">Trial</span><br>
+      <span class="ident">{{ redline.prior_trial }}</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Registered primary completion</span><br>
+      <span class="ident">{{ redline.prior_pcd }}</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Approved claim</span>
+      <div class="claim">{{ redline.proposed_card.claim }}</div>
+    </div>
+    <div class="field">
+      <span class="field-label">Funding gap at approval</span><br>
+      <span class="figure-ok">+{{ redline.lapse_display.prior_gap_1f }} months</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Approved band</span><br>
+      <span class="figure">[{{ redline.breach.display.expected_low_1f }},
+        {{ redline.breach.display.expected_high_1f }}] months</span>
+    </div>
+    {% else %}
+    <p class="field">
+      <strong>{{ task.label }}.</strong>
+    </p>
+    <p class="field unavailable">
+      No belief for {{ ticker }} is in the decision record, so there is no approved claim to
+      compare the evidence against. The states on this page describe the public record only.
+      A belief written on the belief form is recorded and nothing rereads it, so writing one
+      would not make this a challenge.
+    </p>
+    {% endif %}
+  </section>
+
+  {# ---------------- 4. Current contract ---------------- #}
+  <section class="panel p-current" aria-labelledby="h-current">
+    <h2 id="h-current">Current contract</h2>
+    <div class="field">
+      <span class="field-label">Binding trial</span><br>
+      <span class="ident">{{ c.trial.nct }}</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Registered primary completion</span><br>
+      <span class="ident">{{ c.catalyst_date }}</span>
+      <span class="unavailable">({{ c.trial.pcd_type | lower }})</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Runway, conservative end</span><br>
+      <span class="figure">{{ c.runway.display.months_low_1f }} to
+        {{ c.runway.display.months_high_1f }} months</span>
+      <span class="unavailable">from the filing as of {{ c.runway.as_of }}</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Funding gap</span><br>
+      {% if gap_1f is none %}
+        <span class="unavailable">unavailable &middot; not rankable</span>
+      {% elif adjudicable %}
+        <span class="figure-alert">{{ gap_1f }} months</span>
+      {% else %}
+        <span class="figure">{{ gap_1f }} months</span>
+      {% endif %}
+    </div>
+    <div class="field">
+      <span class="field-label">Thesis state</span><br>
+      <span class="{% if gap_1f is not none and c.gap_months >= 0 %}figure-ok{% else %}figure-alert{% endif %}"
+            style="font-size:12px;">{{ c.verdict }}</span>
+    </div>
+    {% if adjudicable %}
+    <div class="field">
+      <span class="field-label">Classification</span><br>
+      <span class="badge badge-classification">
+        {{ redline.classification.label | upper | replace("_", " ") }}
+      </span>
+      {# No confidence figure. The classification's confidence is the model's
+         own JSON field, and no model-produced number reaches the user. The
+         source stays, because who judged is the part a reader can act on. #}
+      <span class="granite-accent" style="font-size:11px;">{{ redline.classification.source }}</span>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+{# ---------------- The model's prose, after Python's account ---------------- #}
+{% if adjudicable %}
+<div class="memo-panel">
+  <h2 style="margin-top:0;">Integrity memo
+    <span class="memo-source">IBM Granite</span></h2>
+  <p class="note">
+    Read the deterministic explanation above first. Every figure quoted here was computed by
+    Python and passed to the model; the model's own confidence is stripped before this page
+    renders, and a returned rationale carrying any quantity of its own is discarded whole in
+    favour of a deterministic stub.
+  </p>
+  <div class="memo-body">{{ memo }}</div>
+</div>
+
+<div class="review-grid" style="display:block;">
+  <section class="panel" aria-labelledby="h-claim">
+    <h2 id="h-claim">Analyst claim &middot; redline</h2>
+    <h3>Original</h3>
+    <div class="claim" style="border-left-color:var(--cds-support-error);">
+      {{ redline.proposed_card.claim }}</div>
+    <h3>Proposed change, applied to the ledger if this is accepted</h3>
+    <div class="claim" style="border-left-color:var(--cds-support-success);">
+      <span class="ident">{{ redline.redline }}</span></div>
+    <h3>Driver</h3>
+    <p class="field unavailable">{{ redline.proposed_card.driver }}</p>
+  </section>
+</div>
+
+{# The one consequential action, through the write path that already exists.
+   Accepting posts to /redline/decide, which seeds the approved card if the
+   ledger has not got it, bumps the version, records the anchor and hands off to
+   the receipt selected by this card's id. A second write path would be a second
+   place for the ledger to be wrong. #}
+<div class="decide">
+  <h2>Decision</h2>
+  <form method="post" action="/redline/decide">
+    <label for="reason" style="font-size:12px; color:var(--cds-text-secondary);">
+      Reason (optional)
+    </label><br>
+    <input type="text" id="reason" name="reason"
+           placeholder="e.g. the registered date passed">
+    <div class="btn-row">
+      <button type="submit" name="verdict" value="approve" class="btn btn-accept">
+        &#10003; Accept
+      </button>
+      <button type="submit" name="verdict" value="reject" class="btn btn-reject">
+        &#10007; Reject
+      </button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{# ---------------- 5. Evidence and calculations ---------------- #}
+{# Progressive disclosure, native <details>, no script. The top layer states
+   what happened; everything a reader would need to falsify it is one click
+   away and none of it is computed here. #}
+<h2>Evidence and calculations</h2>
+
+<details class="drawer">
+  <summary>Deterministic calculation and the record behind every step</summary>
+  <div class="drawer-body">
+    {% if not c.runway.reliable %}
+    <span class="refusal">&#9888; Not comparable. The burn estimate under this
+      calculation is unusable.</span>
+    <p class="refused-figure">The steps below are shown because hiding a hard case is worse
+      than showing it. The gap row is arithmetic over an input this desk has flagged, so it
+      is not a figure to rank against the others.</p>
+    {% endif %}
+    {% set rows = c.derivation %}
+    {% include "_derivation.html" with context %}
+  </div>
+</details>
+
+<details class="drawer">
+  <summary>Date precision: what the registry actually committed to</summary>
+  <div class="drawer-body">
+    <p>The registry records this expectation as
+      <strong>{{ c.trial.pcd }}</strong>, marked
+      <strong>{{ c.trial.pcd_type | lower }}</strong>, and this desk reads a month-only
+      value as the first of that month, giving <strong>{{ c.catalyst_date }}</strong>. The
+      two readings of a month-only date differ by up to the length of the month, and every
+      figure on this page uses the first-of-month one.</p>
+    <p style="margin-top:8px;">The expectation is a registered primary-completion
+      expectation, which is not the date a result is published. The two differ
+      systematically, by two to four months.</p>
+  </div>
+</details>
+
+{% if c.history %}
+<details class="drawer">
+  <summary>Promise identity: which movements count as movement</summary>
+  <div class="drawer-body">
+    <p>{{ c.history.revisions | length }} revisions across
+      {{ c.history.n_versions }} registry versions for
+      <span class="ident">{{ c.history.nct }}</span>,
+      {{ c.history.n_late_moves }} of them moved with under 90 days notice.</p>
+    <p style="margin-top:8px;">Net date movement across revisions where the commitment
+      provably held its shape: <strong>{{ c.history.slip_established_days }} days</strong>.</p>
+    {% if c.history.slip_contingent_revisions %}
+    <p style="margin-top:8px;">A further {{ c.history.slip_contingent_days }} days are
+      contingent on {{ c.history.slip_contingent_revisions }} revision(s) where only the
+      endpoint wording changed. A reword and a redefinition are indistinguishable from the
+      text, so a human has to read the two descriptions. If they name the same commitment
+      the total is {{ c.history.slip_upper_bound_days }} days; if not, it stays at
+      {{ c.history.slip_established_days }}.</p>
+    {% endif %}
+    {% if c.history.slip_refused_revisions %}
+    {# The refusal is rendered above the magnitude it refuses, heavier and
+       larger. Reversing that order is how a refused figure gets quoted as a
+       finding. #}
+    <span class="refusal">&#9888; Comparison refused. Not comparable, and not to be
+      read as delay.</span>
+    <p class="refused-figure">Reported movement across all revisions:
+      {{ c.history.slip_reported_days }} days, refused. A count or an enumeration changed
+      across {{ c.history.slip_refused_revisions }} revision(s), so subtracting the two
+      dates would describe two different commitments rather than one that moved.</p>
+    {% endif %}
+  </div>
+</details>
+{% endif %}
+
+<details class="drawer">
+  <summary>Provenance limitations: what this page cannot see</summary>
+  <div class="drawer-body">
+    <p><strong>Runway inputs.</strong>
+      {% if c.runway.notes %}
+        {% for note in c.runway.notes %}{{ note }}{% if not loop.last %}; {% endif %}{% endfor %}
+      {% else %}
+        No condition was recorded against this contract's burn estimate.
+      {% endif %}
+    </p>
+    <p style="margin-top:8px;"><strong>Sources queried.</strong> SEC XBRL company facts for
+      the liquidity and burn figures, and the ClinicalTrials.gov version history for the
+      registered dates. Press wires, investor decks, correspondence and SEC filings other
+      than the XBRL facts named in the calculation were not queried, so nothing on this page
+      is evidence about them either way.</p>
+    <p style="margin-top:8px;"><strong>As of.</strong> Every computed state here comes from
+      the snapshot taken on {{ snapshot_as_of }}, content address
+      <span class="ident">{{ snapshot_id }}</span>. Nothing rereads the evidence between
+      snapshots, and a snapshot is rebuilt by hand.</p>
+    {% if adjudicable and reconciliation.state == "unknown" %}
+    <p style="margin-top:8px;"><strong>Registry reconciliation.</strong> Unavailable for
+      {{ reconciliation.trial }}: {{ reconciliation.why }}.</p>
+    {% endif %}
+  </div>
+</details>
+
+<details class="drawer">
+  <summary>Readings this screen found and refuses to use</summary>
+  <div class="drawer-body">
+    {% if c.lapsed %}
+    <p><strong>Lapsed registered expectations, kept and not treated as catalysts.</strong></p>
+    <ul style="list-style:none; margin-top:6px;">
+      {% for l in c.lapsed %}
+      <li style="padding:4px 0;">
+        <span class="ident ident-gone">{{ l.nct }} ({{ l.pcd }})</span>
+        <span class="unavailable">{{ l.status | lower | replace("_", " ") }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <p style="margin-top:8px;">A date that has already arrived cannot be a funding target,
+      so none of these is the binding catalyst. They are kept and reported as date-integrity
+      signals, which is the point of this desk, rather than dropped.</p>
+    {% else %}
+    <p>No lapsed registered expectation is stored for this contract.</p>
+    {% endif %}
+  </div>
+</details>
+
+<details class="drawer">
+  <summary>Decision record: what a human has written down about this</summary>
+  <div class="drawer-body">
+    <p><strong>Workflow state.</strong> {{ task.label }}.</p>
+    {% if task.card_id %}
+    <p style="margin-top:8px;"><strong>Card.</strong>
+      <span class="ident">{{ task.card_id }}</span></p>
+    {% else %}
+    <p style="margin-top:8px;"><strong>Card.</strong>
+      <span class="unavailable">unavailable: no belief for {{ ticker }} is in the decision
+      record</span></p>
+    {% endif %}
+    {% if task.decision_entry_id %}
+    <p style="margin-top:8px;"><strong>Receipt.</strong> The ruling was recorded as ledger
+      entry <span class="ident">{{ task.decision_entry_id }}</span>.
+      <a href="/receipts/{{ task.decision_entry_id }}">Open the decision integrity
+        receipt</a>.</p>
+    {% else %}
+    <p style="margin-top:8px;"><strong>Receipt.</strong>
+      <span class="unavailable">unavailable: a receipt exists only after a human decision
+      that reached the ledger, and none has.</span></p>
+    {% endif %}
+    <p style="margin-top:8px;">Record integrity is read from the anchor on every render and
+      reported above. It says whether the history of human decisions is still what it was,
+      and nothing about the evidence on this page.</p>
+  </div>
+</details>
+
+<p class="back">
+  <a href="/inbox">&larr; Decision inbox</a>
+  <span class="sep" aria-hidden="true">|</span>
+  <a href="/contract/{{ ticker }}">Full evidence and timeline for {{ ticker }}</a>
+  <span class="sep" aria-hidden="true">|</span>
+  <a href="/contracts">Contract list</a>
+</p>
+
+{% endif %}
+{% endblock %}

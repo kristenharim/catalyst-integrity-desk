@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 371 passed, 19 skipped
+python3 -m pytest tests/ -q       # 404 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -160,10 +160,10 @@ above it, and each has its own command, so a number here is traceable to what pr
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **371 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **372 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **374 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | measured, not printed |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **404 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **405 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **407 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **420 passed, 3 skipped** |
 
 Base is the tier a judge gets and the number printed above; on a clone with nothing extra
 installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
@@ -172,21 +172,28 @@ is data rather than a dependency: it changes what an existing command reports in
 adding one. Running the axe command with the cache present runs both, and leaves the
 credentialed Granite check as the only skip.
 
-Two results are measured and deliberately not printed here: the cache-backed tier, and the
-combined cache-plus-axe pair. Both passed counts are also renderings of a cohort field, and
-`tests/test_prose_figures.py` cannot tell a test count from a retyped cohort figure, so it
-reports the collision either way. That is the right way round for a guard to be wrong, and
-the price is that these two figures live in `docs/BOB_LOG.md` with the run that produced
-them rather than on this page. The three printed tiers reconcile to the same total, which is
-what the count guard enforces. The Granite check is verified not to pass on the stub:
-pointed at an invalid endpoint it fails on `source == "granite"`.
+The cache-backed tier and the combined cache-plus-axe pair were off this page for two
+commits. At the counts they carried then, both passed counts were also renderings of a
+cohort field, and `tests/test_prose_figures.py` cannot tell a test count from a retyped
+cohort figure, so it reported the collision either way. That is the right way round for a
+guard to be wrong. Adding this screen moved the counts and neither collides now, so both are
+printed again: the cache-backed tier is in the table above, and running the axe command with
+the cache present gives 422 passed and 1 skipped. Every printed tier reconciles to the same
+total, which is what the count guard enforces. The Granite check is verified not to pass on
+the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+
+Measure the base and Playwright tiers with `node_modules/` absent. `npm ci` puts axe-core
+where the scan looks for it, and the scan runs whenever it finds it, so a machine that has
+run `npm ci` reports one tier higher than the row it thinks it is running.
 
 The fifteen cache-dependent tests verify the cohort research rather than the console, the
 browser check verifies the demo's opening frame is where the script says it is, and the
 accessibility checks run axe-core over the Phase 2 decision spine: the inbox, the receipt,
-the redline and the confirmation the demo ends on. Nothing on the demo path depends on any
-of them, which is why a clone can run the whole product with nineteen tests skipped and
-still be running the real thing.
+the redline, the confirmation the demo ends on, and the decision review screen in both of
+the states it renders, that last one at 1440x1000, 1024x768 and 390x844 because its layout
+changes with the width and a breakpoint can create a violation neither side of it has.
+Nothing on the demo path depends on any of them, which is why a clone can run the whole
+product with nineteen tests skipped and still be running the real thing.
 
 `package.json` and `package-lock.json` pin axe-core and nothing else, so `npm ci` installs
 the exact version these results were measured against. There is no frontend build step and
@@ -386,6 +393,15 @@ pass the suite stopped writing the repository's own runtime state: one test reac
 ledger anchor on the real path and a plain `pytest tests/` created `data/ledger.anchor`, so
 the three console paths are redirected once for every test in `tests/conftest.py` and a
 session-scoped guard fails the run if any of the three real files is created or changed.
+Most recently, the third Phase 2 screen: the decision review at
+`/decisions/<card_id>/review`, which reads one decision end to end in one order at every
+width and places its three panels into a desktop row by grid rather than by reordering the
+markup. The one decision with a challenge behind it can be ruled on, through the write path
+that already existed; every other decision renders its evidence and no control at all,
+disabled ones included, because a control that cannot complete is a claim about capability
+the desk cannot keep. Measuring that screen at 390x844 found a defect every screen here had
+carried since the first commit: the navigation row could not wrap, so the whole console
+scrolled sideways on a phone.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

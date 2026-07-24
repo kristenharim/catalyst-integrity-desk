@@ -60,22 +60,32 @@ Current status as of the Phase 1 commit.
 | `/demo` | added | redirects to `/contract/RCKT`, deterministically |
 | `/inbox` | added | the decision inbox, one item per decision, triggers grouped |
 | `/receipts/<entry_id>` | added | the decision integrity receipt for one ledger entry |
+| `/decisions/<card_id>/review` | added | one decision read end to end; adjudication for the one challenge, evidence only for the rest |
 | `/queue` | unchanged | serves the queue rows |
 | `/redline` | unchanged | serves the pending challenge |
 | `/contracts`, `/contract/<ticker>` | unchanged | list and detail |
 | `/belief/new`, `/workspace` | unchanged | belief entry and intake |
 
-Intended structure. The first three are built; the rest are Phase 2 work not yet done:
+Intended structure. The first four are built; the rest are Phase 2 work not yet done:
 
 ```text
 /inbox                     Decision Inbox                          built
 /demo                      deterministic Rocket demonstration      built
 /receipts/<entry_id>       Decision Integrity Receipt              built
+/decisions/<card_id>/review    Decision Review                     built
 /decisions                 decision portfolio
-/decisions/<card_id>/review    decision review
 /evidence/<contract_id>    Evidence Explorer
 /activity                  decision history
 ```
+
+A decision is addressed by the id of the belief card recorded for it, and by the ticker
+when no belief is recorded. Exactly one challenge exists and it is written in Python inside
+`make_snapshot.py`, so every other decision has no card id to carry, and minting one would
+put an identifier on screen that names no record. `review.card_ticker` reads both shapes,
+which is why they share a route. The Inbox's one action per item leads there under both of
+its labels, Adjudicate for the challenge and Review evidence for the rest, and `/redline`
+is unchanged: it is where docs/DEMO.md sends the room, and a second door onto one challenge
+is only safe while the first one still opens.
 
 The inbox is at `/inbox` and not at `/`. The root redirect to the Rocket detail is
 documented in README.md as the demo's opening frame and measured at 1280x800 by
@@ -137,9 +147,19 @@ The precise capability today: **recorded** yes, **projected from the frozen snap
 ## Phase 2 direction
 
 Specified in `docs/plans/phase2-inbox-spec.md`, which maps every proposed element to the
-backend field that feeds it and lists in its section 8 the elements nothing feeds. Two
-screens of it are built: the Decision Inbox with its empty state, and the Decision
-Integrity Receipt with its tampered and truncated states. The rest is not started.
+backend field that feeds it and lists in its section 8 the elements nothing feeds. Three
+screens of it are built: the Decision Inbox with its empty state, the Decision Integrity
+Receipt with its tampered and truncated states, and the Decision Review with its
+adjudication, evidence-only, contingent, refused and unavailable states. The rest is not
+started.
+
+The Decision Review reads in one order at every width: what changed, why that needs a
+human, the approved belief, the current contract, then the evidence under all four. Above
+1024px the three panels are placed into a 25/45/30 row without moving in the markup, so the
+centre panel is the widest thing on the page and a screen reader still travels the argument
+in the order it is argued. The deterministic account sits above the Granite memo, never
+below it. A decision with no challenge behind it renders no control at all, disabled ones
+included, and offers the way back to the evidence instead.
 
 - No Figma file exists. The specification is the interaction-design source of truth, and
   it says so and why.

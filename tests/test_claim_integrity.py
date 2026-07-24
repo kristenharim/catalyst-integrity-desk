@@ -219,6 +219,16 @@ def test_no_rendered_page_carries_the_models_own_confidence():
             for needle in needles:
                 if needle in body:
                     offenders.append(f"GET /contract/{ticker} renders {needle!r}")
+        # The parameterised rules are skipped by the loop above, and the
+        # decision review screen renders the classification block, which is
+        # where the confidence sat the first time it reached a page. Driven
+        # explicitly rather than left to the filter.
+        for path in (f"/decisions/{snap['redline']['card_id']}/review",
+                     "/decisions/SRPT/review"):
+            body = c.get(path).data.decode()
+            for needle in needles:
+                if needle in body:
+                    offenders.append(f"GET {path} renders {needle!r}")
 
     assert not offenders, (
         "a number the model authored is on a page a human reads:\n  "

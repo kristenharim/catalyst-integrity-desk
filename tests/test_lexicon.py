@@ -67,6 +67,18 @@ PARAMETERISED = {
     # isolated ledger in tests/test_inbox_receipt.py, which is where the writes
     # belong.
     "/receipts/<entry_id>": ["/receipts/no-entry-with-this-id"],
+    # The decision review screen renders two different pages: the one decision
+    # that can be ruled on, and the evidence-only form every other decision
+    # gets. Both are scanned, plus the unavailable row and the intact contract
+    # carrying no trigger, because each writes prose the others do not. The id
+    # that resolves to nothing is a 404 and is read by the template scan below
+    # instead, which is keyed on files rather than on routes.
+    "/decisions/<card_id>/review": [
+        "/decisions/rckt:funded_to_catalyst/review",
+        "/decisions/PRME/review",
+        "/decisions/SRPT/review",
+        "/decisions/BEAM/review",
+    ],
 }
 
 TEMPLATE_DIR = os.path.join(REPO, "console", "templates")

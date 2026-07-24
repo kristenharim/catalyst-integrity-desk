@@ -732,6 +732,51 @@ def test_the_root_still_redirects_to_the_rocket_detail(client):
     assert r.status_code == 302 and "/contract/RCKT" in r.headers["Location"]
 
 
+def test_the_redline_page_still_serves_the_pending_challenge(client):
+    """Route compatibility for `/decisions/<card_id>/review`.
+
+    The review screen is the adjudication surface the inbox now links to, and
+    `/redline` is where `docs/DEMO.md` sends the room and what the nav still
+    offers. Adding a second door to one challenge is only safe while the first
+    one still opens, so this pins the old route rather than trusting that
+    nothing touched it: the challenge renders, the memo renders, and the form
+    still posts to the one write path.
+    """
+    body = client.get("/redline").get_data(as_text=True)
+    snap = _snapshot()
+    assert snap["redline"]["prior_trial"] in body
+    assert snap["redline"]["current_trial"] in body
+    assert 'action="/redline/decide"' in body, (
+        "/redline no longer offers the decision form the demo ends on"
+    )
+    assert "Integrity memo" in body
+
+
+def test_the_inbox_sends_every_decision_to_the_review_screen(client):
+    """The inbox's one action per item points at the new route, both labels.
+
+    `Adjudicate` carries the challenge's card id, which is what
+    `/redline/decide` and the receipt select by. Every other item carries its
+    ticker, because no card id exists for a decision nobody has recorded a
+    belief for and minting one would name a record that is not there.
+    """
+    snap = _snapshot()
+    redline = snap["redline"]
+    body = client.get("/inbox").get_data(as_text=True)
+
+    hrefs = re.findall(r'<a class="action" href="([^"]+)"', body)
+    assert hrefs, "the inbox renders no primary action"
+    for href in hrefs:
+        assert href.startswith("/decisions/") and href.endswith("/review"), (
+            f"an inbox action leads somewhere other than the review screen: {href}"
+        )
+        assert client.get(href).status_code == 200, f"{href} does not resolve"
+    assert f"/decisions/{redline['card_id']}/review" in hrefs, (
+        "the pending challenge must be addressed by the card id the ledger and "
+        "the receipt select by"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Accessibility, in a real browser
 # ---------------------------------------------------------------------------
@@ -751,11 +796,31 @@ AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"]
 # list of URLs. `{entry_hash}` is filled from the ledger entry the test seeds,
 # the way tests/test_lexicon.py's PARAMETERISED map gives a parameterised rule a
 # fixture instance to run against.
+#
+# The value is a list because one rule can render more than one page. The
+# decision review screen is the case: the decision that can be ruled on carries
+# a form, a memo and a redline that the evidence-only decisions do not, and
+# scanning only one of the two would leave half the screen unmeasured while
+# reporting the rule as covered.
 A11Y_PAGES = {
-    "/inbox": "/inbox",
-    "/redline": "/redline",
-    "/redline/confirm": "/redline/confirm?verdict=approve",
-    "/receipts/<entry_id>": "/receipts/{entry_hash}",
+    "/inbox": ["/inbox"],
+    "/redline": ["/redline"],
+    "/redline/confirm": ["/redline/confirm?verdict=approve"],
+    "/receipts/<entry_id>": ["/receipts/{entry_hash}"],
+    "/decisions/<card_id>/review": [
+        "/decisions/rckt:funded_to_catalyst/review",
+        "/decisions/SRPT/review",
+    ],
+}
+
+# The viewport each rule is measured at. One size is enough for a page whose
+# layout does not change with the width; the decision review screen's does, and
+# a breakpoint is perfectly capable of creating a violation that neither side of
+# it has. Its three sizes are a desktop, the width Carbon calls the tablet edge,
+# and a phone.
+DEFAULT_VIEWPORTS = [(1280, 800)]
+A11Y_VIEWPORTS = {
+    "/decisions/<card_id>/review": [(1440, 1000), (1024, 768), (390, 844)],
 }
 
 # Every other rule, each with why this tier does not scan it. Nothing falls
@@ -805,6 +870,47 @@ def _axe_source_path() -> str | None:
 def _axe_source() -> str | None:
     path = _axe_source_path()
     return Path(path).read_text() if path else None
+
+
+def _assert_review_layout(page, where: str, width: int) -> None:
+    """The decision review screen's layout contract, in real boxes.
+
+    Two things, and they are the same thing at two widths. Above the desktop
+    breakpoint the centre panel is the widest of the three and sits between the
+    two it is measured against, because "what changed" is the reason a human
+    opened the page. Below it the columns become one and "What changed" is
+    first, which is also its position in the markup at every width: the desktop
+    row is grid placement, not reordered content, so a screen reader and a
+    keyboard travel the argument in the order it is argued.
+    """
+    boxes = {}
+    for name in ("changed", "why", "approved", "current"):
+        handle = page.query_selector(f".p-{name}")
+        assert handle, f"the {name} panel is missing on {where}"
+        boxes[name] = handle.bounding_box()
+
+    if width >= 1024:
+        # The three placed panels. The why band spans the row beneath them by
+        # design and is not one of the columns being compared.
+        row = {k: boxes[k] for k in ("approved", "changed", "current")}
+        widest = max(row, key=lambda k: row[k]["width"])
+        assert widest == "changed", (
+            f"on {where} the widest panel is {widest}, not the centre one: "
+            + ", ".join(f"{k}={v['width']:.0f}px" for k, v in row.items())
+        )
+        assert (boxes["approved"]["x"] < boxes["changed"]["x"]
+                < boxes["current"]["x"]), (
+            f"on {where} the three panels are not approved | changed | current"
+        )
+        assert boxes["why"]["y"] > boxes["changed"]["y"], (
+            f"on {where} the why band is not beneath the three panels"
+        )
+    else:
+        order = sorted(boxes, key=lambda k: boxes[k]["y"])
+        assert order == ["changed", "why", "approved", "current"], (
+            f"on {where} the single column does not read in the hierarchy's "
+            f"order: {order}"
+        )
 
 
 @pytest.fixture()
@@ -874,38 +980,55 @@ def test_the_phase_2_screens_pass_axe_core(live_server):
             pytest.skip(f"no playwright browser installed: {exc}")
         try:
             page = browser.new_page(viewport={"width": 1280, "height": 800})
-            for rule, path in sorted(A11Y_PAGES.items()):
-                page.goto(base + path.format(entry_hash=entry_hash),
-                          wait_until="load")
-                page.add_script_tag(content=axe)
-                result = page.evaluate(
-                    "async (tags) => await axe.run(document, "
-                    "{runOnly: {type: 'tag', values: tags}})", AXE_TAGS)
-                _AXE_SCANS.append(rule)
-                findings[rule] = {f"{v['id']} {n['target'][0]}"
-                                  for v in result["violations"]
-                                  for n in v["nodes"]}
-                # Every status carries text, so a reader who cannot see the
-                # colour still gets the state.
-                for selector in [".badge", ".chip", ".record-badge"]:
-                    for handle in page.query_selector_all(selector):
-                        assert handle.inner_text().strip(), (
-                            f"{selector} on {rule} conveys its state by colour alone"
+            for rule, paths in sorted(A11Y_PAGES.items()):
+                for path in paths:
+                    for width, height in A11Y_VIEWPORTS.get(rule, DEFAULT_VIEWPORTS):
+                        page.set_viewport_size({"width": width, "height": height})
+                        page.goto(base + path.format(entry_hash=entry_hash),
+                                  wait_until="load")
+                        page.add_script_tag(content=axe)
+                        result = page.evaluate(
+                            "async (tags) => await axe.run(document, "
+                            "{runOnly: {type: 'tag', values: tags}})", AXE_TAGS)
+                        _AXE_SCANS.append(rule)
+                        where = f"{path} at {width}x{height}"
+                        findings[where] = {f"{v['id']} {n['target'][0]}"
+                                           for v in result["violations"]
+                                           for n in v["nodes"]}
+                        # Every status carries text, so a reader who cannot see
+                        # the colour still gets the state.
+                        for selector in [".badge", ".chip", ".record-badge"]:
+                            for handle in page.query_selector_all(selector):
+                                assert handle.inner_text().strip(), (
+                                    f"{selector} on {where} conveys its state by "
+                                    "colour alone"
+                                )
+                        # The page never scrolls sideways. Wide content scrolls
+                        # inside its own container instead.
+                        overflow = page.evaluate(
+                            "() => document.documentElement.scrollWidth - "
+                            "document.documentElement.clientWidth")
+                        assert overflow <= 0, (
+                            f"{where} scrolls horizontally by {overflow}px"
                         )
-                # The whole page is reachable by keyboard, with a visible ring.
-                focused = []
-                for _ in range(40):
-                    page.keyboard.press("Tab")
-                    focused.append(page.evaluate(
-                        "() => document.activeElement && document.activeElement.tagName"))
-                assert "A" in focused, f"no link on {rule} is reachable by Tab"
+                        # The whole page is reachable by keyboard, with a
+                        # visible ring.
+                        focused = []
+                        for _ in range(40):
+                            page.keyboard.press("Tab")
+                            focused.append(page.evaluate(
+                                "() => document.activeElement && "
+                                "document.activeElement.tagName"))
+                        assert "A" in focused, f"no link on {where} is reachable by Tab"
+                        if rule == "/decisions/<card_id>/review":
+                            _assert_review_layout(page, where, width)
         finally:
             browser.close()
 
     assert not any(findings.values()), (
         "axe-core violations:\n  "
-        + "\n  ".join(f"{rule}: {v}"
-                      for rule, vs in findings.items() for v in sorted(vs))
+        + "\n  ".join(f"{path}: {v}"
+                      for path, vs in findings.items() for v in sorted(vs))
     )
 
 
@@ -988,9 +1111,9 @@ def test_the_three_record_integrity_states_stay_visually_distinct():
 def test_every_route_is_axe_scanned_or_named_outside_the_phase_2_surface():
     """The control that cannot silently omit a newly added Phase 2 page.
 
-    The scope, exactly: `A11Y_PAGES` is the Phase 2 decision spine, four pages,
-    and this is not whole-app accessibility coverage. Every other rule is named
-    in `A11Y_NOT_SCANNED` with why, and for the Phase 1 screens that reason is
+    The scope, exactly: `A11Y_PAGES` is the Phase 2 decision spine, five rules
+    and six pages, and this is not whole-app accessibility coverage. Every
+    other rule is named in `A11Y_NOT_SCANNED` with why, and for Phase 1 that is
     that they are outside this tier, which is a gap in coverage and not a
     statement that they pass.
 
@@ -1002,9 +1125,10 @@ def test_every_route_is_axe_scanned_or_named_outside_the_phase_2_surface():
     it in exactly the same way, still carrying the two colour pairings the
     previous commit repaired on the page next to it.
 
-    So a route added from here on fails this until someone classifies it.
-    `/_components` and the Decision Review route do not exist yet; when either
-    is added this fails naming it, which is the point of writing it now.
+    So a route added from here on fails this until someone classifies it. It did
+    its job on the first route added after it was written: the decision review
+    screen failed here unclassified, and is now scanned in both of the states it
+    renders. `/_components` does not exist yet and will fail this the same way.
     """
     rules = {str(r.rule) for r in flask_app.url_map.iter_rules()}
     unaccounted = rules - set(A11Y_PAGES) - set(A11Y_NOT_SCANNED)
