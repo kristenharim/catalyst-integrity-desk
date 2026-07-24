@@ -1,0 +1,9 @@
+{
+  "name": "catalyst-integrity-desk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pins axe-core for the accessibility test tier. The product is Flask and Jinja and has no frontend build step.",
+  "devDependencies": {
+    "axe-core": "4.12.1"
+  }
+}

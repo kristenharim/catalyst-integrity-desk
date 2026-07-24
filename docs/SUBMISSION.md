@@ -270,7 +270,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 369 passed, 18 skipped
+python3 -m pytest tests/ -q   # 369 passed, 19 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -279,15 +279,31 @@ judge can clone and run it with no IBM account.
 The count depends on what the machine carries. A clone installs `requirements.txt` and
 nothing else, so four groups skip: fifteen tests that replay registry version history out
 of the gitignored `data/cache/`, one credential-gated live Granite check, one
-browser-geometry check needing Playwright, and one accessibility check needing Playwright
-and an axe-core source. That is **369 passed, 18 skipped**. Install Playwright alone and the
-geometry check runs too: **370 passed, 17 skipped**. Add the cache and Playwright locally
-and sixteen of them run instead: **385 passed, 2 skipped**. The two remaining skips are the
-credentialed Granite test and the accessibility check, which resolves axe-core from
-`CID_AXE_CORE` or a local `node_modules` rather than vendoring a JavaScript dependency into
-the repo; neither configuration is quoted with a count, because neither has been measured
-for this commit. The fifteen verify the cohort research rather than the console, so nothing
-on the demo path depends on them.
+browser-geometry check needing Playwright, and two accessibility checks needing Playwright
+and axe-core. Four tiers, each adding one thing to the one above it, each with its own
+command:
+
+| tier | what it needs | command | result |
+|---|---|---|---|
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **369 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **370 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `CID_AXE_REQUIRED=1 python3 -m pytest tests/ -q` | **372 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **385 passed, 3 skipped** |
+
+Base is what a judge gets, and on a clone with nothing extra installed the plain command
+produces it. The last tier shares a command with the second because the cache is data
+rather than a dependency. Running the axe command with the cache present runs both and
+leaves the credentialed Granite check as the only skip; that combined pair is not printed
+here, because its passed count is also a rendering of a cohort field and
+`tests/test_prose_figures.py` cannot tell the two apart. The fifteen cache tests verify the
+cohort research rather than the console, so nothing on the demo path depends on them.
+
+`package.json` and `package-lock.json` pin axe-core and nothing else, so `npm ci` installs
+the exact version these numbers were measured against. No frontend build step, no bundler,
+no framework: the product is Flask and Jinja. axe-core is MPL-2.0 and is installed rather
+than vendored, so no third-party source is committed here, and the tests read it from disk
+rather than a CDN so the tier runs offline. `CID_AXE_REQUIRED=1` makes an accessibility run
+that scans nothing fail rather than report green.
 
 ## Links
 

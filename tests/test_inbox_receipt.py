@@ -26,6 +26,7 @@ What these tests are actually for:
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import re
@@ -738,17 +739,30 @@ def test_the_root_still_redirects_to_the_rocket_detail(client):
 # development extra rather than a repo dependency, so a clean checkout must not
 # measure a tier no judge can reproduce. axe-core is a second extra, resolved
 # from CID_AXE_CORE or a local node_modules, and skipped when absent rather than
-# vendored into the repo.
+# vendored into the repo. `package.json` and `package-lock.json` pin the version
+# `npm ci` puts in that node_modules, so the tier is reproducible rather than
+# whatever axe-core the registry served that day.
 
 AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"]
 
+# Every axe.run that actually executed, appended by the test below and read by
+# the guard at the end of this file. A skipped accessibility test and a passing
+# one are indistinguishable in a green summary, which is how a tier degrades to
+# zero scans without anyone noticing.
+_AXE_SCANS: list[str] = []
 
-def _axe_source() -> str | None:
+
+def _axe_source_path() -> str | None:
     for candidate in [os.environ.get("CID_AXE_CORE"),
                       str(REPO / "node_modules" / "axe-core" / "axe.min.js")]:
         if candidate and os.path.exists(candidate):
-            return Path(candidate).read_text()
+            return candidate
     return None
+
+
+def _axe_source() -> str | None:
+    path = _axe_source_path()
+    return Path(path).read_text() if path else None
 
 
 @pytest.fixture()
@@ -821,6 +835,7 @@ def test_the_decision_screens_pass_axe_core(live_server):
                 result = page.evaluate(
                     "async (tags) => await axe.run(document, "
                     "{runOnly: {type: 'tag', values: tags}})", AXE_TAGS)
+                _AXE_SCANS.append(name)
                 findings[name] = [
                     f"{v['id']} ({v['impact']}): "
                     + "; ".join(n["target"][0] for n in v["nodes"][:3])
@@ -846,4 +861,39 @@ def test_the_decision_screens_pass_axe_core(live_server):
     assert not any(findings.values()), (
         "axe-core violations:\n  "
         + "\n  ".join(f"{page}: {v}" for page, vs in findings.items() for v in vs)
+    )
+
+
+def test_the_documented_accessibility_command_ran_an_axe_scan():
+    """The accessibility tier cannot report green having scanned nothing.
+
+    Every gate in the test above is a `pytest.skip`, and a skip is invisible in
+    the one line a reader looks at. Someone follows the documented setup, `npm
+    ci` fails or installs somewhere else or the package layout moves, the axe
+    test skips, the suite says green, and the accessibility claim in the README
+    is now measured against zero pages. That is the same shape as the
+    `_fabricated` substring guard, the hand-maintained `PAGES` list and the
+    receipt-link matcher that passed its own mutation: a check with no way to
+    fail on the thing it is named after.
+
+    So the documented command sets `CID_AXE_REQUIRED=1`, and with it set this
+    asserts that axe actually ran. It reads `_AXE_SCANS`, which is appended only
+    after `axe.run` returns for a page, so it fails on a skip, on a browser that
+    would not launch, and on a page list that quietly emptied. Without the
+    variable it skips, because the base and Playwright tiers do not carry
+    axe-core and must not be failed for it.
+
+    This file's tests run in definition order, so the scan is recorded before
+    this reads it.
+    """
+    if not os.environ.get("CID_AXE_REQUIRED"):
+        pytest.skip("CID_AXE_REQUIRED unset; the accessibility tier was not requested")
+
+    have_playwright = importlib.util.find_spec("playwright.sync_api") is not None
+    assert _AXE_SCANS, (
+        "CID_AXE_REQUIRED is set, so the documented accessibility command is "
+        "running, and no axe scan executed: the tier reported green having "
+        "measured nothing. axe-core source: "
+        f"{_axe_source_path() or 'not found, run npm ci in the repo root'}; "
+        f"playwright: {'importable' if have_playwright else 'absent, pip install playwright'}"
     )

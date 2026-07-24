@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 369 passed, 18 skipped
+python3 -m pytest tests/ -q       # 369 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -151,30 +151,46 @@ Run it as a module, from the repo root. Set `PORT` to move it off 8050.
 it renders comes from `data/snapshot.json`, which is committed. Clone, install Flask, run.
 Nothing else.
 
-**Three tiers, because the result depends on what your machine carries.** A clone gets
+**Four tiers, because the result depends on what your machine carries.** A clone gets
 tracked files only and installs `requirements.txt` alone, so four groups skip: fifteen that
 replay registry version history out of the gitignored `data/cache/`, one live Granite check
-that needs watsonx credentials, one browser-geometry check that needs Playwright, and one
-accessibility check that needs Playwright and an axe-core source. That is **369 passed, 18
-skipped**, the number above, and the one a judge sees. Install Playwright alone and the
-browser-geometry check runs too: **370 passed, 17 skipped**. Add the cache and Playwright
-locally and sixteen of those run instead, giving **385 passed, 2 skipped**. The two
-remaining skips are the credentialed Granite test and the accessibility check, which
-resolves axe-core from `CID_AXE_CORE` or a local `node_modules` and is skipped rather than
-vendoring a JavaScript dependency into this repo. Neither configuration is quoted with a
-count, because neither has been measured for this commit. The Granite test is verified not
-to pass on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+that needs watsonx credentials, one browser-geometry check that needs Playwright, and two
+accessibility checks that need Playwright and axe-core. Each tier adds one thing to the one
+above it, and each has its own command, so a number here is traceable to what produced it.
+
+| tier | what it needs | command | result |
+|---|---|---|---|
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **369 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **370 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `CID_AXE_REQUIRED=1 python3 -m pytest tests/ -q` | **372 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **385 passed, 3 skipped** |
+
+Base is the tier a judge gets and the number printed above; on a clone with nothing extra
+installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
+that carries the extras. The last tier shares a command with the second because the cache
+is data rather than a dependency: it changes what an existing command reports instead of
+adding one. Running the axe command with the cache present runs both, and leaves the
+credentialed Granite check as the only skip. That combined pair is deliberately not printed
+here: its passed count is also a rendering of a cohort field, and
+`tests/test_prose_figures.py` cannot tell a test count from a retyped cohort figure, which
+is the right way round for a guard to be wrong. The Granite check is verified not to pass
+on the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 The fifteen cache-dependent tests verify the cohort research rather than the console, the
 browser check verifies the demo's opening frame is where the script says it is, and the
-accessibility check runs axe-core over the decision inbox and the receipt. Nothing on the
-demo path depends on any of them, which is why a clone can run the whole product with
-eighteen tests skipped and still be running the real thing. For the browser checks:
+accessibility checks run axe-core over the decision inbox, the receipt and the redline.
+Nothing on the demo path depends on any of them, which is why a clone can run the whole
+product with nineteen tests skipped and still be running the real thing.
 
-```bash
-pip install playwright && python3 -m playwright install chromium
-npm install axe-core && CID_AXE_CORE=node_modules/axe-core/axe.min.js python3 -m pytest tests/ -q
-```
+`package.json` and `package-lock.json` pin axe-core and nothing else, so `npm ci` installs
+the exact version these results were measured against. There is no frontend build step and
+the product is Flask and Jinja; the lockfile exists only so the accessibility tier is
+reproducible. axe-core is MPL-2.0 and is installed rather than vendored, so no third-party
+source is committed here. The tests load it from disk and never from a CDN, which keeps the
+no-network guarantee. `CID_AXE_CORE` still overrides the path if you have axe-core
+elsewhere. `CID_AXE_REQUIRED=1` is what makes that tier honest: with it set, an
+accessibility run that scans nothing fails instead of reporting green, because a `skip` and
+a `pass` look identical in a summary line.
 
 **The 90 second tour:**
 

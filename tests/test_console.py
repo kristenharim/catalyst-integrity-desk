@@ -959,7 +959,11 @@ def test_documented_test_counts_match_a_real_run():
                  # A clone installs requirements.txt and nothing else. Development
                  # extras live in the environment rather than the repo, so without
                  # this the tier measured here is one no judge can reproduce.
-                 "CID_BASE_DEPS_ONLY": "1"},
+                 "CID_BASE_DEPS_ONLY": "1",
+                 # node_modules/ is gitignored, so the exported checkout has no
+                 # axe-core. Inheriting the accessibility tier's flag would demand
+                 # a scan the child cannot run and fail it for the parent's setup.
+                 "CID_AXE_REQUIRED": ""},
         ).stdout
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
