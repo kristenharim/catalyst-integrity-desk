@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+{% block title %}Evidence &middot; Catalyst Integrity Desk{% endblock %}
+
+{% block styles %}
+<style>
+  /* Carbon g100 tokens from base.html. Nothing imported, nothing fetched.
+
+     The page reads in one order at every width: what is displayed, how it was
+     calculated, which record supplied each input, and what is missing. There is
+     no second column and no map. A chain is a list, and a list is what a
+     screen reader, a keyboard and a 390px phone all travel in the same order. */
+  .panel {
+    background: var(--cds-layer-01); border: 1px solid var(--cds-border-subtle);
+    padding: var(--cds-spacing-05); margin-bottom: var(--cds-spacing-05);
+    max-width: 1180px;
+  }
+  .scope {
+    max-width: 1180px; margin-bottom: var(--cds-spacing-05);
+    padding: var(--cds-spacing-05); font-size: 12px; line-height: 1.7;
+    background: var(--cds-tint-info); border-left: 4px solid var(--cds-support-info);
+    color: var(--cds-text-primary);
+  }
+  .field-label { font-size: 11px; color: var(--cds-text-secondary);
+                 text-transform: uppercase; letter-spacing: 0.07em; }
+  .figure { color: var(--cds-text-primary); font-variant-numeric: tabular-nums;
+            font-size: 15px; }
+  .unavailable { color: var(--cds-text-secondary); }
+  .ident { font-family: ui-monospace, monospace; background: var(--cds-background);
+           color: var(--cds-text-primary); padding: 1px 6px;
+           overflow-wrap: anywhere; word-break: break-word; }
+  .note-line { font-size: 12px; line-height: 1.7; color: var(--cds-text-secondary);
+               max-width: 62em; margin-top: 4px; }
+
+  .states { display: flex; flex-wrap: wrap; gap: var(--cds-spacing-06);
+            margin-bottom: var(--cds-spacing-05); }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px;
+           border: 1px solid var(--cds-border-subtle); color: var(--cds-text-primary);
+           background: var(--cds-layer-02); }
+  .badge-review_required { background: var(--cds-tint-error);
+                           border-color: var(--cds-support-error);
+                           color: var(--cds-support-error); font-weight: 700; }
+  .badge-contingent      { background: var(--cds-tint-warning);
+                           border-color: var(--cds-support-warning);
+                           color: var(--cds-support-warning); }
+  .badge-intact          { background: var(--cds-tint-success);
+                           border-color: var(--cds-support-success);
+                           color: var(--cds-support-success); }
+
+  /* The provenance tag. Three states, three glyphs, three words, three colour
+     pairs: the glyph and the words carry the state on their own, which is what
+     keeps it readable when the colour is not. */
+  .prov { display: inline-block; font-size: 11px; padding: 2px 8px;
+          border: 1px solid; white-space: nowrap; }
+  .prov-source_linked        { background: var(--cds-tint-success);
+                               border-color: var(--cds-support-success);
+                               color: var(--cds-support-success); }
+  .prov-named_but_unresolved { background: var(--cds-tint-warning);
+                               border-color: var(--cds-support-warning);
+                               color: var(--cds-support-warning); font-weight: 700; }
+  .prov-unavailable          { background: var(--cds-layer-02);
+                               border-color: var(--cds-border-subtle);
+                               color: var(--cds-text-secondary); }
+  .prov-computed { display: inline-block; font-size: 11px; padding: 2px 8px;
+                   border: 1px dashed var(--cds-border-subtle);
+                   color: var(--cds-text-secondary); }
+
+  .result { border-top: 1px solid var(--cds-border-subtle);
+            padding: var(--cds-spacing-05) 0; }
+  /* Only where it opens the panel. `:first-of-type` also matched the first row
+     after an introductory paragraph, which removed the rule that separates the
+     two and left the label sitting on the sentence above it. */
+  .result:first-child { border-top: none; padding-top: 0; }
+
+  /* The chain: an ordered list, indented under one rule rather than drawn as a
+     graph. The order is the calculation's own and it is the DOM order, so a
+     keyboard and a screen reader travel the steps in the order Python ran
+     them. */
+  .chain { list-style: none; margin: 0; }
+  .chain > li { border-left: 2px solid var(--cds-border-subtle);
+                padding: var(--cds-spacing-03) 0 var(--cds-spacing-03) var(--cds-spacing-05);
+                margin-bottom: 2px; }
+  .chain > li.is-computed { border-left-style: dashed; }
+  .step-head { display: flex; flex-wrap: wrap; align-items: baseline;
+               gap: var(--cds-spacing-03); }
+  .step-name { font-size: 12px; color: var(--cds-text-primary); font-weight: 700; }
+  .step-value { font-variant-numeric: tabular-nums; color: var(--cds-text-primary);
+                font-size: 13px; }
+  .step-source { font-size: 11px; color: var(--cds-text-secondary);
+                 margin-top: 4px; line-height: 1.7; overflow-wrap: anywhere; }
+
+  .source-card { background: var(--cds-layer-01);
+                 border: 1px solid var(--cds-border-subtle);
+                 padding: var(--cds-spacing-05); margin-bottom: var(--cds-spacing-05);
+                 max-width: 1180px; }
+  .source-head { display: flex; flex-wrap: wrap; align-items: baseline;
+                 gap: var(--cds-spacing-03); margin-bottom: var(--cds-spacing-03); }
+  .source-type { font-size: 13px; font-weight: 700; color: var(--cds-text-primary); }
+  .source-field { border-top: 1px solid var(--cds-border-subtle);
+                  padding: var(--cds-spacing-03) 0; font-size: 12px;
+                  line-height: 1.7; color: var(--cds-text-secondary); }
+  .limitation { background: var(--cds-tint-warning); color: var(--cds-text-primary);
+                border-left: 3px solid var(--cds-support-warning);
+                padding: 8px 10px; font-size: 12px; line-height: 1.7;
+                margin-top: var(--cds-spacing-03); max-width: 62em; }
+
+  .refusal { display: block; color: var(--cds-text-primary);
+             background: var(--cds-tint-error); padding: 6px 10px;
+             font-weight: 700; font-size: 13px; max-width: 62em; }
+  .refused-figure { color: var(--cds-text-secondary); font-size: 12px;
+                    margin-top: 4px; line-height: 1.7; max-width: 62em; }
+
+  .drawer { max-width: 1180px; border-top: 1px solid var(--cds-border-subtle);
+            padding: var(--cds-spacing-03) 0; }
+  .drawer summary { cursor: pointer; color: var(--cds-link-primary); font-size: 12px;
+                    padding: 4px 0; }
+  .drawer-body { padding: var(--cds-spacing-05) 0 var(--cds-spacing-05) 14px;
+                 border-left: 2px solid var(--cds-border-subtle);
+                 font-size: 12px; line-height: 1.7; color: var(--cds-text-secondary);
+                 overflow-x: auto; }
+  .drawer-body li { list-style: none; padding: 3px 0; overflow-wrap: anywhere; }
+  .hash { font-family: ui-monospace, monospace; overflow-wrap: anywhere;
+          word-break: break-all; color: var(--cds-text-primary); }
+
+  /* Every separator is an ordinary space. A row of links joined by a
+     non-breaking one cannot wrap, and on a 390px screen that pushes the whole
+     page sideways. */
+  .back { font-size: 12px; margin-top: var(--cds-spacing-06); line-height: 2.2; }
+  .back a { display: inline-block; }
+  .back .sep { color: var(--cds-text-secondary); padding: 0 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if v is none %}
+<h1>Evidence</h1>
+<div class="panel">
+  <p><strong>No contract with this id is in this snapshot.</strong></p>
+  <p class="note-line">
+    Evidence is addressed here by the same id the decision review screen uses: the id of
+    the belief card recorded for a decision, or the ticker when no belief is recorded.
+    <span class="ident">{{ contract_id }}</span> resolves to neither, and the nearest
+    contract is not shown, because a page that guesses which evidence you meant is how one
+    contract's records end up under another contract's name.
+  </p>
+  <p class="back"><a href="/inbox">&larr; Decision inbox</a></p>
+</div>
+{% else %}
+
+<h1>Evidence &middot; {{ v.ticker }}</h1>
+
+<p class="note">
+  {{ v.name }}. Requested as <span class="ident">{{ v.contract_id }}</span>, resolved to
+  contract <span class="ident">{{ v.ticker }}</span>. Computed states come from the snapshot
+  taken on {{ snapshot_as_of }}, content address <span class="ident">{{ snapshot_id }}</span>.
+</p>
+
+<div class="scope">
+  This page shows the evidence recorded in the committed artifact. It does not independently
+  verify the underlying investment or scientific thesis.
+</div>
+
+<div class="states">
+  <div>
+    <div class="field-label">Evidence state</div>
+    <div style="margin-top:4px;">
+      <span class="badge badge-{{ v.decision.evidence }}">
+        <span aria-hidden="true">&#9679;</span> {{ v.decision.evidence_label }}
+      </span>
+    </div>
+  </div>
+  <div>
+    <div class="field-label">Evidence bundle</div>
+    <div style="margin-top:4px;">
+      {% if v.bundle.present %}
+        <span class="prov prov-source_linked">&#10003; {{ v.bundle.origin }},
+          as of {{ v.bundle.as_of }}</span>
+      {% else %}
+        <span class="prov prov-unavailable">&#8709; unavailable</span>
+      {% endif %}
+    </div>
+  </div>
+  <div>
+    <div class="field-label">Decision</div>
+    <div style="margin-top:4px;">
+      <a href="{{ v.review_href }}">Back to decision review</a>
+    </div>
+  </div>
+</div>
+
+<p class="note-line">
+  Two vocabularies share the word unavailable and they answer different questions. The
+  evidence state above is the decision axis computed in the snapshot: whether this thesis
+  can be read at all. A provenance state below is about one link: whether a figure can be
+  followed to the record it names. Neither is derived from the other.
+</p>
+
+{# ---------------- 1. What is displayed ---------------- #}
+<h2>1. The displayed result</h2>
+<div class="panel" id="displayed-result">
+  {% for r in v.results %}
+  <div class="result">
+    <div class="field-label">{{ r.label }}</div>
+    {% if r.shown %}
+      <div class="figure">{{ r.value }}</div>
+    {% else %}
+      <div class="unavailable"><strong>unavailable</strong> &middot; not rankable</div>
+    {% endif %}
+    <p class="note-line">{{ r.note }}</p>
+  </div>
+  {% endfor %}
+
+  <div class="result">
+    <div class="field-label">Triggers grouped under this decision</div>
+    {% if v.decision.triggers %}
+    <ul style="list-style:none; margin-top:6px;">
+      {% for t in v.decision.triggers %}
+      <li style="padding:4px 0;">
+        <strong style="color:var(--cds-text-primary); font-size:12px;">{{ t.label }}</strong>
+        <span class="unavailable">&middot; {{ t.severity }}</span>
+        <div class="note-line">{{ t.detail }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="note-line">No trigger fired for this decision in this snapshot. That is a
+      statement about the conditions this desk computes against one frozen snapshot, not a
+      finding that nothing is wrong.</p>
+    {% endif %}
+  </div>
+</div>
+
+{# ---------------- 2. The deterministic derivation ---------------- #}
+<h2>2. How it was calculated</h2>
+<p class="note-line">
+  The committed derivation, in the order Python computed it. A step naming an XBRL tag or a
+  trial resolves to the source record below and carries that record's provenance state. A
+  step whose inputs are the steps above it names no record and carries no provenance state,
+  because it has none to carry.
+</p>
+<ol class="chain">
+  {% for s in v.steps %}
+  <li class="{% if s.computed %}is-computed{% endif %}">
+    <div class="step-head">
+      <span class="step-name">{{ s.step }}</span>
+      <span class="step-value">{{ s.value }}</span>
+      {% if s.computed %}
+        <span class="prov-computed">deterministic step, no external source</span>
+      {% else %}
+        <span class="prov prov-{{ s.state }}">
+          {%- if s.state == "source_linked" %}&#10003;
+          {%- elif s.state == "named_but_unresolved" %}&#9888;
+          {%- else %}&#8709;{% endif %} {{ s.state_label }}</span>
+      {% endif %}
+    </div>
+    <div class="step-source">
+      {% if s.computed %}
+        Computed from: {{ s.source }}
+      {% else %}
+        Field or tag: <span class="ident">{{ s.source }}</span>
+        {% if s.record %}<br>Record: {{ s.record }}{% endif %}
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+
+{# ---------------- 3. The source records ---------------- #}
+<h2>3. Which records supplied the inputs</h2>
+{% for s in v.sources %}
+<section class="source-card">
+  <div class="source-head">
+    <span class="source-type">{{ s.type }}</span>
+    <span class="prov prov-{{ s.state }}">
+      {%- if s.state == "source_linked" %}&#10003;
+      {%- elif s.state == "named_but_unresolved" %}&#9888;
+      {%- else %}&#8709;{% endif %} {{ s.state_label }}</span>
+  </div>
+  <div class="step-source">
+    Record: <span class="ident">{{ s.record }}</span><br>
+    {{ s.effective_label }}:
+    {% if s.effective %}{{ s.effective }}{% else %}<span class="unavailable">not
+      stored on this record</span>{% endif %}
+    {% if s.binding is defined %}
+      <br>{% if s.binding %}The binding trial for this contract.{% else %}A trial this
+      contract carries whose registered date has passed.{% endif %}
+    {% endif %}
+    <br>State of this record: {{ s.state_note }}. Each field below carries its own.
+  </div>
+
+  {% for f in s.fields %}
+  <div class="source-field">
+    <strong style="color:var(--cds-text-primary);">{{ f.label }}</strong>
+    <span class="prov prov-{{ f.state }}">
+      {%- if f.state == "source_linked" %}&#10003;
+      {%- elif f.state == "named_but_unresolved" %}&#9888;
+      {%- else %}&#8709;{% endif %} {{ f.state_label }}</span>
+    <br>Field or tag: <span class="ident">{{ f.field }}</span>
+    <br>Value: <span class="ident">{{ f.value }}</span>
+  </div>
+  {% endfor %}
+
+  <p class="limitation">{{ s.limitation }}</p>
+
+  <details class="drawer">
+    <summary>Technical detail for this record</summary>
+    <div class="drawer-body">
+      <ul>
+        <li>Locator: <span class="hash">{{ s.record }}</span></li>
+        <li>Fetched at:
+          {% if s.fetched %}{{ s.fetched }}{% else %}<span class="unavailable">not
+            stored</span>{% endif %}</li>
+        <li>Parser version:
+          {% if s.parser_version %}{{ s.parser_version }}{% else %}<span
+            class="unavailable">not stored</span>{% endif %}</li>
+        {% if s.versions is defined %}
+        <li>Registry versions counted by the source: {{ s.n_versions }}</li>
+        <li>Registry versions stored here: {{ s.n_stored }}</li>
+        {% for r in s.versions %}
+        <li>Version {{ r.version }}, submitted {{ r.submitted }}, registered primary
+          completion {{ r.pcd }} ({{ r.pcd_type }}){% if r.transition %},
+          {{ r.transition }}{% endif %}</li>
+        {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+  </details>
+</section>
+{% endfor %}
+
+{# ---------------- 4. Missing, negative and refused ---------------- #}
+<h2>4. What is missing, and what was refused</h2>
+
+<h3>Queries that ran and returned nothing</h3>
+<div class="panel">
+  {% if v.negatives %}
+  <ul style="list-style:none;">
+    {% for n in v.negatives %}
+    <li style="padding:6px 0;">
+      <strong style="color:var(--cds-text-primary); font-size:12px;">{{ n.source }}</strong>
+      <br><span class="step-source">Locator: <span class="ident">{{ n.locator }}</span></span>
+      <p class="note-line">Returned nothing: {{ n.reason }}. Recorded when the query ran, at
+        {{ n.fetched }}.</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="note-line">Every source query recorded in this bundle returned a record. The
+    sources reached were
+    {%- for q in v.queried_sources %} <span class="ident">{{ q }}</span>{% if not loop.last %},{% endif %}{% endfor -%}
+    . A query that ran and found nothing would be listed here as its own entry; an empty
+    list means none did, which is a different fact from a source that was never reached.</p>
+  {% endif %}
+</div>
+
+<h3>Identity joins this chain rests on</h3>
+<div class="panel">
+  <p class="note-line">
+    The sponsor-to-issuer join is a string match and it is the thinnest link here. The
+    bundle records its own state for the join it performed:
+    {% if v.bundle.entity_state %}
+      <span class="ident">{{ v.bundle.entity_state }}</span> &mdash;
+      {{ v.bundle.entity_method }}.
+    {% else %}
+      <span class="unavailable">unavailable, no bundle to read it from</span>.
+    {% endif %}
+    Each trial's own stored sponsor string is compared below.
+  </p>
+  {% for g in v.gaps %}{% if "Sponsor-to-issuer" in g.label %}
+  <div class="result">
+    <div class="field-label">{{ g.label }}</div>
+    <div style="margin-top:4px;">
+      <span class="prov prov-{{ g.state }}">
+        {%- if g.state == "source_linked" %}&#10003;
+        {%- elif g.state == "named_but_unresolved" %}&#9888;
+        {%- else %}&#8709;{% endif %} {{ g.state_label }}</span>
+    </div>
+    <p class="note-line">{{ g.detail }}</p>
+  </div>
+  {% endif %}{% endfor %}
+</div>
+
+<h3>Dimensions this page cannot establish</h3>
+<div class="panel">
+  {% for g in v.gaps %}{% if "Sponsor-to-issuer" not in g.label %}
+  <div class="result">
+    <div class="field-label">{{ g.label }}</div>
+    <div style="margin-top:4px;">
+      <span class="prov prov-{{ g.state }}">
+        {%- if g.state == "source_linked" %}&#10003;
+        {%- elif g.state == "named_but_unresolved" %}&#9888;
+        {%- else %}&#8709;{% endif %} {{ g.state_label }}</span>
+    </div>
+    <p class="note-line">{{ g.detail }}</p>
+  </div>
+  {% endif %}{% endfor %}
+</div>
+
+<h3>Readings this desk found and refuses to use</h3>
+<div class="panel">
+  {% if v.refused %}
+  {% for r in v.refused %}
+  <div class="result">
+    <span class="refusal">&#9888; {{ r.label }}: {{ r.refusal }}.</span>
+    <p class="refused-figure">{{ r.figure }}. {{ r.detail }}</p>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="note-line">No lapsed registered expectation and no refused comparison is stored
+    for this contract.</p>
+  {% endif %}
+</div>
+
+<details class="drawer">
+  <summary>What this evidence does not establish</summary>
+  <div class="drawer-body">
+    <p>Every figure above is a comparison of dated public records: SEC XBRL company facts
+      for the liquidity and cash-flow figures, and ClinicalTrials.gov version history for the
+      registered dates. That comparison is the whole of what is shown.</p>
+    <p style="margin-top:8px;">It does not establish whether the underlying science is
+      sound, whether a registered date can be met, why any date moved, or what any of it
+      implies for a security. The expectation named here is a registered primary-completion
+      expectation, which is not the date a result is published; the two differ
+      systematically, by two to four months.</p>
+    <p style="margin-top:8px;">Nothing rereads the evidence between snapshots. Every
+      computed state on this page comes from the snapshot taken on {{ snapshot_as_of }}, and
+      a snapshot is rebuilt by hand.</p>
+  </div>
+</details>
+
+<details class="drawer">
+  <summary>Bundle identity and stored hash</summary>
+  <div class="drawer-body">
+    <ul>
+      <li>Subject: <span class="ident">{{ v.ticker }}</span></li>
+      {% if v.bundle.present %}
+      <li>Origin: {{ v.bundle.origin }}</li>
+      <li>Pinned as of: {{ v.bundle.as_of }}</li>
+      <li>Content address: <span class="hash">{{ v.bundle.digest }}</span></li>
+      <li>Bundle complete as assembled: {% if v.bundle.complete %}yes{% else %}no{% endif %}</li>
+      {% for m in v.bundle.missing %}<li>Asked for and not obtained: {{ m }}</li>{% endfor %}
+      {% else %}
+      <li><span class="unavailable">{{ v.bundle.error }}</span></li>
+      {% endif %}
+    </ul>
+    <p style="margin-top:8px;">The content address covers the source payloads, so a bundle
+      edited after it was written does not reproduce it. It is read on every render.</p>
+  </div>
+</details>
+
+<p class="back">
+  <a href="{{ v.review_href }}">&larr; Decision review</a>
+  <span class="sep" aria-hidden="true">|</span>
+  <a href="/inbox">Decision inbox</a>
+  <span class="sep" aria-hidden="true">|</span>
+  <a href="/contract/{{ v.ticker }}">Full timeline for {{ v.ticker }}</a>
+</p>
+
+{% endif %}
+{% endblock %}

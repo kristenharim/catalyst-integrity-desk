@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 429 passed, 19 skipped
+python3 -m pytest tests/ -q       # 496 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -160,10 +160,10 @@ above it, and each has its own command, so a number here is traceable to what pr
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **429 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **430 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **432 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **445 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **496 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **497 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **499 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **512 passed, 3 skipped** |
 
 Base is the tier a judge gets and the number printed above; on a clone with nothing extra
 installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
@@ -176,10 +176,10 @@ The cache-backed tier and the combined cache-plus-axe pair were off this page fo
 commits. At the counts they carried then, both passed counts were also renderings of a
 cohort field, and `tests/test_prose_figures.py` cannot tell a test count from a retyped
 cohort figure, so it reported the collision either way. That is the right way round for a
-guard to be wrong. Two screens later the counts have moved twice more and neither collides,
-so both stay printed: the cache-backed tier is in the table above, and running the axe
-command with the cache present gives 447 passed and 1 skipped. Every printed tier reconciles to the same
-total, which is what the count guard enforces. The Granite check is verified not to pass on
+guard to be wrong. Three screens later the counts have moved again and neither collides, so
+both stay printed: the cache-backed tier is in the table above, and running the axe command
+with the cache present gives 514 passed and 1 skipped. Every printed tier reconciles to the
+same total, which is what the count guard enforces. The Granite check is verified not to pass on
 the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
 
 Measure the base and Playwright tiers with `node_modules/` absent. `npm ci` puts axe-core
@@ -233,6 +233,7 @@ not whole-app accessibility coverage; the Phase 1 screens are named as unscanned
 | Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
 | `/inbox` | the same states as a morning's work: one item per decision, worst first, every reason grouped under it, and the unreliable row shown without a position |
 | `/receipts/<entry hash>` | one recorded decision, addressed by its own hash, with the record-integrity badge recomputed at render |
+| `/evidence/<contract id>` | the chain behind one displayed figure: the calculation, the record each input resolves to, which links are exact, and where the chain stops |
 
 **The tamper demo:** accept the redline, edit any byte inside the `card` object in
 `data/decisions.jsonl`, reload the confirm page. The badge goes from `✓ intact` to
@@ -414,7 +415,19 @@ the `ts=0.0` the approve path writes is a marker rather than a moment, and the r
 screens share returns a display state that names it as one, with the stored entry left
 byte-identical, because the alternative repair is to write a better timestamp into the
 record. The same extraction had already found that every receipt ever rendered stamped the
-host machine's local wall time under a UTC label.
+host machine's local wall time under a UTC label. Most recently, the fifth Phase 2 screen: the
+narrow evidence explorer at `/evidence/<contract_id>`, reached by one link from the decision
+review and addressed by the same decision identity, so the two screens are naming one
+decision rather than arriving at one company twice. It shows the committed derivation for a
+contract, the source record each input resolves to, and three provenance states that never
+blur: source linked, named but unresolved, and unavailable. One function decides a state and
+only that function may name the strongest of the three, which a test asserts over the
+module's own syntax tree, so a named source has no path by which to become a resolved one.
+What the page could not establish sits beside what it could, including the registry versions
+this artifact does not store and the sponsor-to-issuer join, which is a string match nothing
+here normalises. The page renders its scope rather than implying it: it shows the evidence
+recorded in the committed artifact, and it does not independently verify the underlying
+thesis.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

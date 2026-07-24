@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from flask import Flask, redirect, render_template, request, url_for
 
-from console import intake, review
+from console import intake, provenance, review
 from engine.ledger import BeliefCard, BeliefLedger, Breach
 from evidence import FrozenSnapshotProvider, Incomplete
 from orchestrator.anchor import check as anchor_check, record as anchor_record
@@ -194,6 +194,30 @@ def decision_review(card_id):
         memo=(without_model_confidence(view["redline"]["memo"])
               if view["adjudicable"] else None),
     )
+
+
+@app.get("/evidence/<contract_id>")
+def evidence_explorer(contract_id):
+    """The evidence chain behind one displayed claim, and where it stops.
+
+    Addressed by the same identity the review screen uses, so the link between
+    them is the same selection rather than a second way of naming a decision.
+    An id that names no contract in this snapshot is a 404: unlike the receipt,
+    where "no entry with this id" is itself a reading of the record, there is no
+    honest page to render for a contract that is not here, and rendering the
+    nearest one would put one company's records under another company's name.
+
+    Everything on the page is committed. The contract, its derivation and its
+    version history come from the snapshot; the source records the derivation
+    cites come from the frozen evidence bundle through the same provider the
+    workspace reads. No network call, and no join this artifact does not already
+    make: the bundle is read by the ticker both artifacts file it under, and the
+    page says so under what it cannot establish.
+    """
+    view = provenance.explorer(SNAPSHOT, contract_id, EVIDENCE)
+    if view is None:
+        return render_template("evidence.html", contract_id=contract_id, v=None), 404
+    return render_template("evidence.html", contract_id=contract_id, v=view)
 
 
 @app.get("/contracts")

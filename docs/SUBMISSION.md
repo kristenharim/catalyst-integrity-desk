@@ -270,7 +270,7 @@ build step, no external CSS or JS, no network access at render time.
 ```bash
 pip install -r requirements.txt
 python3 -m console.app        # http://localhost:8050
-python3 -m pytest tests/ -q   # 429 passed, 19 skipped
+python3 -m pytest tests/ -q   # 496 passed, 19 skipped
 ```
 
 No credentials and no network. The console renders entirely from a committed snapshot, so a
@@ -285,20 +285,20 @@ command:
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **429 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **430 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **432 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **445 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **496 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **497 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **499 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **512 passed, 3 skipped** |
 
 Base is what a judge gets, and on a clone with nothing extra installed the plain command
 produces it. The last tier shares a command with the second because the cache is data
 rather than a dependency. Running the axe command with the cache present runs both and
-leaves the credentialed Granite check as the only skip, at 447 passed and 1 skipped. That
+leaves the credentialed Granite check as the only skip, at 514 passed and 1 skipped. That
 figure and the cache-backed row were off this page for two commits, because at the counts
 they carried then both passed counts were also renderings of a cohort field and
-`tests/test_prose_figures.py` cannot tell the two apart. The decision review screen and the
-activity history have moved the counts twice since, and neither collides, so both stay
-printed. Measure the base and
+`tests/test_prose_figures.py` cannot tell the two apart. The decision review screen, the
+activity history and the evidence explorer have moved the counts three times since, and
+neither collides, so both stay printed. Measure the base and
 Playwright tiers with `node_modules/` absent: the scan runs wherever it finds axe-core, so a
 machine that has run `npm ci` reports one tier higher than the row it thinks it is running.
 The fifteen cache tests verify the cohort research rather than the console, so nothing on

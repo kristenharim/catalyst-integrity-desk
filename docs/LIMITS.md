@@ -995,10 +995,12 @@ not-yet-lapsed history produces `unknown`.
 ## The accessibility tier covers the Phase 2 spine and nothing else
 
 The scan is keyed on the app's own `url_map`, so no route can go unclassified, but the set it
-actually drives is four pages: `/inbox`, `/receipts/<entry_id>`, `/redline` and
-`/redline/confirm`. Everything else is named in `A11Y_NOT_SCANNED` with a reason. For the
-Phase 1 screens that reason is that they are outside this tier, and that is a gap in coverage,
-not a finding that they pass.
+actually drives is seven rules and nine pages: `/inbox`, `/activity`, `/redline`,
+`/redline/confirm`, `/receipts/<entry_id>`, the decision review in both of the shapes it
+renders, and the evidence explorer for the contract with the longest chain and for the one
+whose funding gap is withheld. Everything else is named in `A11Y_NOT_SCANNED` with a reason.
+For the Phase 1 screens that reason is that they are outside this tier, and that is a gap in
+coverage, not a finding that they pass.
 
 Measured on 2026-07-24 with the same tags the tier uses, and recorded here because leaving it
 out would let the tier's green summary read as more than it is: `/contracts` and `/queue`
@@ -1007,7 +1009,7 @@ reported at least one, including a `select` with no accessible name on the belie
 of those five is scanned, so those readings are a snapshot from one run rather than a
 guarantee in either direction.
 
-All four scanned pages now report zero violations, and there is no declared-exception map
+Every scanned page reports zero violations, and there is no declared-exception map
 left. `/redline/confirm` carried three colour-contrast failures when the inventory first
 reached it: the record-integrity badge and the hash-verified chip at `#10b981` on `#1a4731`,
 `4.16:1` against a `4.5:1` floor, and the prev hash in the receipt table at `#6b7280` on

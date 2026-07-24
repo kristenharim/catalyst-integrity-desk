@@ -79,6 +79,13 @@ PARAMETERISED = {
         "/decisions/SRPT/review",
         "/decisions/BEAM/review",
     ],
+    # All four contracts, because the explorer's prose is driven by what each
+    # contract's evidence does: the refusals, the lapsed dates, the unresolved
+    # identity join and the unavailable funding gap are each written by a
+    # different row, and a scan of one of them reads none of the others. The id
+    # that resolves to nothing is a 404 and is read by the template scan below.
+    "/evidence/<contract_id>": ["/evidence/RCKT", "/evidence/PRME",
+                                "/evidence/SRPT", "/evidence/BEAM"],
 }
 
 TEMPLATE_DIR = os.path.join(REPO, "console", "templates")

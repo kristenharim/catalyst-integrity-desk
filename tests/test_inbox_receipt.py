@@ -812,6 +812,11 @@ A11Y_PAGES = {
         "/decisions/rckt:funded_to_catalyst/review",
         "/decisions/SRPT/review",
     ],
+    # Two of the four contracts, chosen for the states they render rather than
+    # for coverage of the tickers: Rocket carries the longest chain, three
+    # source records and a refused comparison, and Sarepta is the row whose
+    # funding gap is withheld and whose identity join does not resolve.
+    "/evidence/<contract_id>": ["/evidence/RCKT", "/evidence/SRPT"],
 }
 
 # The viewport each rule is measured at. One size is enough for a page whose
@@ -826,6 +831,9 @@ A11Y_VIEWPORTS = {
     # scroll, and a row carrying a 64-character hash is exactly the shape that
     # pushes a page sideways on a phone while measuring clean on a desktop.
     "/activity": [(1440, 1000), (1024, 768), (390, 844)],
+    # And the evidence explorer, which carries both shapes at once: 64-character
+    # content addresses and XBRL tag names long enough to be their own line.
+    "/evidence/<contract_id>": [(1440, 1000), (1024, 768), (390, 844)],
 }
 
 # Every other rule, each with why this tier does not scan it. Nothing falls
