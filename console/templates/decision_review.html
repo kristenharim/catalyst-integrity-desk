@@ -451,7 +451,8 @@
     <div class="field">
       <span class="field-label">Thesis state</span><br>
       <span class="{% if gap_1f is not none and c.gap_months >= 0 %}figure-ok{% else %}figure-alert{% endif %}"
-            style="font-size:12px;">{{ c.verdict }}</span>
+            style="font-size:12px;">{{ c.verdict }}</span><br>
+      <span class="unavailable">computed under the recorded assumptions: flat burn from the last filing, no undrawn facility or milestone inflow</span>
     </div>
     {% if adjudicable %}
     <div class="field">
