@@ -254,9 +254,10 @@ the README now says.
 The scripted amendment is gone. `/redline` now shows an event that actually happened:
 the thesis was approved against `NCT04248439` at 2026-05-05 for +8.4 months funded, that
 date passed, the binding catalyst became `NCT06092034` at 2028-04, and the same runway
-gives -14.5. The centre column says it plainly: **no amendment was filed, the registered
-completion date passed.** That is the strongest sentence in the project, and it removes
-the last invented element.
+gives -14.5. The centre column says it plainly: **no later registry version reconciled the
+registered expectation before its date passed**, as far as the frozen version history
+shows. That is the strongest sentence in the project, and it removes the last invented
+element.
 
 Verified internally consistent: `breach.observed` is -14.5 against a `[0.0, 10.4]` band
 anchored to the approved thesis, and Granite's memo quotes the same two figures. No
