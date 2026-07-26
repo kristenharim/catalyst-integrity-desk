@@ -1,0 +1,244 @@
+{% extends "memo_base.html" %}
+{% block title %}{{ c.runway.name }} &middot; Catalyst Memo{% endblock %}
+{% block styles %}
+  main { padding-bottom: 40px; }
+  .memo-head { padding: 56px 0 8px; }
+  .memo-head .row1 { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .memo-head h1 { font-size: clamp(28px, 4vw, 44px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.06; }
+  .memo-head .lede { margin-top: 18px; font-size: clamp(19px, 2.4vw, 25px); line-height: 1.4;
+                     color: var(--ink); max-width: 30ch; font-weight: 500; letter-spacing: -0.02em; }
+  .memo-head .lede b { font-weight: 600; }
+  .lede.ok b { color: var(--ok); } .lede.alert b { color: var(--alert); } .lede.warn b { color: var(--warn); }
+  .back { font-size: 14px; color: var(--ink-3); }
+
+  section.block { padding: 34px 0; border-top: 1px solid var(--hair); margin-top: 10px; }
+  section.block > .kicker { margin-bottom: 22px; }
+  .kicker h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+  .kicker p { font-size: 15px; color: var(--ink-2); margin-top: 6px; max-width: 62ch; }
+
+  /* hero timeline */
+  .timeline-card { padding: 8px 8px 4px; overflow-x: auto; }
+  .timeline-card svg { display: block; width: 100%; height: auto; min-width: 620px; }
+  .tl-note { font-size: 13px; color: var(--ink-3); padding: 4px 20px 16px; }
+
+  /* the gap number */
+  .gapwrap { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+  .bignum { font-size: clamp(64px, 11vw, 108px); font-weight: 600; letter-spacing: -0.045em; line-height: .9; }
+  .bignum.ok { color: var(--ok); } .bignum.alert { color: var(--alert); } .bignum.warn { color: var(--ink-3); }
+  .gapwrap .side { max-width: 34ch; }
+  .gapwrap .side .u { font-size: 17px; color: var(--ink-3); font-weight: 500; }
+  .gapwrap .side p { margin-top: 8px; color: var(--ink-2); font-size: 16px; line-height: 1.5; }
+
+  /* two halves */
+  .halves { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 720px) { .halves { grid-template-columns: 1fr; } }
+  .half { padding: 24px; }
+  .half .cap { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+  .half .cap .t { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .half .cap .src { margin-left: auto; font-size: 11.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+  .stat { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--hair); gap: 16px; }
+  .stat:last-child { border-bottom: none; }
+  .stat .k { font-size: 14.5px; color: var(--ink-2); }
+  .stat .v { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; text-align: right; }
+  .stat .v small { font-weight: 500; color: var(--ink-3); font-size: 13px; }
+
+  /* reasoning ladder */
+  .ladder { display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 30px 1fr auto; gap: 18px; align-items: start;
+          padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .step:last-child { border-bottom: none; }
+  .step .n { width: 26px; height: 26px; border-radius: 100px; background: var(--surface-2);
+             border: 1px solid var(--hair-strong); color: var(--ink-3); font-size: 12.5px; font-weight: 600;
+             display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .step .body .name { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
+  .step .body .from { font-size: 13.5px; color: var(--ink-3); margin-top: 3px; }
+  .step .body .from code { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+  .step details { margin-top: 8px; }
+  .step details summary { font-size: 13px; color: var(--accent); cursor: pointer; width: max-content; }
+  .step details .rec { font-size: 13px; color: var(--ink-2); margin-top: 6px; padding: 10px 12px;
+                       background: var(--surface-2); border: 1px solid var(--hair); border-radius: 10px; font-family: var(--mono); }
+  .step .val { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .step .kind-tag { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 500; margin-top: 3px; }
+  .step.result { background: var(--surface-2); border-radius: 14px; padding: 18px 16px; margin-top: 6px; border-bottom: none; }
+  .step.result .n { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .step.result .val.alert { color: var(--alert); } .step.result .val.ok { color: var(--ok); }
+
+  /* integrity */
+  .integrity { padding: 26px 26px 24px; border: 1px solid var(--alert-soft); background: linear-gradient(180deg, #fff, #fffafa); }
+  .integrity .flagline { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .integrity .flagline .sym { color: var(--alert-deep); font-size: 18px; }
+  .integrity .flagline .t { font-size: 16px; font-weight: 600; }
+  .integrity .say { font-size: 18px; line-height: 1.5; letter-spacing: -0.01em; max-width: 60ch; }
+  .integrity .say b { color: var(--alert-deep); font-weight: 600; }
+  .integrity .meta { margin-top: 14px; font-size: 13.5px; color: var(--ink-3); }
+  .integrity .meta code { font-family: var(--mono); font-size: 12px; }
+{% endblock %}
+
+{% block body %}
+{% set d = c.runway.display %}
+{% set tl = c.thesis_timeline %}
+{% set gapabs = (c.gap_months_1f or '').lstrip('-') %}
+<main class="wrap">
+
+  <div class="memo-head">
+    <a class="back" href="/desk">&larr; Portfolio</a>
+    <div class="row1" style="margin-top:14px">
+      <span class="ticker-chip">{{ ticker }}</span>
+      {% if state == 'ok' %}<span class="pill ok">Funded to the trial</span>
+      {% elif state == 'warn' %}<span class="pill warn">Shown, not ranked</span>
+      {% else %}<span class="pill alert">Cash runs out first</span>{% endif %}
+      {% if c.lapsed %}<span class="pill alert" style="background:transparent;color:var(--alert-deep)">&#9873; carries an expired date</span>{% endif %}
+    </div>
+    <h1>{{ c.runway.name }}</h1>
+    <p class="lede {{ state }}">
+      {% if state == 'ok' %}
+        Funded with <b>about {{ c.gap_months_1f }} months to spare</b> before the lead trial&rsquo;s filed finish date.
+      {% elif state == 'warn' %}
+        A one-time cash inflow distorts the burn rate here, so the desk <b>shows this one but does not rank it</b>.
+      {% else %}
+        On the filed numbers, cash runs out <b>about {{ gapabs }} months before</b> the lead trial is due to finish.
+      {% endif %}
+    </p>
+  </div>
+
+  {# ---------- HERO TIMELINE ---------- #}
+  <section class="block" style="border-top:none">
+    <div class="kicker"><h2>The whole picture, on one line</h2>
+      <p>Two dated public facts and the distance between them. The left post is when the cash is read to run out; the right post is the trial&rsquo;s filed finish date.</p></div>
+    <div class="card timeline-card rise">
+      <svg viewBox="0 0 1100 172" role="img"
+           aria-label="Time line from today to when cash runs out and when the trial finishes.">
+        <!-- baseline -->
+        <line x1="90" y1="104" x2="1010" y2="104" stroke="#d2d2d7" stroke-width="2" stroke-linecap="round"/>
+        <!-- gap span -->
+        {% if state != 'warn' %}
+        {% set gx0 = tl.shortfall.x_from %}{% set gx1 = tl.shortfall.x_to %}
+        <rect x="{{ gx0 }}" y="99" width="{{ (gx1 - gx0)|round(1) }}" height="10" rx="5"
+              fill="{{ '#12855a' if state == 'ok' else '#c22d2d' }}"/>
+        <text x="{{ ((gx0 + gx1) / 2)|round(1) }}" y="86" text-anchor="middle"
+              font-family="var(--sans)" font-size="15" font-weight="600"
+              fill="{{ '#12855a' if state == 'ok' else '#c22d2d' }}">
+          {{ tl.shortfall.months_1f }} months {{ 'of buffer' if state == 'ok' else 'short' }}
+        </text>
+        {% endif %}
+
+        <!-- today -->
+        <line x1="{{ tl.today.x }}" y1="94" x2="{{ tl.today.x }}" y2="114" stroke="#86868b" stroke-width="2" stroke-linecap="round"/>
+        <text x="{{ tl.today.x }}" y="134" text-anchor="middle" font-family="var(--sans)" font-size="12.5" fill="#6e6e73">Today</text>
+        <text x="{{ tl.today.x }}" y="150" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#86868b">{{ tl.today.date }}</text>
+
+        <!-- cash runs out -->
+        <circle cx="{{ tl.runway.x_lo }}" cy="104" r="6.5" fill="#1d1d1f"/>
+        <text x="{{ tl.runway.x_lo }}" y="{{ 60 if state == 'ok' else 60 }}" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="600" fill="#1d1d1f">Cash runs out</text>
+        <text x="{{ tl.runway.x_lo }}" y="{{ 76 if state == 'ok' else 76 }}" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#6e6e73">~{{ tl.runway.date_lo }}</text>
+
+        <!-- trial finishes -->
+        <circle cx="{{ tl.catalyst.x }}" cy="104" r="6.5" fill="#0071e3"/>
+        <text x="{{ tl.catalyst.x }}" y="134" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="600" fill="#0066cc">Trial due to finish</text>
+        <text x="{{ tl.catalyst.x }}" y="150" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#6e6e73">{{ tl.catalyst.date }}</text>
+
+        <!-- lapsed flag -->
+        {% if tl.lapsed %}
+        <g>
+          <path d="M {{ tl.lapsed.x }} 96 l 6 8 l -6 8 l -6 -8 z" fill="#a51f1f"/>
+          <text x="{{ tl.lapsed.x }}" y="60" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="#a51f1f">Expired date</text>
+          <text x="{{ tl.lapsed.x }}" y="76" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="#a51f1f">{{ tl.lapsed.date }}</text>
+        </g>
+        {% endif %}
+      </svg>
+    </div>
+    <p class="tl-note">The lead trial is {{ c.trial.nct }}{% if c.trial.phases %} &middot; {{ c.trial.phases | join(', ') | replace('PHASE','Phase ') }}{% endif %}. Dates the company filed with the public registry; the finish date is an estimate the company can revise.</p>
+  </section>
+
+  {# ---------- THE GAP NUMBER ---------- #}
+  <section class="block">
+    <div class="gapwrap">
+      {% if state == 'warn' %}
+        <span class="bignum warn">&mdash;</span>
+        <div class="side"><span class="u">no ranking</span>
+          <p>{{ c.runway.notes | join('; ') }}. Until the true burn rate is clear, ranking this company would put a number the desk does not trust next to ones it does.</p></div>
+      {% else %}
+        <span class="bignum {{ state }} tabnum">{{ c.gap_months_1f }}</span>
+        <div class="side"><span class="u">months {{ 'of buffer' if state == 'ok' else 'of shortfall' }}</span>
+          <p>{% if state == 'ok' %}Cash is read to last past the trial&rsquo;s filed finish date, with room to spare.{% else %}Cash is read to run out first. Closing this needs new financing before the trial&rsquo;s filed finish date.{% endif %}</p></div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# ---------- TWO HALVES ---------- #}
+  <section class="block">
+    <div class="kicker"><h2>Where the two sides come from</h2>
+      <p>The left half of the bet is money, read from the last SEC filing. The right half is the trial&rsquo;s finish date, read from the public registry.</p></div>
+    <div class="halves">
+      <div class="card half">
+        <div class="cap"><span class="t">The money</span><span class="src">SEC filing</span></div>
+        <div class="stat"><span class="k">Cash on hand</span><span class="v">${{ d.cash_m }}M</span></div>
+        <div class="stat"><span class="k">Short-term securities</span><span class="v">${{ d.securities_m }}M</span></div>
+        <div class="stat"><span class="k">Total liquidity</span><span class="v">${{ d.liquidity_m }}M</span></div>
+        <div class="stat"><span class="k">Cash burn</span><span class="v">${{ d.burn_recent_annual_m }}M <small>/yr</small></span></div>
+        <div class="stat"><span class="k">Runway</span><span class="v">{{ d.months_low_1f }}&ndash;{{ d.months_high_1f }} <small>months</small></span></div>
+      </div>
+      <div class="card half">
+        <div class="cap"><span class="t">The trial</span><span class="src">Public registry</span></div>
+        <div class="stat"><span class="k">Lead trial</span><span class="v">{{ c.trial.nct }}</span></div>
+        <div class="stat"><span class="k">Phase</span><span class="v">{{ c.trial.phases | join(', ') | replace('PHASE','Phase ') if c.trial.phases else '&mdash;' }}</span></div>
+        <div class="stat"><span class="k">Status</span><span class="v" style="font-size:14px">{{ c.trial.status | replace('_',' ') | title }}</span></div>
+        <div class="stat"><span class="k">Registered finish (filed)</span><span class="v">{{ c.catalyst_date }}</span></div>
+        <div class="stat"><span class="k">Times the finish date changed</span><span class="v">{{ (c.history.revisions | length) if c.history else 0 }}</span></div>
+      </div>
+    </div>
+  </section>
+
+  {# ---------- REASONING LADDER ---------- #}
+  <section class="block">
+    <div class="kicker"><h2>Why the desk says this</h2>
+      <p>Every step, in order, from the filed inputs to the funding gap. Open any step to see the exact source it came from.</p></div>
+    <div class="ladder card" style="padding:6px 22px">
+      {% for s in c.derivation %}
+      <div class="step {{ 'result' if s.kind == 'result' else '' }}">
+        <div class="n">{{ loop.index }}</div>
+        <div class="body">
+          <div class="name">{{ s.step }}</div>
+          <div class="from">from <code>{{ s.source }}</code></div>
+          {% if s.record %}
+          <details><summary>Show source</summary><div class="rec">{{ s.record }}</div></details>
+          {% endif %}
+        </div>
+        <div class="val {{ state if s.kind == 'result' else '' }}">{{ s.value }}
+          <span class="kind-tag">{{ 'filed value' if s.kind == 'tag' else ('computed' if s.kind == 'calc' else 'result') }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ---------- INTEGRITY SIGNAL ---------- #}
+  {% if c.lapsed and c.lapsed_history %}
+  <section class="block">
+    <div class="kicker"><h2>Date-integrity signal</h2>
+      <p>Separate from the funding call. A finish date the company filed, that is already in the past, and how long it stayed there before a revision.</p></div>
+    {% for lh in c.lapsed_history %}
+    {% if lh and lh.revisions %}
+    {% set lm = c.lapsed[loop.index0] %}
+    <div class="card integrity">
+      <div class="flagline"><span class="sym">&#9873;</span><span class="t">{{ lm.nct }} &middot; {{ lm.title }}</span></div>
+      {% for r in lh.revisions if r.carried_expired %}
+      <p class="say">In a filing dated <b>{{ r.submitted }}</b>, the company carried a finish date of
+        <b>{{ r.pcd }}</b> that had already been in the past for <b>{{ r.days_expired }} days</b>.</p>
+      <div class="meta">A finish date this far past its own filed value is the integrity signal this desk was built to surface. It is reported, not judged. Source: registry <code>{{ lm.nct }}</code>, filed {{ r.submitted }}.</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <footer class="provenance">
+    Every figure on this page is a named SEC XBRL tag or a specific registry version, shown in the
+    reasoning above. Nothing here is modeled or predicted, and the desk does not judge whether the
+    underlying science will succeed. It reports the distance between two dated, public numbers.<br>
+    Snapshot <span class="mono">{{ snapshot_id }}</span> &middot; as of {{ snapshot_as_of }}.
+    &middot; <a href="/contract/{{ ticker }}">Open the analyst view for {{ ticker }}</a>
+  </footer>
+</main>
+{% endblock %}

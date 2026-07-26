@@ -42,7 +42,7 @@ the conservative one first. Never say "677 days" as a bare fact.
 > ClinicalTrials.gov, where the company sets it, can change it whenever it likes, and
 > nothing reconciles that change against the thesis that depended on the old date.
 
-**0:20 to 0:50, the fact.** `/` redirects to `/contract/RCKT`. Do not click anything yet.
+**0:20 to 0:50, the fact.** `/demo` redirects to `/contract/RCKT`. Do not click anything yet.
 
 > Here is a real trial. In April 2024, Rocket filed a protocol revision carrying a primary
 > completion date the registry records as June 2022, a month with no day. Read at the end of

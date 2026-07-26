@@ -2,17 +2,24 @@
 {% block title %}Contracts &middot; Catalyst Integrity Desk{% endblock %}
 {% block content %}
 <h1>Catalyst Contracts</h1>
+<p class="note">
+  Each row is one company's bet that its cash lasts until its trial finishes. Read the
+  <strong>Funding gap</strong> first: <span class="verdict-alert">red / negative</span>
+  means it runs out of money before the trial's filed finish date;
+  <span class="verdict-ok">green / positive</span> means funded with room. Ranked worst
+  first. Open the &ldquo;What am I looking at&rdquo; key above for the rest.
+</p>
 
 <table>
   <thead>
     <tr>
-      <th>Rank</th>
+      <th title="Ranked worst funding gap first.">Rank</th>
       <th>Ticker</th>
       <th>Company</th>
-      <th>Gap (months)</th>
-      <th>Runway band</th>
-      <th>Registered primary completion</th>
-      <th>Revisions</th>
+      <th title="Months of cash left minus months until the trial's filed finish date. Negative means the money runs out first.">Funding gap</th>
+      <th title="Months of cash the company has left, as a range, from its SEC filings.">Cash runway</th>
+      <th title="Registered primary completion: the date filed with the public trial registry for when the trial finishes.">Trial finish (as filed)</th>
+      <th title="How many times the company changed that filed finish date.">Date changes</th>
     </tr>
   </thead>
   <tbody>
@@ -51,13 +58,14 @@
 {% if unreliable %}
 <hr>
 <h2>Flagged &middot; not ranked</h2>
+<p class="note">Numbers the desk does not trust enough to rank, shown here rather than hidden.</p>
 <table>
   <thead>
     <tr>
       <th>Ticker</th>
       <th>Company</th>
-      <th>Flag reason</th>
-      <th>Registered primary completion</th>
+      <th title="Why this row was not trusted enough to rank.">Why flagged</th>
+      <th title="Registered primary completion: the date filed with the public trial registry for when the trial finishes.">Trial finish (as filed)</th>
     </tr>
   </thead>
   <tbody>

@@ -1,7 +1,8 @@
 """Flask app for the Catalyst Integrity Desk console.
 
 Loads data/snapshot.json once at startup and serves three views:
-  GET /                  redirects to /contract/RCKT (demo-opening constraint)
+  GET /                  redirects to /desk (the plain-language front door)
+  GET /demo              redirects to /contract/RCKT (demo-opening constraint)
   GET /contracts         ranked contract list
   GET /contract/<ticker> contract detail with revision timeline
   GET /redline           pending challenge card
@@ -96,7 +97,10 @@ def inject_cmd_bar():
 
 @app.get("/")
 def index():
-    return redirect(url_for("contract_detail", ticker="RCKT"))
+    # The plain-language portfolio is the front door: a first-time reader lands
+    # on the at-a-glance view and drills into a memo from there. The judge demo
+    # keeps its own stable entry at /demo, which opens on the Rocket frame.
+    return redirect(url_for("desk_overview"))
 
 
 @app.get("/demo")
@@ -239,6 +243,68 @@ def contract_list():
 def queue_view():
     """This morning's work: one row per reason to look, worst first."""
     return render_template("queue.html", queue=SNAPSHOT.get("queue"))
+
+
+# ---------------------------------------------------------------------------
+# Plain-language presentation surface: the memo. A first-time reader sees the
+# funding call at a glance, then opens any figure to its filed source. No
+# arithmetic here either -- every number is a precomputed snapshot field, and
+# these handlers only pick a state label and select a sentence for it.
+# ---------------------------------------------------------------------------
+
+def _memo_state(c: dict) -> str:
+    """ok = funded, warn = shown but not ranked, alert = runs short."""
+    if not c["runway"]["reliable"]:
+        return "warn"
+    gap = c.get("gap_months")
+    return "ok" if (gap is not None and gap >= 0) else "alert"
+
+
+def _memo_headline(c: dict, state: str) -> str:
+    gap = (c.get("gap_months_1f") or "").lstrip("-")
+    if state == "ok":
+        return (f"Funded with about {gap} months to spare before the lead trial's "
+                "filed finish date.")
+    if state == "warn":
+        return ("A one-time cash inflow distorts the burn rate, so this one is shown "
+                "but not ranked.")
+    return (f"On the filed numbers, cash runs out about {gap} months before the lead "
+            "trial is due to finish.")
+
+
+@app.get("/desk")
+def desk_overview():
+    contracts = SNAPSHOT["contracts"]
+    ranked, flagged = [], []
+    for ticker, c in contracts.items():
+        state = _memo_state(c)
+        row = {
+            "ticker": ticker, "c": c, "state": state,
+            "headline": _memo_headline(c, state),
+            "lapsed_count": len(c.get("lapsed") or []),
+            "rev_count": (c.get("history") or {}).get("n_versions") or 0,
+        }
+        (flagged if state == "warn" else ranked).append(row)
+    ranked.sort(key=lambda r: r["c"]["gap_months"] if r["c"]["gap_months"] is not None
+                else float("inf"))
+    for i, r in enumerate(ranked):
+        r["rank_label"] = "Most exposed" if i == 0 else f"#{i + 1} by funding gap"
+    for r in flagged:
+        r["rank_label"] = "Not ranked"
+    return render_template("desk.html", rows=ranked + flagged)
+
+
+@app.get("/memo/<ticker>")
+def memo_view(ticker):
+    contracts = SNAPSHOT["contracts"]
+    if ticker not in contracts:
+        return f"No memo for {ticker!r}.", 404
+    c = contracts[ticker]
+    state = _memo_state(c)
+    return render_template(
+        "memo.html", ticker=ticker, c=c, state=state,
+        headline=_memo_headline(c, state),
+    )
 
 
 @app.get("/contract/<ticker>")

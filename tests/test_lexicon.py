@@ -42,7 +42,7 @@ REPO = os.path.join(os.path.dirname(__file__), "..")
 #
 # Every rule must be scanned or named here with a reason. Nothing falls through.
 NON_CLAIM_ROUTES = {
-    "/": "302 to the Rocket detail, renders no prose of its own",
+    "/": "302 to /desk, renders no prose of its own",
     "/demo": "302 to the Rocket detail, renders no prose of its own",
     "/static/<path:filename>": "Flask builtin, serves files rather than claims",
     # POST-only surfaces. They render templates rather than new prose, and the
@@ -86,6 +86,10 @@ PARAMETERISED = {
     # that resolves to nothing is a 404 and is read by the template scan below.
     "/evidence/<contract_id>": ["/evidence/RCKT", "/evidence/PRME",
                                 "/evidence/SRPT", "/evidence/BEAM"],
+    # The plain-language memo, one page per contract. Its prose is composed from
+    # precomputed fields the same way the detail screen's is, so it is scanned
+    # for banned claims on every ticker rather than one.
+    "/memo/<ticker>": ["/memo/RCKT", "/memo/BEAM", "/memo/PRME", "/memo/SRPT"],
 }
 
 TEMPLATE_DIR = os.path.join(REPO, "console", "templates")

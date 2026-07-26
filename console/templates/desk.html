@@ -1,0 +1,144 @@
+{% extends "memo_base.html" %}
+{% block title %}Portfolio &middot; Catalyst Integrity{% endblock %}
+{% block styles %}
+  .hero { padding: 72px 0 40px; }
+  .hero h1 {
+    font-size: clamp(30px, 4.4vw, 46px); font-weight: 600;
+    letter-spacing: -0.03em; line-height: 1.08; max-width: 16ch;
+  }
+  .hero p {
+    margin-top: 18px; max-width: 54ch; font-size: 19px;
+    color: var(--ink-2); line-height: 1.55;
+  }
+  .hero .legend {
+    margin-top: 26px; display: flex; flex-wrap: wrap; gap: 10px 20px;
+    font-size: 13.5px; color: var(--ink-3);
+  }
+  .hero .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .hero .legend i { width: 9px; height: 9px; border-radius: 100px; display: inline-block; }
+
+  .grid { display: grid; gap: 18px; padding-bottom: 40px;
+          grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+
+  .co {
+    display: block; color: inherit; padding: 24px 24px 22px;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .co:hover { text-decoration: none; transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .co-top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .co-top .rank { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .co-name { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; margin: 6px 0 14px; }
+
+  .co-num { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+  .co-num b { font-size: 42px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+  .co-num .u { font-size: 15px; color: var(--ink-3); font-weight: 500; }
+  .co-num.ok b { color: var(--ok); } .co-num.alert b { color: var(--alert); } .co-num.warn b { color: var(--warn); }
+  .co-read { font-size: 14px; color: var(--ink-2); line-height: 1.45; min-height: 40px; }
+
+  /* mini gap bar: today tick, cash-out dot, trial-finish dot, gap span */
+  .bar { position: relative; height: 20px; margin: 20px 0 10px; }
+  .bar .axis { position: absolute; left: 0; right: 0; top: 9px; height: 2px; background: var(--hair-strong); border-radius: 2px; }
+  .bar .span { position: absolute; top: 8px; height: 4px; border-radius: 3px; }
+  .bar .span.alert { background: var(--alert); }
+  .bar .span.ok { background: var(--ok); }
+  .bar .mk { position: absolute; top: 3px; width: 2px; height: 14px; background: var(--ink-3); border-radius: 2px; transform: translateX(-1px); }
+  .bar .dot { position: absolute; top: 5px; width: 10px; height: 10px; border-radius: 100px; transform: translate(-50%, 0); border: 2px solid var(--surface); }
+  .bar .dot.cash { background: var(--ink); }
+  .bar .dot.trial { background: var(--accent-fill); }
+  .bar .flag {
+    position: absolute; top: 4px; width: 10px; height: 10px; border-radius: 2px;
+    background: var(--alert-deep); border: 2px solid var(--surface); transform: translate(-50%, 0) rotate(45deg);
+  }
+  .bar-cap { display: flex; gap: 16px; font-size: 12px; color: var(--ink-3); margin-bottom: 2px; }
+  .bar-cap span { display: inline-flex; align-items: center; gap: 6px; }
+  .bar-cap i { width: 8px; height: 8px; border-radius: 100px; }
+  .bar-cap i.cash { background: var(--ink); } .bar-cap i.trial { background: var(--accent-fill); }
+  .bar-cap b { font-weight: 500; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .co-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 14px;
+             padding-top: 14px; border-top: 1px solid var(--hair); }
+  .co-foot .open { font-size: 14px; font-weight: 500; color: var(--accent); }
+  .integrity-tag { font-size: 12px; font-weight: 600; color: var(--alert-deep);
+                   display: inline-flex; align-items: center; gap: 6px; }
+{% endblock %}
+
+{% block body %}
+<main class="wrap">
+  <section class="hero">
+    <h1 class="rise">Is each company funded to its next trial?</h1>
+    <p class="rise d1">
+      Every biotech thesis rests on one bet: enough cash to last until the trial finishes.
+      This desk reads the cash from SEC filings and the trial's filed finish date from the
+      public registry, then shows the distance between them. Green is funded. Red runs out of
+      money first. Open any card for the full reasoning.
+    </p>
+    <div class="legend rise d2">
+      <span><i style="background:var(--ok)"></i> Funded to the trial</span>
+      <span><i style="background:var(--alert)"></i> Cash runs out first</span>
+      <span><i style="background:var(--warn)"></i> Can&rsquo;t be ranked</span>
+      <span><i style="background:var(--alert-deep)"></i> Carries an expired date</span>
+    </div>
+  </section>
+
+  <section class="grid">
+    {% for row in rows %}
+    {% set c = row.c %}
+    {% set st = row.state %}
+    <a class="card co rise d{{ loop.index if loop.index < 6 else 5 }}" href="/memo/{{ row.ticker }}">
+      <div class="co-top">
+        <span class="ticker-chip">{{ row.ticker }}</span>
+        <span class="rank">{{ row.rank_label }}</span>
+        {% if st == 'ok' %}<span class="pill ok" style="margin-left:auto">Funded</span>
+        {% elif st == 'warn' %}<span class="pill warn" style="margin-left:auto">Unranked</span>
+        {% else %}<span class="pill alert" style="margin-left:auto">Runs short</span>{% endif %}
+      </div>
+      <div class="co-name">{{ c.runway.name }}</div>
+
+      <div class="co-num {{ st }}">
+        {% if st == 'ok' %}<b class="tabnum">+{{ c.gap_months_1f }}</b><span class="u">months of buffer</span>
+        {% elif st == 'warn' %}<b class="tabnum">&mdash;</b><span class="u">burn estimate unreliable</span>
+        {% else %}<b class="tabnum">{{ c.gap_months_1f }}</b><span class="u">months short</span>{% endif %}
+      </div>
+      <div class="co-read">{{ row.headline }}</div>
+
+      {% set tl = c.thesis_timeline %}
+      {% set span = 1010 - 90 %}
+      {% macro pc(x) %}{{ ((x - 90) / span * 100) | round(1) }}{% endmacro %}
+      {% if st != 'warn' %}
+      <div class="bar-cap">
+        <span><i class="cash"></i> Cash out <b>{{ tl.runway.date_lo[:7] }}</b></span>
+        <span><i class="trial"></i> Trial ends <b>{{ tl.catalyst.date[:7] }}</b></span>
+      </div>
+      <div class="bar" aria-hidden="true">
+        <div class="axis"></div>
+        {% if st == 'ok' %}
+          <div class="span ok" style="left:{{ pc(tl.catalyst.x) }}%; right:{{ (100 - (pc(tl.runway.x_lo)|float)) }}%"></div>
+        {% else %}
+          <div class="span alert" style="left:{{ pc(tl.runway.x_lo) }}%; right:{{ (100 - (pc(tl.catalyst.x)|float)) }}%"></div>
+        {% endif %}
+        <div class="mk today" style="left:{{ pc(tl.today.x) }}%" title="today"></div>
+        <div class="dot cash" style="left:{{ pc(tl.runway.x_lo) }}%"></div>
+        <div class="dot trial" style="left:{{ pc(tl.catalyst.x) }}%"></div>
+        {% if tl.lapsed %}<div class="flag" style="left:{{ pc(tl.lapsed.x) }}%" title="carries an expired date"></div>{% endif %}
+      </div>
+      {% else %}
+      <div class="bar" aria-hidden="true"><div class="axis"></div>
+        <div class="mk today" style="left:{{ pc(tl.today.x) }}%"></div></div>
+      {% endif %}
+
+      <div class="co-foot">
+        {% if row.lapsed_count %}
+          <span class="integrity-tag">&#9873; {{ row.lapsed_count }} expired {{ 'date' if row.lapsed_count == 1 else 'dates' }} on file</span>
+        {% else %}<span style="font-size:12px;color:var(--ink-3)">{{ row.rev_count }} date changes on record</span>{% endif %}
+        <span class="open">Open memo &rarr;</span>
+      </div>
+    </a>
+    {% endfor %}
+  </section>
+
+  <footer class="provenance wrap" style="padding-left:0;padding-right:0">
+    Every figure traces to a named SEC XBRL tag or a specific registry version. Nothing here
+    is modeled or predicted. The desk reports the distance between two dated, public numbers.<br>
+    Snapshot <span class="mono">{{ snapshot_id }}</span> &middot; as of {{ snapshot_as_of }}.
+  </footer>
+</main>
+{% endblock %}

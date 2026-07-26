@@ -160,6 +160,46 @@
       outline: 2px solid var(--cds-focus);
       outline-offset: 2px;
     }
+
+    /* -------------------------------------------------------------------
+       Plain-English key. Collapsed by default so it adds one line of height
+       and never moves the demo's opening frame; open it to decode the terms.
+    ------------------------------------------------------------------- */
+    .help-key {
+      background: #0d1117;
+      border-bottom: 1px solid #21262d;
+      padding: 8px 24px;
+      font-size: 12px;
+    }
+    .help-key > summary {
+      cursor: pointer;
+      color: #8b949e;
+      list-style-position: inside;
+    }
+    .help-key > summary:hover { color: #e6edf3; }
+    .help-key .help-lede {
+      color: #c9d1d9;
+      max-width: 900px;
+      margin: 10px 0 12px;
+      line-height: 1.5;
+    }
+    .help-key table { max-width: 900px; }
+    .help-key th, .help-key td {
+      padding: 4px 12px 4px 0;
+      border: none;
+      font-size: 12px;
+      text-transform: none;
+      letter-spacing: 0;
+      vertical-align: top;
+    }
+    .help-key th {
+      color: #e6edf3;
+      white-space: nowrap;
+      width: 1%;
+    }
+    .help-key td { color: #8b949e; }
+    .help-key .k-bad { color: #f85149; }
+    .help-key .k-ok  { color: #10b981; }
   </style>
   {% block styles %}{% endblock %}
 </head>
@@ -179,20 +219,44 @@
   {% set cb = snapshot_cmd_bar %}
   {% if cb %}
   <div class="cmd-bar" role="region" aria-label="Snapshot counts">
-    <div class="cmd-bar-item">
+    <div class="cmd-bar-item" title="Companies this desk is tracking right now.">
       <span class="cmd-bar-count count-ok">{{ cb.monitored }}</span>
       <span class="cmd-bar-label">contracts monitored</span>
     </div>
-    <div class="cmd-bar-item">
+    <div class="cmd-bar-item" title="Bets that have broken: the trial date the thesis depended on has already slipped past.">
       <span class="cmd-bar-count count-alert">{{ cb.active_breaches }}</span>
       <span class="cmd-bar-label">active breaches</span>
     </div>
-    <div class="cmd-bar-item">
+    <div class="cmd-bar-item" title="Filed trial-finish dates that are already in the past and still shown as current.">
       <span class="cmd-bar-count count-alert">{{ cb.lapsed_expectations }}</span>
       <span class="cmd-bar-label">lapsed registered expectations</span>
     </div>
   </div>
   {% endif %}
+
+  {# Plain-English key, shared across every page. Collapsed by default. #}
+  <details class="help-key">
+    <summary>New here? What am I looking at &mdash; and how to read it</summary>
+    <p class="help-lede">
+      Every clinical-stage biotech thesis rests on one bet: <em>we have enough cash to
+      last until our trial finishes.</em> The left half comes from SEC filings, the right
+      half from the public trial registry, where the company sets the finish date and can
+      change it whenever it likes. This desk recomputes both halves and shows when the bet
+      has quietly broken. A healthy row is <span class="k-ok">green</span> and boring; the
+      point is the <span class="k-bad">red</span> ones.
+    </p>
+    <table>
+      <tr><th>Contract</th><td>One company's bet that its cash lasts until its trial's filed finish date.</td></tr>
+      <tr><th>Gap</th><td>Months of cash left minus months until the trial finishes. <span class="k-bad">Negative (red)</span> means the money runs out first; <span class="k-ok">positive (green)</span> means funded with room.</td></tr>
+      <tr><th>Runway band</th><td>How many months of cash the company has left, as a range, read from its SEC filings.</td></tr>
+      <tr><th>Registered primary completion</th><td>The date the company filed with the public trial registry for when its trial finishes. Not the same as when results are announced.</td></tr>
+      <tr><th>Revisions</th><td>How many times the company has changed that filed finish date.</td></tr>
+      <tr><th>Breach</th><td>A bet that has broken: the date it was counting on has already slipped past.</td></tr>
+      <tr><th>Lapsed</th><td>A filed finish date that is already in the past and still shown as current.</td></tr>
+      <tr><th>Flagged</th><td>A number the desk does not trust enough to rank, shown anyway rather than hidden.</td></tr>
+      <tr><th>Unresolved</th><td>You asked about a company, but no matching trial was found in the registry.</td></tr>
+    </table>
+  </details>
 
   <main>
     {% block content %}{% endblock %}

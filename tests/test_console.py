@@ -63,9 +63,20 @@ def snapshot_raw() -> str:
 # Routing tests
 # ---------------------------------------------------------------------------
 
-def test_root_redirects_to_rckt(client):
-    """GET / must redirect to /contract/RCKT — demo-opening constraint."""
+def test_root_redirects_to_desk(client):
+    """GET / must redirect to /desk, the plain-language front door.
+
+    The demo-opening constraint moved to /demo, which test_demo_frame drives and
+    which still redirects to /contract/RCKT. The root is now the portfolio.
+    """
     r = client.get("/")
+    assert r.status_code == 302
+    assert "/desk" in r.headers["Location"]
+
+
+def test_demo_still_opens_on_rckt(client):
+    """GET /demo keeps the demo-opening constraint even though / moved."""
+    r = client.get("/demo")
     assert r.status_code == 302
     assert "/contract/RCKT" in r.headers["Location"]
 

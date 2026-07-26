@@ -69,8 +69,9 @@ repo, the Project Page, the video, and the SkillsBuild certificate.
 The demo opens on the Rocket revision timeline, not the contract list. The
 677-day expired-date row is the only thing in this demo the room has not seen
 before. It must be visible without scrolling and without a click, and marked
-distinctly from ordinary revisions. `/` redirects to `/contract/RCKT` for exactly
-this reason. If a layout decision would bury it, the layout loses.
+distinctly from ordinary revisions. `/demo` redirects to `/contract/RCKT` for exactly
+this reason. (The root `/` is now the plain-language portfolio front door; the demo
+opens on `/demo`, which is unchanged.) If a layout decision would bury it, the layout loses.
 
 ## Budget, and what happened to the first trial
 

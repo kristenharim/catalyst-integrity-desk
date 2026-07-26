@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Catalyst Integrity Memo{% endblock %}</title>
+  <style>
+    /* ===================================================================
+       Catalyst Integrity Memo — plain-language presentation surface.
+
+       A separate identity from the analyst console: light, quiet, and
+       legible at a glance, so a first-time reader understands the funding
+       call without narration, then can open any figure to its source.
+
+       Typeface is the system stack, which resolves to SF Pro on Apple
+       devices with no network and no embedding — the same face the brief
+       asks for, for free.
+    =================================================================== */
+    :root {
+      --canvas:      #f5f5f7;
+      --surface:     #ffffff;
+      --surface-2:   #fbfbfd;
+      --ink:         #1d1d1f;
+      --ink-2:       #55565a;
+      --ink-3:       #6e6e73;
+      --hair:        #e6e6ea;
+      --hair-strong: #d2d2d7;
+      --accent:      #0066cc;
+      --accent-fill: #0071e3;
+      --ok:          #12855a;
+      --ok-soft:     #e8f6ef;
+      --warn:        #a75d00;
+      --warn-soft:   #fbeeda;
+      --alert:       #c22d2d;
+      --alert-soft:  #fbe9e9;
+      --alert-deep:  #a51f1f;
+      --radius:      20px;
+      --radius-sm:   13px;
+      --shadow:      0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.04);
+      --shadow-lg:   0 2px 6px rgba(0,0,0,.05), 0 18px 48px rgba(0,0,0,.10);
+      --mono:        ui-monospace, "SF Mono", "Menlo", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+              "SF Pro Text", system-ui, "Segoe UI", "Helvetica Neue", sans-serif;
+      --wide: 1080px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: var(--sans);
+      background: var(--canvas);
+      color: var(--ink);
+      line-height: 1.5;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: var(--wide); margin: 0 auto; padding: 0 24px; }
+
+    /* --- top bar ---------------------------------------------------- */
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(245,245,247,.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--hair);
+    }
+    .topbar .wrap {
+      height: 52px; display: flex; align-items: center; gap: 18px;
+    }
+    .topbar .mark { font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+    .topbar .mark .dot { color: var(--accent-fill); }
+    .topbar nav { margin-left: auto; display: flex; gap: 22px; align-items: center; }
+    .topbar nav a { color: var(--ink-3); font-size: 14px; font-weight: 500; }
+    .topbar nav a:hover { color: var(--ink); text-decoration: none; }
+    .topbar .asof { color: var(--ink-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    /* --- shared type ------------------------------------------------ */
+    .eyebrow {
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--ink-3);
+    }
+    .ticker-chip {
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; color: var(--ink-2);
+      background: var(--surface); border: 1px solid var(--hair-strong);
+      border-radius: 6px; padding: 2px 7px;
+    }
+    .tabnum { font-variant-numeric: tabular-nums; }
+
+    /* --- verdict pills ---------------------------------------------- */
+    .pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em;
+      padding: 5px 13px; border-radius: 100px; white-space: nowrap;
+    }
+    .pill::before {
+      content: ""; width: 7px; height: 7px; border-radius: 100px;
+      background: currentColor;
+    }
+    .pill.ok    { color: var(--ok);    background: var(--ok-soft); }
+    .pill.alert { color: var(--alert); background: var(--alert-soft); }
+    .pill.warn  { color: var(--warn);  background: var(--warn-soft); }
+
+    /* --- cards ------------------------------------------------------ */
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow); border: 1px solid var(--hair);
+    }
+
+    /* --- generic reveal (respects reduced motion) ------------------- */
+    @media (prefers-reduced-motion: no-preference) {
+      .rise { opacity: 0; transform: translateY(12px); animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+      .rise.d1 { animation-delay: .06s; } .rise.d2 { animation-delay: .12s; }
+      .rise.d3 { animation-delay: .18s; } .rise.d4 { animation-delay: .24s; }
+      .rise.d5 { animation-delay: .30s; } .rise.d6 { animation-delay: .36s; }
+      @keyframes rise { to { opacity: 1; transform: none; } }
+    }
+
+    :focus-visible { outline: 2px solid var(--accent-fill); outline-offset: 3px; border-radius: 4px; }
+
+    footer.provenance {
+      color: var(--ink-3); font-size: 13px; line-height: 1.7;
+      padding: 40px 0 72px; border-top: 1px solid var(--hair); margin-top: 56px;
+    }
+    footer.provenance .mono { font-family: var(--mono); font-size: 12px; }
+
+    {% block styles %}{% endblock %}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <span class="mark">Catalyst Integrity<span class="dot">.</span></span>
+      <nav>
+        <a href="/desk">Portfolio</a>
+        <a href="/contracts">Analyst console</a>
+        <span class="asof">as of {{ snapshot_as_of }}</span>
+      </nav>
+    </div>
+  </header>
+  {% block body %}{% endblock %}
+</body>
+</html>

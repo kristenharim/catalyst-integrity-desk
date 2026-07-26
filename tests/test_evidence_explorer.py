@@ -571,10 +571,13 @@ def test_the_routes_around_the_explorer_still_render(client, route):
     assert client.get(route).status_code == 200, f"{route} no longer renders"
 
 
-def test_the_demo_entry_points_are_unmoved(client):
-    for route in ("/", "/demo"):
-        r = client.get(route)
-        assert r.status_code == 302 and "/contract/RCKT" in r.headers["Location"]
+def test_the_demo_entry_point_is_unmoved(client):
+    # The demo opens on /demo, which still redirects to the Rocket frame. The
+    # root moved to the plain-language portfolio; the demo entry did not.
+    r = client.get("/demo")
+    assert r.status_code == 302 and "/contract/RCKT" in r.headers["Location"]
+    root = client.get("/")
+    assert root.status_code == 302 and "/desk" in root.headers["Location"]
 
 
 def test_the_redline_still_serves_the_decision_form(client):

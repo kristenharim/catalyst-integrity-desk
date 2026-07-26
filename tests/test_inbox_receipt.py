@@ -724,10 +724,14 @@ def test_the_existing_confirm_page_still_renders_its_receipt(isolated):
     assert "intact" in body
 
 
-def test_the_root_still_redirects_to_the_rocket_detail(client):
-    """The inbox is at /inbox. The front door did not move."""
+def test_the_root_leads_to_the_portfolio_and_demo_to_the_rocket_detail(client):
+    """The root is the plain-language portfolio; the demo entry is unchanged.
+
+    The inbox is at /inbox and was never the front door. The root now leads to
+    /desk, and /demo keeps the demo-opening constraint on the Rocket frame.
+    """
     r = client.get("/")
-    assert r.status_code == 302 and "/contract/RCKT" in r.headers["Location"]
+    assert r.status_code == 302 and "/desk" in r.headers["Location"]
     r = client.get("/demo")
     assert r.status_code == 302 and "/contract/RCKT" in r.headers["Location"]
 
@@ -840,7 +844,7 @@ A11Y_VIEWPORTS = {
 # through: the test at the end of this file reads the url_map and fails on a
 # rule that is in neither map.
 A11Y_NOT_SCANNED = {
-    "/": "302 to the Rocket detail, renders nothing a reader can look at",
+    "/": "302 to /desk, renders nothing a reader can look at",
     "/demo": "302 to the Rocket detail, renders nothing a reader can look at",
     "/static/<path:filename>": "Flask builtin, serves files rather than pages",
     "/redline/decide": "POST only; it redirects to /redline/confirm, scanned above",
@@ -855,6 +859,11 @@ A11Y_NOT_SCANNED = {
     "/queue": "Phase 1 monitoring queue, outside the Phase 2 surface",
     "/workspace": "Phase 1 workspace, outside the Phase 2 surface",
     "/belief/new": "Phase 1 belief form, outside the Phase 2 surface",
+    # Plain-language presentation surface, outside the Phase 2 decision spine.
+    # Built accessibly (semantic HTML, visible focus, contrast floor) but not
+    # yet driven through axe here; a gap in coverage rather than a pass claim.
+    "/desk": "Plain-language portfolio overview, outside the Phase 2 surface",
+    "/memo/<ticker>": "Plain-language company memo, outside the Phase 2 surface",
 }
 
 # There is no exception map here on purpose. The three colour-contrast nodes on
