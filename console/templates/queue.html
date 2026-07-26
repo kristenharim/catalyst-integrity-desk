@@ -45,7 +45,7 @@
       <td><a href="/contract/{{ row.ticker }}">{{ row.ticker }}</a></td>
       <td>{{ row.name }}</td>
       <td>
-        {% if row.gap_1f is not none %}{{ row.gap_1f }} mo{% else %}<span style="color:#8b949e">not rankable</span>{% endif %}
+        {% if row.gap_1f is not none %}{{ row.gap_1f }} mo{% else %}<span style="color:var(--cds-text-secondary)">not rankable</span>{% endif %}
       </td>
       <td>{{ row.detail }}</td>
     </tr>

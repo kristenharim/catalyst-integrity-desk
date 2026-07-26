@@ -9,20 +9,20 @@
    the previous ledger hash, the new ledger hash, thesis state.
    Hashes come from ledger entries -- the chain is the proof.
    ------------------------------------------------------------------ #}
-<div style="background:#161b22; border:1px solid #30363d; border-radius:6px;
+<div style="background:#ffffff; border:1px solid #e6e6ea; border-radius:6px;
             padding:20px; max-width:720px; margin-bottom:24px;">
 
   {# Verdict + integrity badge side by side #}
   <div style="display:flex; align-items:center; justify-content:space-between;
               margin-bottom:20px;">
     <div>
-      <span style="font-size:11px; color:#8b949e; text-transform:uppercase;
+      <span style="font-size:11px; color:#6e6e73; text-transform:uppercase;
                    letter-spacing:0.07em;">Verdict</span>
       <div style="margin-top:4px;">
         {% if verdict == "approve" %}
-          <span style="color:#10b981; font-weight:bold; font-size:15px;">Accepted</span>
+          <span style="color:#0f7350; font-weight:bold; font-size:15px;">Accepted</span>
         {% else %}
-          <span style="color:#f85149; font-weight:bold; font-size:15px;">Rejected</span>
+          <span style="color:#c22d2d; font-weight:bold; font-size:15px;">Rejected</span>
         {% endif %}
       </div>
     </div>
@@ -31,25 +31,25 @@
        Each keeps its meaning colour: green intact, red tampered, amber
        truncated or replaced. Only the ground under green moved, to the darker
        success tint base.html declares as --cds-tint-success, the same
-       substitution /redline took: #10b981 on #1a4731 is 4.16:1 against a 4.5:1
-       floor and on #0f2417 it is 6.44:1. The other two already clear it,
-       #f85149 on #3d1414 at 4.79:1 and #f59e0b on #2d1a00 at 7.76:1. #}
+       substitution /redline took: #0f7350 on #e8f6ef is 4.16:1 against a 4.5:1
+       floor and on #e8f6ef it is 6.44:1. The other two already clear it,
+       #c22d2d on #fbe9e9 at 4.79:1 and #8f5000 on #fbeeda at 7.76:1. #}
     <div>
-      <span style="font-size:11px; color:#8b949e; text-transform:uppercase;
+      <span style="font-size:11px; color:#6e6e73; text-transform:uppercase;
                    letter-spacing:0.07em;">Ledger integrity</span>
       <div style="margin-top:4px;">
         {% if integrity_status == "intact" %}
-          <span style="background:#0f2417; color:#10b981; border:1px solid #10b981;
+          <span style="background:#e8f6ef; color:#0f7350; border:1px solid #0f7350;
                        font-size:12px; padding:4px 14px; border-radius:3px; font-weight:bold;">
             &#10003; intact
           </span>
         {% elif integrity_status == "tampered" %}
-          <span style="background:#3d1414; color:#f85149; border:1px solid #f85149;
+          <span style="background:#fbe9e9; color:#c22d2d; border:1px solid #c22d2d;
                        font-size:12px; padding:4px 14px; border-radius:3px; font-weight:bold;">
             &#10007; tampered
           </span>
         {% else %}
-          <span style="background:#2d1a00; color:#f59e0b; border:1px solid #f59e0b;
+          <span style="background:#fbeeda; color:#8f5000; border:1px solid #8f5000;
                        font-size:12px; padding:4px 14px; border-radius:3px; font-weight:bold;">
             &#9888; truncated or replaced
           </span>
@@ -63,33 +63,33 @@
   {# Receipt detail #}
   {% if receipt %}
   <div style="margin:16px 0;">
-    <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+    <div style="font-size:11px; color:#6e6e73; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">Receipt</div>
     <table style="max-width:680px; font-size:12px;">
       <tbody>
         <tr>
-          <td style="color:#8b949e; padding:5px 12px 5px 0; white-space:nowrap;">Author</td>
+          <td style="color:#6e6e73; padding:5px 12px 5px 0; white-space:nowrap;">Author</td>
           <td>{{ receipt.author }}</td>
         </tr>
         <tr>
-          <td style="color:#8b949e; padding:5px 12px 5px 0; white-space:nowrap;">Timestamp</td>
+          <td style="color:#6e6e73; padding:5px 12px 5px 0; white-space:nowrap;">Timestamp</td>
           {# review.ts_display composes both fields; this page renders them. #}
           <td>{{ receipt.ts_display.label }}
             {%- if receipt.ts_display.note %}
-            <span style="color:#8b949e;">{{ receipt.ts_display.note }}</span>
+            <span style="color:#6e6e73;">{{ receipt.ts_display.note }}</span>
             {%- endif %}
           </td>
         </tr>
         <tr>
-          <td style="color:#8b949e; padding:5px 12px 5px 0; white-space:nowrap;">Card</td>
+          <td style="color:#6e6e73; padding:5px 12px 5px 0; white-space:nowrap;">Card</td>
           <td><span class="tag">{{ receipt.card_id }}</span></td>
         </tr>
         <tr>
-          <td style="color:#8b949e; padding:5px 12px 5px 0; white-space:nowrap;">What changed</td>
+          <td style="color:#6e6e73; padding:5px 12px 5px 0; white-space:nowrap;">What changed</td>
           <td>{{ receipt.what_changed }}</td>
         </tr>
         <tr>
-          <td style="color:#8b949e; padding:5px 12px 5px 0; white-space:nowrap;">Thesis state</td>
+          <td style="color:#6e6e73; padding:5px 12px 5px 0; white-space:nowrap;">Thesis state</td>
           <td>
             {% if receipt.thesis_state == "financing required before catalyst" %}
               <span class="verdict-alert">{{ receipt.thesis_state }}</span>
@@ -98,7 +98,7 @@
             {% else %}
               {{ receipt.thesis_state }}
             {% endif %}
-            <span style="display:block; color:#8b949e; font-size:11px; margin-top:3px;">computed under the recorded assumptions: flat burn from the last filing, no undrawn facility or milestone inflow</span>
+            <span style="display:block; color:#6e6e73; font-size:11px; margin-top:3px;">computed under the recorded assumptions: flat burn from the last filing, no undrawn facility or milestone inflow</span>
           </td>
         </tr>
       </tbody>
@@ -108,48 +108,48 @@
   {# Hash chain: the most impressive thing in the system, made visible #}
   <hr>
   <div style="margin-top:16px;">
-    <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+    <div style="font-size:11px; color:#6e6e73; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:12px;">Hash chain</div>
 
     {# Chain diagram: observation -> Granite memo -> human decision -> hash verified #}
     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;
                 margin-bottom:16px; font-size:11px;">
-      <span style="background:#0d1117; border:1px solid #30363d; border-radius:3px;
-                   padding:4px 10px; color:#c9d1d9;">observation</span>
-      <span style="color:#30363d;">&#8594;</span>
-      <span style="background:#0d1117; border:1px solid #1e3a5f; border-radius:3px;
-                   padding:4px 10px; color:#60a5fa;">Granite memo</span>
-      <span style="color:#30363d;">&#8594;</span>
-      <span style="background:#0d1117; border:1px solid #30363d; border-radius:3px;
-                   padding:4px 10px; color:#c9d1d9;">human decision</span>
-      <span style="color:#30363d;">&#8594;</span>
+      <span style="background:#f6f8fa; border:1px solid #e6e6ea; border-radius:3px;
+                   padding:4px 10px; color:#1d1d1f;">observation</span>
+      <span style="color:#e6e6ea;">&#8594;</span>
+      <span style="background:#f6f8fa; border:1px solid #dbe7ff; border-radius:3px;
+                   padding:4px 10px; color:#0066cc;">Granite memo</span>
+      <span style="color:#e6e6ea;">&#8594;</span>
+      <span style="background:#f6f8fa; border:1px solid #e6e6ea; border-radius:3px;
+                   padding:4px 10px; color:#1d1d1f;">human decision</span>
+      <span style="color:#e6e6ea;">&#8594;</span>
       {% if integrity_status == "intact" %}
         {# Same pairing as the badge above, and the same substitution. #}
-        <span style="background:#0f2417; border:1px solid #10b981; border-radius:3px;
-                     padding:4px 10px; color:#10b981; font-weight:bold;">hash verified</span>
+        <span style="background:#e8f6ef; border:1px solid #0f7350; border-radius:3px;
+                     padding:4px 10px; color:#0f7350; font-weight:bold;">hash verified</span>
       {% elif integrity_status == "tampered" %}
-        <span style="background:#3d1414; border:1px solid #f85149; border-radius:3px;
-                     padding:4px 10px; color:#f85149; font-weight:bold;">hash FAILED</span>
+        <span style="background:#fbe9e9; border:1px solid #c22d2d; border-radius:3px;
+                     padding:4px 10px; color:#c22d2d; font-weight:bold;">hash FAILED</span>
       {% else %}
-        <span style="background:#2d1a00; border:1px solid #f59e0b; border-radius:3px;
-                     padding:4px 10px; color:#f59e0b; font-weight:bold;">chain replaced</span>
+        <span style="background:#fbeeda; border:1px solid #8f5000; border-radius:3px;
+                     padding:4px 10px; color:#8f5000; font-weight:bold;">chain replaced</span>
       {% endif %}
     </div>
 
     <table style="max-width:680px; font-size:11px;">
       <tbody>
         <tr>
-          <td style="color:#8b949e; padding:4px 12px 4px 0; white-space:nowrap;">Prev hash</td>
+          <td style="color:#6e6e73; padding:4px 12px 4px 0; white-space:nowrap;">Prev hash</td>
           {# The page's own secondary text colour rather than the dimmer grey it
              used to carry, which was 3.57:1 on this layer and so was subordinate
              by being unreadable. It stays subordinate to the entry hash below by
              colour meaning: green is the hash this receipt is addressed by. #}
-          <td style="font-family:ui-monospace,monospace; color:#8b949e;
+          <td style="font-family:ui-monospace,monospace; color:#6e6e73;
                      word-break:break-all;">{{ receipt.prev_hash }}</td>
         </tr>
         <tr>
-          <td style="color:#8b949e; padding:4px 12px 4px 0; white-space:nowrap;">Entry hash</td>
-          <td style="font-family:ui-monospace,monospace; color:#10b981;
+          <td style="color:#6e6e73; padding:4px 12px 4px 0; white-space:nowrap;">Entry hash</td>
+          <td style="font-family:ui-monospace,monospace; color:#0f7350;
                      word-break:break-all;">{{ receipt.entry_hash }}</td>
         </tr>
       </tbody>
@@ -168,8 +168,8 @@
 
 </div>
 
-<blockquote style="border-left:3px solid #30363d; padding-left:12px;
-                   color:#8b949e; font-size:11px; line-height:1.6;
+<blockquote style="border-left:3px solid #e6e6ea; padding-left:12px;
+                   color:#6e6e73; font-size:11px; line-height:1.6;
                    max-width:720px; margin-bottom:16px;">
   Tamper demo: edit one byte of <code>data/decisions.jsonl</code> and reload to see
   <strong>tampered</strong>. Delete the last entry and reload to see

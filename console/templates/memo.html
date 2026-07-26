@@ -114,10 +114,10 @@
         {% if state != 'warn' %}
         {% set gx0 = tl.shortfall.x_from %}{% set gx1 = tl.shortfall.x_to %}
         <rect x="{{ gx0 }}" y="99" width="{{ (gx1 - gx0)|round(1) }}" height="10" rx="5"
-              fill="{{ '#12855a' if state == 'ok' else '#c22d2d' }}"/>
+              fill="{{ '#0f7350' if state == 'ok' else '#c22d2d' }}"/>
         <text x="{{ ((gx0 + gx1) / 2)|round(1) }}" y="86" text-anchor="middle"
               font-family="var(--sans)" font-size="15" font-weight="600"
-              fill="{{ '#12855a' if state == 'ok' else '#c22d2d' }}">
+              fill="{{ '#0f7350' if state == 'ok' else '#c22d2d' }}">
           {{ tl.shortfall.months_1f }} months {{ 'of buffer' if state == 'ok' else 'short' }}
         </text>
         {% endif %}

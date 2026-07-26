@@ -496,11 +496,11 @@ def test_badge_tampered_not_truncated_on_byte_edit(tmp_path, monkeypatch):
         # The badge must show 'tampered', not 'truncated or replaced'.
         # The blockquote also contains 'truncated' as instructional text, so
         # we confirm the badge span colour belongs to the tampered style
-        # (red border #f85149) rather than the truncated style (amber #f59e0b).
-        assert b"f85149" in resp.data, (
+        # (red #c22d2d) rather than the truncated style (amber #a75d00).
+        assert b"c22d2d" in resp.data, (
             "tampered badge must use red styling, not amber"
         )
-        assert b"f59e0b" not in resp.data, (
+        assert b"a75d00" not in resp.data, (
             "badge must not show amber 'truncated or replaced' styling on a byte-edit tamper"
         )
 

@@ -5,38 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Catalyst Integrity Desk{% endblock %}</title>
   <style>
-    /* -------------------------------------------------------------------
-       IBM Carbon Gray 100 tokens, declared rather than imported.
+    /* ===================================================================
+       Catalyst Integrity console — light Apple identity, shared with the
+       memo surface (memo_base.html). One design language across the whole
+       product: light, legible, SF Pro via the native system stack with no
+       network, monospace kept only for data (numbers, tags, hashes).
 
-       Carbon is the grammar here: the token names, the type scale, the
-       spacing step and the contrast floor. No Carbon package is installed
-       and no stylesheet is fetched, because the console must render with
-       flask alone and no network call. The values are the published g100
-       theme; the semantic role each one plays is the one this product
-       already used, so a colour does not change meaning on the way over.
-
-       Alarm colours are stated twice: once as the token, once as the dark
-       tint they sit on. $support-error on $layer-01 is 4.26:1, under the
-       4.5:1 body floor, and on its own tint it clears it. A palette that
-       fails contrast on the state that matters most is the wrong palette.
-    ------------------------------------------------------------------- */
+       Semantic colour is carried by three roles and nothing else: green is
+       funded/healthy, red is an integrity or funding failure, blue is the
+       Granite provenance accent. Each is checked to clear the 4.5:1 body
+       contrast floor on the surface it sits on.
+    =================================================================== */
     :root {
-      --cds-background: #161616;
-      --cds-layer-01: #262626;
-      --cds-layer-02: #393939;
-      --cds-border-subtle: #393939;
-      --cds-text-primary: #f4f4f4;
-      --cds-text-secondary: #c6c6c6;
-      --cds-support-success: #42be65;
-      --cds-support-error: #fa4d56;
-      --cds-support-warning: #f1c21b;
-      --cds-support-info: #4589ff;
-      --cds-link-primary: #78a9ff;
-      --cds-focus: #ffffff;
-      --cds-tint-success: #0f2417;
-      --cds-tint-error: #2d0f11;
-      --cds-tint-warning: #2d2400;
-      --cds-tint-info: #0f1a2d;
+      --canvas:      #f5f5f7;
+      --surface:     #ffffff;
+      --surface-2:   #fbfbfd;
+      --ink:         #1d1d1f;
+      --ink-2:       #55565a;
+      --ink-3:       #6e6e73;
+      --hair:        #e6e6ea;
+      --hair-strong: #d2d2d7;
+      --accent:      #0066cc;
+      --accent-fill: #0071e3;
+      --ok:          #0f7350;
+      --ok-soft:     #e8f6ef;
+      --warn:        #8f5000;
+      --warn-soft:   #fbeeda;
+      --alert:       #c22d2d;
+      --alert-soft:  #fbe9e9;
+      --alert-deep:  #a51f1f;
+      --radius:      18px;
+      --radius-sm:   12px;
+      --shadow:      0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.05);
+      --mono:        ui-monospace, "SF Mono", "Menlo", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+              "SF Pro Text", system-ui, "Segoe UI", "Helvetica Neue", sans-serif;
+
+      /* Legacy Carbon token names, remapped to the light palette. Several
+         console pages (the decision spine, evidence, activity, receipt) were
+         built on these, so redefining the values here re-themes them light in
+         one place rather than touching each template. Every text-on-surface and
+         text-on-tint pairing below clears the 4.5:1 body contrast floor. */
+      --cds-background:      #f5f5f7;
+      --cds-layer-01:        #ffffff;
+      --cds-layer-02:        #eff0f2;
+      --cds-border-subtle:   #e0e0e4;
+      --cds-text-primary:    #1d1d1f;
+      --cds-text-secondary:  #55565a;
+      --cds-support-success: #0f7350;
+      --cds-support-error:   #c22d2d;
+      --cds-support-warning: #8f5000;
+      --cds-support-info:    #0066cc;
+      --cds-link-primary:    #0066cc;
+      --cds-focus:           var(--accent-fill);
+      --cds-tint-success:    #e8f6ef;
+      --cds-tint-error:      #fbe9e9;
+      --cds-tint-warning:    #fbeeda;
+      --cds-tint-info:       #eaf1fc;
       --cds-spacing-02: 4px;
       --cds-spacing-03: 8px;
       --cds-spacing-05: 16px;
@@ -44,168 +69,140 @@
       --cds-spacing-07: 32px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
-      font-family: ui-monospace, "Cascadia Code", "Menlo", monospace;
-      font-size: 13px;
-      background: #0f1117;
-      color: #c9d1d9;
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.5;
+      letter-spacing: -0.01em;
+      background: var(--canvas);
+      color: var(--ink);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
-    a { color: #58a6ff; text-decoration: none; }
+    a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* -------------------------------------------------------------------
-       Nav bar: brand + links
-    ------------------------------------------------------------------- */
-    /* Wrapping, because a row of six links and a brand is 538px wide and a
-       phone is 390. Without it every screen in this console pushed the page
-       148px sideways at 390x844, measured in a browser rather than argued
-       about. At every width the nav already fitted, wrapping changes nothing:
-       the demo frame at 1280x800 is unmoved. */
+    /* --- top nav: light, sticky, matches the memo surface ----------- */
     nav {
-      background: #161b22;
-      border-bottom: 1px solid #30363d;
-      padding: 10px 24px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 24px;
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(245,245,247,.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--hair);
+      padding: 0 24px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px;
+      min-height: 52px;
     }
     nav .brand {
-      font-weight: bold;
-      color: #e6edf3;
-      letter-spacing: 0.03em;
+      font-weight: 600; letter-spacing: -0.02em; color: var(--ink);
+      margin-right: 8px;
     }
-    nav a { color: #8b949e; font-size: 12px; }
-    nav a:hover { color: #e6edf3; }
+    nav .brand .dot { color: var(--accent-fill); }
+    nav a { color: var(--ink-3); font-size: 14px; font-weight: 500; }
+    nav a:hover { color: var(--ink); text-decoration: none; }
 
-    /* -------------------------------------------------------------------
-       Command bar: operational counts across the top
-       Precomputed in make_snapshot.py; no Jinja arithmetic.
-    ------------------------------------------------------------------- */
+    /* --- command bar: operational counts ---------------------------- */
     .cmd-bar {
-      background: #0d1117;
-      border-bottom: 1px solid #21262d;
-      padding: 7px 24px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--hair);
+      padding: 12px 24px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 32px;
     }
-    .cmd-bar-item {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-    }
-    .cmd-bar-count {
-      font-size: 18px;
-      font-weight: bold;
-      font-variant-numeric: tabular-nums;
-    }
-    .cmd-bar-label {
-      font-size: 11px;
-      color: #8b949e;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-    }
-    /* Colour meanings:
-       Emerald  = healthy / within band
-       Red      = integrity failure only
-       Electric blue = Granite accent
-    */
-    .count-ok    { color: #10b981; }   /* emerald */
-    .count-alert { color: #f85149; }   /* red — breach / lapsed */
-    .count-info  { color: #60a5fa; }   /* electric blue — Granite accent */
+    .cmd-bar-item { display: flex; align-items: baseline; gap: 8px; }
+    .cmd-bar-count { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .cmd-bar-label { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .count-ok    { color: var(--ok); }
+    .count-alert { color: var(--alert); }
+    .count-info  { color: var(--accent); }
 
-    main { padding: 24px; max-width: 1280px; }
-    h1 { font-size: 16px; font-weight: bold; color: #e6edf3; margin-bottom: 16px; }
-    h2 { font-size: 13px; font-weight: bold; color: #8b949e;
-         text-transform: uppercase; letter-spacing: 0.08em;
-         margin: 24px 0 10px; }
+    /* --- layout + type ---------------------------------------------- */
+    main { padding: 32px 24px 64px; max-width: 1120px; margin: 0 auto; }
+    h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 6px; }
+    h2 { font-size: 12px; font-weight: 600; color: var(--ink-3);
+         text-transform: uppercase; letter-spacing: 0.07em; margin: 32px 0 12px; }
+    p { color: var(--ink-2); }
+
+    /* --- tables ----------------------------------------------------- */
     table { border-collapse: collapse; width: 100%; }
     th {
-      text-align: left;
-      font-size: 11px;
-      color: #8b949e;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      border-bottom: 1px solid #30363d;
-      padding: 6px 12px;
+      text-align: left; font-size: 11.5px; color: var(--ink-3);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--hair-strong); padding: 9px 14px;
     }
-    td { padding: 7px 12px; border-bottom: 1px solid #21262d; vertical-align: top; }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--hair); vertical-align: top; }
     tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background .12s ease; }
+
+    /* --- shared components (light) ---------------------------------- */
+    .card { background: var(--surface); border: 1px solid var(--hair);
+            border-radius: var(--radius); box-shadow: var(--shadow); }
     .tag {
-      display: inline-block;
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 3px;
-      background: #21262d;
-      color: #8b949e;
-      border: 1px solid #30363d;
+      display: inline-block; font-family: var(--mono); font-size: 11px;
+      padding: 2px 7px; border-radius: 6px; background: var(--surface-2);
+      color: var(--ink-2); border: 1px solid var(--hair-strong);
     }
-    hr { border: none; border-top: 1px solid #30363d; margin: 20px 0; }
-    .note { font-size: 11px; color: #8b949e; max-width: 860px; margin-bottom: 10px; }
-    details summary::marker { color: #58a6ff; }
+    .mono { font-family: var(--mono); }
+    .tabnum { font-variant-numeric: tabular-nums; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 7px; font-size: 13px;
+      font-weight: 600; letter-spacing: -0.01em; padding: 4px 12px; border-radius: 100px;
+    }
+    .pill::before { content: ""; width: 7px; height: 7px; border-radius: 100px; background: currentColor; }
+    .pill.ok { color: var(--ok); background: var(--ok-soft); }
+    .pill.alert { color: var(--alert); background: var(--alert-soft); }
+    .pill.warn { color: var(--warn); background: var(--warn-soft); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans);
+      font-size: 15px; font-weight: 500; letter-spacing: -0.01em; cursor: pointer;
+      padding: 10px 18px; border-radius: 100px; border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--accent-fill); color: #fff; }
+    .btn-primary:hover { background: #0062c9; text-decoration: none; }
+    .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--hair-strong); }
+    .btn-ghost:hover { background: var(--surface-2); text-decoration: none; }
+    .btn-danger { background: var(--alert); color: #fff; }
+    .btn-danger:hover { background: var(--alert-deep); text-decoration: none; }
 
-    /* Colour discipline */
-    .verdict-ok     { color: #10b981; }   /* emerald: funded */
-    .verdict-alert  { color: #f85149; }   /* red: breach / financing required */
-    .granite-accent { color: #60a5fa; }   /* electric blue: Granite provenance */
-    .lapsed-label   { color: #f87171; font-size: 11px; }
+    hr { border: none; border-top: 1px solid var(--hair); margin: 28px 0; }
+    .note { font-size: 14px; color: var(--ink-2); max-width: 70ch; margin-bottom: 12px; line-height: 1.55; }
+    .lede { font-size: 18px; color: var(--ink); line-height: 1.45; max-width: 60ch; }
+    details summary { cursor: pointer; }
+    details summary::marker { color: var(--accent); }
 
-    /* A visible focus ring on every interactive element. Carbon $focus, 2px.
-       The keyboard path through the inbox and the receipt is asserted by the
-       axe run in tests/test_inbox_receipt.py. */
-    a:focus-visible, summary:focus-visible, button:focus-visible {
-      outline: 2px solid var(--cds-focus);
-      outline-offset: 2px;
-    }
+    /* --- semantic text roles (class contract kept from the console) - */
+    .verdict-ok     { color: var(--ok); }
+    .verdict-alert  { color: var(--alert); }
+    .verdict-warn   { color: var(--warn); }
+    .granite-accent { color: var(--accent); }
+    .lapsed-label   { color: var(--alert-deep); font-size: 12px; }
 
-    /* -------------------------------------------------------------------
-       Plain-English key. Collapsed by default so it adds one line of height
-       and never moves the demo's opening frame; open it to decode the terms.
-    ------------------------------------------------------------------- */
-    .help-key {
-      background: #0d1117;
-      border-bottom: 1px solid #21262d;
-      padding: 8px 24px;
-      font-size: 12px;
-    }
-    .help-key > summary {
-      cursor: pointer;
-      color: #8b949e;
-      list-style-position: inside;
-    }
-    .help-key > summary:hover { color: #e6edf3; }
-    .help-key .help-lede {
-      color: #c9d1d9;
-      max-width: 900px;
-      margin: 10px 0 12px;
-      line-height: 1.5;
-    }
+    :focus-visible { outline: 2px solid var(--accent-fill); outline-offset: 2px; border-radius: 4px; }
+
+    /* --- plain-English key, collapsed by default -------------------- */
+    .help-key { background: var(--surface); border-bottom: 1px solid var(--hair); padding: 10px 24px; font-size: 14px; }
+    .help-key > summary { cursor: pointer; color: var(--ink-3); list-style-position: inside; font-weight: 500; }
+    .help-key > summary:hover { color: var(--ink); }
+    .help-key .help-lede { color: var(--ink-2); max-width: 900px; margin: 12px 0 14px; line-height: 1.55; }
     .help-key table { max-width: 900px; }
-    .help-key th, .help-key td {
-      padding: 4px 12px 4px 0;
-      border: none;
-      font-size: 12px;
-      text-transform: none;
-      letter-spacing: 0;
-      vertical-align: top;
+    .help-key th, .help-key td { padding: 5px 14px 5px 0; border: none; font-size: 14px; text-transform: none; letter-spacing: 0; vertical-align: top; }
+    .help-key th { color: var(--ink); white-space: nowrap; width: 1%; font-weight: 600; }
+    .help-key td { color: var(--ink-2); }
+    .help-key .k-bad { color: var(--alert); font-weight: 600; }
+    .help-key .k-ok  { color: var(--ok); font-weight: 600; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .rise { opacity: 0; transform: translateY(10px); animation: rise .6s cubic-bezier(.2,.7,.2,1) forwards; }
+      @keyframes rise { to { opacity: 1; transform: none; } }
     }
-    .help-key th {
-      color: #e6edf3;
-      white-space: nowrap;
-      width: 1%;
-    }
-    .help-key td { color: #8b949e; }
-    .help-key .k-bad { color: #f85149; }
-    .help-key .k-ok  { color: #10b981; }
   </style>
   {% block styles %}{% endblock %}
 </head>
 <body>
   <nav>
-    <span class="brand">Catalyst Integrity Desk</span>
+    <span class="brand">Catalyst Integrity<span class="dot">.</span></span>
+    <a href="/desk">Portfolio</a>
     <a href="/inbox">Inbox</a>
     <a href="/activity">Activity</a>
     <a href="/workspace">Workspace</a>

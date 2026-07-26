@@ -19,32 +19,32 @@
             margin-bottom:28px; max-width:1100px;">
 
   {# ---- Left: thesis as approved against the lapsed trial ---- #}
-  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:20px;">
-    <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+  <div style="background:#ffffff; border:1px solid #e6e6ea; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#6e6e73; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">Thesis as approved</div>
-    <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
+    <div style="font-size:12px; color:#1d1d1f; line-height:1.7;">
       <div style="margin-bottom:8px;">
-        <span style="color:#8b949e">Trial:</span>
-        <span style="font-weight:bold; color:#e6edf3;">{{ redline.prior_trial }}</span>
+        <span style="color:#6e6e73">Trial:</span>
+        <span style="font-weight:bold; color:#1d1d1f;">{{ redline.prior_trial }}</span>
       </div>
       <div style="margin-bottom:8px;">
-        <span style="color:#8b949e">Approved claim:</span>
-        <div style="margin-top:4px; font-style:italic; color:#c9d1d9; font-size:11px;
-                    line-height:1.6; border-left:3px solid #30363d; padding-left:10px;">
+        <span style="color:#6e6e73">Approved claim:</span>
+        <div style="margin-top:4px; font-style:italic; color:#1d1d1f; font-size:11px;
+                    line-height:1.6; border-left:3px solid #e6e6ea; padding-left:10px;">
           {{ redline.proposed_card.claim }}
         </div>
       </div>
       <div style="margin-bottom:8px;">
-        <span style="color:#8b949e">Registered primary completion:</span>
-        <code style="background:#0d1117; padding:2px 6px; border-radius:3px;
-                     color:#e6edf3;">{{ redline.prior_pcd }}</code>
+        <span style="color:#6e6e73">Registered primary completion:</span>
+        <code style="background:#f6f8fa; padding:2px 6px; border-radius:3px;
+                     color:#1d1d1f;">{{ redline.prior_pcd }}</code>
       </div>
       <div style="margin-bottom:8px;">
-        <span style="color:#8b949e">Funding gap at approval:</span>
-        <span style="color:#10b981; font-weight:bold;">+{{ redline.lapse_display.prior_gap_1f }} months</span>
+        <span style="color:#6e6e73">Funding gap at approval:</span>
+        <span style="color:#0f7350; font-weight:bold;">+{{ redline.lapse_display.prior_gap_1f }} months</span>
       </div>
       <div>
-        <span style="color:#8b949e">Approved band:</span>
+        <span style="color:#6e6e73">Approved band:</span>
         [{{ redline.breach.display.expected_low_1f }}, {{ redline.breach.display.expected_high_1f }}]
         months
       </div>
@@ -52,10 +52,10 @@
   </div>
 
   {# ---- Centre: what changed (date passed, not an amendment) ---- #}
-  <div style="background:#161b22; border:1px solid #d29922; border-radius:6px; padding:20px;">
-    <div style="font-size:11px; color:#d29922; text-transform:uppercase;
+  <div style="background:#ffffff; border:1px solid #8f5000; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#8f5000; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">What changed</div>
-    <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
+    <div style="font-size:12px; color:#1d1d1f; line-height:1.7;">
       {# Derived in console/review.py from the stored version history of this
          trial, never read off a stored verdict. Three states, three sentences:
          the claim, its contradiction, and the refusal to make either. The
@@ -63,11 +63,11 @@
          quiet when its evidence runs out reads exactly like one whose evidence
          held. #}
       {% if reconciliation.state == "no_later_registry_version_before_expiry" %}
-      <div style="background:#2d1f00; border:1px solid #d29922; border-radius:4px;
-                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#d29922;">
+      <div style="background:#fbeeda; border:1px solid #8f5000; border-radius:4px;
+                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#8f5000;">
         No later registry version reconciled the registered expectation before
         the date passed.
-        <div style="color:#8b949e; margin-top:6px; line-height:1.5;">
+        <div style="color:#55565a; margin-top:6px; line-height:1.5;">
           Read from the registry version history stored for
           {{ reconciliation.trial }} in this snapshot, as of
           {{ reconciliation.as_of }}. Registry versions only: press wires and
@@ -75,43 +75,43 @@
         </div>
       </div>
       {% elif reconciliation.state == "reconciled_before_expiry" %}
-      <div style="background:#161b22; border:1px solid #30363d; border-radius:4px;
-                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#8b949e;">
+      <div style="background:#ffffff; border:1px solid #e6e6ea; border-radius:4px;
+                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#6e6e73;">
         A later registry version moved the registered expectation before the
         date passed, in the history stored for {{ reconciliation.trial }}.
       </div>
       {% else %}
-      <div style="background:#161b22; border:1px solid #30363d; border-radius:4px;
-                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#8b949e;">
+      <div style="background:#ffffff; border:1px solid #e6e6ea; border-radius:4px;
+                  padding:8px 12px; margin-bottom:12px; font-size:11px; color:#6e6e73;">
         Registry reconciliation unavailable for {{ reconciliation.trial }}:
         {{ reconciliation.why }}.
       </div>
       {% endif %}
       <div style="margin-bottom:12px;">
-        <span style="color:#8b949e">Binding trial before</span>
+        <span style="color:#6e6e73">Binding trial before</span>
         <div style="margin-top:6px; display:flex; align-items:center; gap:10px;">
           {# Old trial struck through in red #}
-          <code style="background:#3d1414; padding:2px 8px; border-radius:3px;
-                       color:#f87171; text-decoration:line-through;
+          <code style="background:#fbe9e9; padding:2px 8px; border-radius:3px;
+                       color:#c22d2d; text-decoration:line-through;
                        font-size:13px;">{{ redline.prior_trial }} ({{ redline.prior_pcd }})</code>
         </div>
       </div>
       <div style="margin-bottom:12px;">
-        <span style="color:#8b949e">Binding trial now</span>
+        <span style="color:#6e6e73">Binding trial now</span>
         <div style="margin-top:6px;">
           {# New binding trial in bright red -- breach moment #}
-          <code style="background:#3d1414; padding:2px 8px; border-radius:3px;
-                       color:#f85149; font-size:13px; font-weight:bold;
-                       border:1px solid #f85149;">{{ redline.current_trial }} ({{ redline.current_pcd }})</code>
+          <code style="background:#fbe9e9; padding:2px 8px; border-radius:3px;
+                       color:#c22d2d; font-size:13px; font-weight:bold;
+                       border:1px solid #c22d2d;">{{ redline.current_trial }} ({{ redline.current_pcd }})</code>
         </div>
       </div>
       <div style="margin-bottom:8px;">
-        <span style="color:#8b949e">Metric:</span>
+        <span style="color:#6e6e73">Metric:</span>
         <span class="tag">{{ redline.breach.metric }}</span>
       </div>
       <div>
-        <span style="color:#8b949e">Observed gap:</span>
-        <span style="color:#f85149; font-weight:bold;">
+        <span style="color:#6e6e73">Observed gap:</span>
+        <span style="color:#c22d2d; font-weight:bold;">
           {{ redline.breach.display.observed_1f }} months
         </span>
         (was within [{{ redline.breach.display.expected_low_1f }}, {{ redline.breach.display.expected_high_1f }}])
@@ -120,14 +120,14 @@
   </div>
 
   {# ---- Right: thesis status after the binding catalyst moved ---- #}
-  <div style="background:#161b22; border:2px solid #f85149; border-radius:6px; padding:20px;
+  <div style="background:#ffffff; border:2px solid #c22d2d; border-radius:6px; padding:20px;
               transition: border-color 0.4s;">
-    <div style="font-size:11px; color:#f85149; text-transform:uppercase;
+    <div style="font-size:11px; color:#c22d2d; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">Thesis status</div>
-    <div style="font-size:12px; color:#c9d1d9; line-height:1.7;">
+    <div style="font-size:12px; color:#1d1d1f; line-height:1.7;">
       <div style="margin-bottom:12px;">
         {# Funding gap: flipped from green to red when the binding catalyst moved #}
-        <div style="font-size:11px; color:#8b949e; margin-bottom:4px;">Funding gap</div>
+        <div style="font-size:11px; color:#6e6e73; margin-bottom:4px;">Funding gap</div>
         <div style="display:flex; align-items:center; gap:10px;">
           {# Previous state: positive (within band). The page's secondary text
              colour rather than the dimmer grey it used to carry, which was
@@ -135,35 +135,35 @@
              being unreadable. Subordinate to the current figure by size,
              weight and the strikethrough, which is where that ranking belongs;
              a superseded number nobody can read is not a hierarchy. #}
-          <span style="color:#8b949e; text-decoration:line-through; font-size:13px;">
+          <span style="color:#6e6e73; text-decoration:line-through; font-size:13px;">
             +{{ redline.lapse_display.prior_gap_1f }} months
           </span>
-          <span style="color:#8b949e;">&#8594;</span>
+          <span style="color:#6e6e73;">&#8594;</span>
           {# Current: negative, red #}
-          <span style="color:#f85149; font-weight:bold; font-size:18px;">
+          <span style="color:#c22d2d; font-weight:bold; font-size:18px;">
             {{ redline.lapse_display.current_gap_1f }} months
           </span>
         </div>
       </div>
-      <div style="background:#3d1414; border:1px solid #f85149; border-radius:4px;
+      <div style="background:#fbe9e9; border:1px solid #c22d2d; border-radius:4px;
                   padding:10px; text-align:center;">
-        <span style="color:#f85149; font-weight:bold; font-size:13px;">
+        <span style="color:#c22d2d; font-weight:bold; font-size:13px;">
           &#9888; FINANCING REQUIRED
         </span>
       </div>
       <div style="margin-top:10px;">
         {% if cls_label == "direct_contradiction" %}
-          <span style="background:#3d1414; color:#f85149; border:1px solid #f85149;
+          <span style="background:#fbe9e9; color:#c22d2d; border:1px solid #c22d2d;
                        font-size:11px; padding:2px 8px; border-radius:3px;">
             DIRECT CONTRADICTION
           </span>
         {% elif cls_label == "assumption_weakened" %}
-          <span style="background:#2d1f00; color:#d29922; border:1px solid #d29922;
+          <span style="background:#fbeeda; color:#8f5000; border:1px solid #8f5000;
                        font-size:11px; padding:2px 8px; border-radius:3px;">
             ASSUMPTION WEAKENED
           </span>
         {% else %}
-          <span style="background:#0d2033; color:#60a5fa; border:1px solid #60a5fa;
+          <span style="background:#eff4ff; color:#0066cc; border:1px solid #0066cc;
                        font-size:11px; padding:2px 8px; border-radius:3px;">
             {{ cls_label | upper | replace("_", " ") }}
           </span>
@@ -171,7 +171,7 @@
         {# No confidence figure. The classification's confidence is the model's
            own JSON field, and no model-produced number reaches the user. The
            source stays, because who judged is the part a reader can act on. #}
-        <span style="color:#8b949e; font-size:11px; margin-left:6px;">
+        <span style="color:#6e6e73; font-size:11px; margin-left:6px;">
           <span class="granite-accent">{{ redline.classification.source }}</span>
         </span>
       </div>
@@ -188,10 +188,10 @@
    ------------------------------------------------------------------ #}
 {% if c and c.derivation %}
 <details style="max-width:1100px; margin-bottom:24px;">
-  <summary style="cursor:pointer; color:#58a6ff; font-size:12px; padding:4px 0;">
+  <summary style="cursor:pointer; color:#0066cc; font-size:12px; padding:4px 0;">
     Where {{ redline.lapse_display.current_gap_1f }} months came from, step by step
   </summary>
-  <div style="margin-top:10px; overflow-x:auto; border-left:2px solid #30363d; padding-left:14px;">
+  <div style="margin-top:10px; overflow-x:auto; border-left:2px solid #e6e6ea; padding-left:14px;">
     {% set rows = c.derivation %}
     {% include "_derivation.html" with context %}
   </div>
@@ -206,39 +206,39 @@
             margin-bottom:24px; max-width:1100px;">
 
   {# Granite memo card #}
-  <div style="background:#161b22; border:1px solid #1e3a5f; border-radius:6px; padding:20px;">
-    <div style="font-size:11px; color:#60a5fa; text-transform:uppercase;
+  <div style="background:#ffffff; border:1px solid #dbe7ff; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#0066cc; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">
       &#9670; Integrity memo
-      <span style="font-size:10px; color:#8b949e; margin-left:6px;">IBM Granite</span>
+      <span style="font-size:10px; color:#6e6e73; margin-left:6px;">IBM Granite</span>
     </div>
-    <div style="background:#0d1117; border:1px solid #30363d; border-radius:4px;
+    <div style="background:#f6f8fa; border:1px solid #e6e6ea; border-radius:4px;
                 padding:14px; font-size:12px; line-height:1.6;
-                white-space:pre-wrap; color:#c9d1d9;">{{ memo }}</div>
+                white-space:pre-wrap; color:#1d1d1f;">{{ memo }}</div>
   </div>
 
   {# Original claim with invalidated clause marked, and proposed replacement #}
-  <div style="background:#161b22; border:1px solid #30363d; border-radius:6px; padding:20px;">
-    <div style="font-size:11px; color:#8b949e; text-transform:uppercase;
+  <div style="background:#ffffff; border:1px solid #e6e6ea; border-radius:6px; padding:20px;">
+    <div style="font-size:11px; color:#6e6e73; text-transform:uppercase;
                 letter-spacing:0.07em; margin-bottom:10px;">Analyst claim &middot; redline</div>
 
-    <div style="font-size:11px; color:#8b949e; margin-bottom:6px;">Original:</div>
-    <div style="background:#0d1117; border-left:3px solid #f85149; padding:10px 14px;
+    <div style="font-size:11px; color:#6e6e73; margin-bottom:6px;">Original:</div>
+    <div style="background:#f6f8fa; border-left:3px solid #c22d2d; padding:10px 14px;
                 border-radius:0 4px 4px 0; font-size:12px; line-height:1.6;
-                color:#c9d1d9; margin-bottom:12px; font-style:italic;">
+                color:#1d1d1f; margin-bottom:12px; font-style:italic;">
       {{ redline.proposed_card.claim }}
     </div>
 
-    <div style="font-size:11px; color:#8b949e; margin-bottom:6px;">
+    <div style="font-size:11px; color:#6e6e73; margin-bottom:6px;">
       Proposed change (accept to update the ledger):
     </div>
-    <div style="background:#0d1117; border-left:3px solid #10b981; padding:10px 14px;
+    <div style="background:#f6f8fa; border-left:3px solid #0f7350; padding:10px 14px;
                 border-radius:0 4px 4px 0; font-size:12px; line-height:1.6;
-                color:#c9d1d9; margin-bottom:12px;">
-      <code style="color:#8b949e; font-size:11px;">{{ redline.redline }}</code>
+                color:#1d1d1f; margin-bottom:12px;">
+      <code style="color:#6e6e73; font-size:11px;">{{ redline.redline }}</code>
     </div>
 
-    <div style="font-size:11px; color:#8b949e; margin-top:8px;">
+    <div style="font-size:11px; color:#6e6e73; margin-top:8px;">
       Driver: {{ redline.proposed_card.driver }}
     </div>
   </div>
@@ -252,11 +252,11 @@
 
   <form method="post" action="/redline/decide" style="margin-top:12px;">
     <div style="margin-bottom:10px;">
-      <label style="font-size:12px; color:#8b949e;">
+      <label style="font-size:12px; color:#6e6e73;">
         Reason (optional):
         <input type="text" name="reason" placeholder="e.g. trial date slip is expected"
-               style="margin-left:8px; background:#0d1117; border:1px solid #30363d;
-                      color:#c9d1d9; padding:4px 8px; border-radius:3px;
+               style="margin-left:8px; background:#f6f8fa; border:1px solid #e6e6ea;
+                      color:#1d1d1f; padding:4px 8px; border-radius:3px;
                       font-family:inherit; font-size:12px; width:380px;">
       </label>
     </div>
@@ -266,13 +266,13 @@
          4.16:1, under the floor, and on this one it is 6.44:1. The colour
          carries the same meaning it did; only the ground it sits on moved. #}
       <button type="submit" name="verdict" value="approve"
-              style="background:#0f2417; color:#10b981; border:1px solid #10b981;
+              style="background:#e8f6ef; color:#0f7350; border:1px solid #0f7350;
                      padding:7px 20px; border-radius:4px; cursor:pointer;
                      font-family:inherit; font-size:12px; font-weight:bold;">
         &#10003; Accept
       </button>
       <button type="submit" name="verdict" value="reject"
-              style="background:#3d1414; color:#f85149; border:1px solid #f85149;
+              style="background:#fbe9e9; color:#c22d2d; border:1px solid #c22d2d;
                      padding:7px 20px; border-radius:4px; cursor:pointer;
                      font-family:inherit; font-size:12px; font-weight:bold;">
         &#10007; Reject

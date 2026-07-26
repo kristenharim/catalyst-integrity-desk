@@ -1066,7 +1066,7 @@ INTEGRITY_MEANING = {
     "truncated or replaced": "amber",
     "chain replaced": "amber",
 }
-MEANING_COLOUR = {"green": "#10b981", "red": "#f85149", "amber": "#f59e0b"}
+MEANING_COLOUR = {"green": "#0f7350", "red": "#c22d2d", "amber": "#8f5000"}
 
 _SPAN = re.compile(r'<span style="([^"]+)"[^>]*>(.*?)</span>', re.S)
 

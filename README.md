@@ -378,7 +378,7 @@ own `as_of`, renamed to the narrower fact it proves, and rendered as one of thre
 including an explicit unavailable when the stored history cannot answer. Then the first two
 Phase 2 screens: the decision inbox at `/inbox`, which surfaces the task machinery that had
 been wired to no route, and the decision integrity receipt at `/receipts/<entry_id>`,
-addressed by the ledger entry's own hash, with IBM Carbon g100 tokens declared in CSS rather
+addressed by the ledger entry's own hash, with its colour tokens declared in CSS rather
 than imported, an axe-core accessibility check over both screens, and the elements nothing
 in this repo stores asserted absent from the rendered page. Most recently, that receipt got
 a way in: `/redline/confirm` links to the address of the entry it just rendered, selected by
