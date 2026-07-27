@@ -14,7 +14,7 @@
 {% if c.lapsed_history %}
 {% for lh in c.lapsed_history %}
 {% if lh and lh.revisions %}
-<h2 style="color:#c22d2d;">{{ lh.nct }} &middot; LAPSED registered completion ({{ c.lapsed[loop.index0].pcd }}) &middot; date-integrity signal</h2>
+<h2 style="color:#c22d2d;">{{ lh.nct }} &middot; LAPSED registered completion ({{ lh.lapsed_pcd }}) &middot; date-integrity signal</h2>
 <p style="font-size:12px; color:#c22d2d; margin-bottom:8px;">
   This trial's registered primary completion has already passed. It is not treated as
   a catalyst date. The revision history below is shown because a sponsor that carries
@@ -27,7 +27,10 @@
 </p>
 <div style="overflow-x:auto; background:#fbe9e9; border:1px solid #f2c9c9;
             border-radius:6px; padding:12px 0 8px;">
-<svg width="1220" height="180" style="display:block;">
+{# viewBox, not a fixed width: the console column is narrower than the canvas, so a
+   fixed-width canvas put the right-hand labels past the edge of the panel. #}
+<svg viewBox="0 0 1220 {{ lh.svg_height }}" preserveAspectRatio="xMidYMin meet"
+     style="display:block; width:100%; max-width:1220px; height:auto;">
   <line x1="40" y1="110" x2="1180" y2="110"
         stroke="#f2c9c9" stroke-width="1"/>
 
@@ -43,11 +46,11 @@
       </text>
       <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
             stroke="#c22d2d" stroke-width="1" stroke-dasharray="3,3"/>
-      <text x="{{ r.svg_x }}" y="126" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_submitted }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#6e6e73">
         {{ r.submitted }}
       </text>
-      <text x="{{ r.svg_x }}" y="140" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_pcd }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#c22d2d">
         &#8594; {{ r.pcd }}
       </text>
@@ -70,11 +73,11 @@
         not comparable
       </text>
       {% endif %}
-      <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_submitted }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#6e6e73">
         {{ r.submitted }}
       </text>
-      <text x="{{ r.svg_x }}" y="144" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_pcd }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#6e6e73">
         &#8594; {{ r.pcd }}
       </text>
@@ -266,7 +269,9 @@
 <h2>{{ c.history.nct }} &middot; Registered primary completion date revisions</h2>
 <div style="overflow-x:auto; background:#ffffff; border:1px solid #e6e6ea;
             border-radius:6px; padding:12px 0 8px;">
-<svg width="1220" height="180" style="display:block;">
+{# viewBox, not a fixed width: see the lapsed timeline above. #}
+<svg viewBox="0 0 1220 {{ c.history.svg_height }}" preserveAspectRatio="xMidYMin meet"
+     style="display:block; width:100%; max-width:1220px; height:auto;">
   {# Axis line #}
   <line x1="40" y1="110" x2="1180" y2="110"
         stroke="#e6e6ea" stroke-width="1"/>
@@ -286,11 +291,11 @@
       <line x1="{{ r.svg_x }}" y1="83" x2="{{ r.svg_x }}" y2="110"
             stroke="#c22d2d" stroke-width="1" stroke-dasharray="3,3"/>
       {# Date labels below axis #}
-      <text x="{{ r.svg_x }}" y="126" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_submitted }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#6e6e73">
         {{ r.submitted }}
       </text>
-      <text x="{{ r.svg_x }}" y="140" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_pcd }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#c22d2d">
         &#8594; {{ r.pcd }}
       </text>
@@ -313,11 +318,11 @@
         not comparable
       </text>
       {% endif %}
-      <text x="{{ r.svg_x }}" y="130" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_submitted }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#6e6e73">
         {{ r.submitted }}
       </text>
-      <text x="{{ r.svg_x }}" y="144" text-anchor="middle"
+      <text x="{{ r.svg_x }}" y="{{ r.y_pcd }}" text-anchor="middle"
             font-family="ui-monospace,monospace" font-size="10" fill="#6e6e73">
         &#8594; {{ r.pcd }}
       </text>

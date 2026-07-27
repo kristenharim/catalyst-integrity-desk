@@ -41,8 +41,14 @@ from orchestrator.redline import ContractDelta, run_redline
 
 TICKERS = ["SANA", "PRME", "RCKT", "BEAM", "SRPT"]
 SNAPSHOT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "snapshot.json")
-SVG_WIDTH = 1100
-SVG_PAD = 60  # pixels each side; usable span = SVG_WIDTH - 2*SVG_PAD = 980
+# Revision-timeline geometry.  These must match the <svg> viewBox in detail.html:
+# the nodes are placed by this file and drawn by that template, so a canvas
+# mismatch here parks nodes and their labels outside the drawn area.
+SVG_WIDTH = 1220
+SVG_HEIGHT = 180  # single row of labels; _svg_height() grows it for stacked rows
+SVG_PAD = 90  # each side; wide enough that the "carried expired" label clears the edge
+SVG_LABEL_GAP = 78  # px between node centres below which two date labels collide
+SVG_ROW_H = 30  # vertical drop per stacked label row
 
 # Thesis-break timeline geometry.  Wider padding than the revision timeline
 # because the end markers carry two lines of label each.
@@ -523,6 +529,13 @@ def apply_displays(snapshot: dict) -> dict:
         c["runway"]["display"] = _runway_display(c["runway"])
         if c.get("gap_months") is not None:
             c["gap_months_1f"] = _fmt_1f(c["gap_months"])
+        # Timeline geometry is presentation, derived only from dates already stored,
+        # so it refreshes here rather than needing a credentialled rebuild.
+        for h in [c.get("history"), *(c.get("lapsed_history") or [])]:
+            if h and h.get("revisions"):
+                _add_svg_x(h["revisions"])
+                h["svg_height"] = _svg_height(h["revisions"])
+        _join_lapsed_pcd(c.get("lapsed_history") or [], c.get("lapsed") or [])
         c["thesis_timeline"] = _thesis_timeline(c, today_iso)
         c["derivation"] = _derivation(c, c["thesis_timeline"])
         # Evidence axis only. Workflow and record integrity are joined at
@@ -585,10 +598,19 @@ def _iso(d: date | None) -> str | None:
 
 
 def _add_svg_x(revisions: list[dict]) -> list[dict]:
-    """Compute and attach svg_x to each revision dict (mutates in place, returns list).
+    """Compute and attach svg_x and the label y positions to each revision dict
+    (mutates in place, returns list).
 
-    Maps each revision's submitted date linearly onto a 1100px canvas with 60px
-    padding each side.  When there is only one revision the single node sits centred.
+    Maps each revision's submitted date linearly onto the template's canvas with
+    SVG_PAD each side.  When there is only one revision the single node sits centred.
+
+    The node keeps its true position on the time axis.  Revisions filed days apart
+    after a long quiet stretch land within a few pixels of each other, and two
+    date labels centred a few pixels apart are unreadable, which is how SRPT's
+    2025-02-28 and 2025-03-02 revisions were rendering on top of one another.
+    Moving the nodes apart would make the chart lie about when the sponsor filed,
+    so the labels are stacked downward instead: each label pair that would collide
+    with the one to its left drops a row.  Positions stay true, text stays legible.
     """
     dates = []
     for r in revisions:
@@ -598,24 +620,47 @@ def _add_svg_x(revisions: list[dict]) -> list[dict]:
             dates.append(None)
 
     real_dates = [d for d in dates if d is not None]
+    usable = SVG_WIDTH - 2 * SVG_PAD
+    centre = round(SVG_PAD + usable / 2, 1)
+
     if not real_dates:
         for r in revisions:
-            r["svg_x"] = SVG_PAD + (SVG_WIDTH - 2 * SVG_PAD) / 2
-        return revisions
+            r["svg_x"] = centre
+    else:
+        span_start = min(real_dates)
+        span_end = max(real_dates)
+        total_days = (span_end - span_start).days or 1  # single node: avoid div-by-zero
+        for r, d in zip(revisions, dates):
+            if d is None:
+                r["svg_x"] = centre
+            else:
+                frac = (d - span_start).days / total_days
+                r["svg_x"] = round(SVG_PAD + frac * usable, 1)
 
-    span_start = min(real_dates)
-    span_end = max(real_dates)
-    total_days = (span_end - span_start).days or 1  # avoid div-by-zero for single node
-
-    usable = SVG_WIDTH - 2 * SVG_PAD
-    for r, d in zip(revisions, dates):
-        if d is None:
-            r["svg_x"] = round(SVG_PAD + usable / 2, 1)
+    # Stack colliding label pairs.  Greedy left to right: take the topmost row
+    # whose last label on that row clears SVG_LABEL_GAP.
+    row_last_x: list[float] = []
+    for r in sorted(revisions, key=lambda r: r["svg_x"]):
+        row = 0
+        while row < len(row_last_x) and r["svg_x"] - row_last_x[row] < SVG_LABEL_GAP:
+            row += 1
+        if row == len(row_last_x):
+            row_last_x.append(r["svg_x"])
         else:
-            frac = (d - span_start).days / total_days
-            r["svg_x"] = round(SVG_PAD + frac * usable, 1)
+            row_last_x[row] = r["svg_x"]
+        # A carried-expired node is lifted off the axis, so its labels start higher.
+        top = 126 if r.get("carried_expired") else 130
+        r["label_row"] = row
+        r["y_submitted"] = top + row * SVG_ROW_H
+        r["y_pcd"] = top + 14 + row * SVG_ROW_H
 
     return revisions
+
+
+def _svg_height(revisions: list[dict]) -> int:
+    """Canvas height for a revision timeline, tall enough for the deepest label row."""
+    rows = max((r.get("label_row", 0) for r in revisions), default=0)
+    return SVG_HEIGHT + rows * SVG_ROW_H
 
 
 def _serialise_history(history) -> dict | None:
@@ -631,7 +676,23 @@ def _serialise_history(history) -> dict | None:
         rev_dict["days_expired"] = rev_obj.days_expired
         rev_dict["is_late_move"] = rev_obj.is_late_move
     _add_svg_x(d["revisions"])
+    d["svg_height"] = _svg_height(d["revisions"])
     return d
+
+
+def _join_lapsed_pcd(lapsed_history: list[dict], lapsed: list[dict]) -> None:
+    """Carry each lapsed trial's registered completion date onto its own history dict.
+
+    build() drops the lapsed trials whose history would not fetch, so lapsed_history
+    is shorter than lapsed whenever a fetch fails and the two lists stop lining up by
+    position.  The template used to read the date out of lapsed[loop.index0], which
+    would then print one trial's NCT id beside another trial's completion date.
+    Joined on the NCT id it cannot slide, and a trial with no match prints nothing
+    rather than a neighbour's date.
+    """
+    by_nct = {t["nct"]: t.get("pcd") for t in lapsed}
+    for h in lapsed_history:
+        h["lapsed_pcd"] = by_nct.get(h.get("nct"))
 
 
 def _serialise_contract(c: CatalystContract) -> dict:
@@ -641,6 +702,7 @@ def _serialise_contract(c: CatalystContract) -> dict:
     lapsed_serialised = [
         _serialise_history(h) for h in c.lapsed_history if h is not None
     ]
+    _join_lapsed_pcd(lapsed_serialised, c.lapsed)
     return {
         "runway": _serialise_runway(c.runway),
         "trial": c.trial,
