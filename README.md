@@ -1,101 +1,60 @@
 # Catalyst Integrity Desk
 
-An auditable monitor for when a biotech investment thesis no longer matches its approved
-evidence contract.
+An auditable monitor for when a biotech investment thesis no longer matches its approved evidence contract.
 
-The system does not determine whether a thesis is true. It identifies when the public evidence no longer matches the assumptions
-recorded in the evidence contract and routes that change to a human. A belief written through the console is recorded and hash-chained; nothing re-reads it on its own.
+Catalyst Integrity Desk does not decide whether an investment thesis is true. It records the evidence and assumptions behind a thesis, detects when later public records no longer match them, drafts a constrained challenge, and routes the decision to a human.
 
-# Issue Background 
-In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
-carrying a primary completion date of June 2022. That date names a month, not a day, so read
-at its latest it **had already been expired for at least 648 days** when the revision was
-filed, and at its earliest 677 days. Either way it stood in public, on a federal registry,
-machine readable the entire time.
+A belief entered through the console is hash-chained into a ledger. The system does not silently revisit or rewrite it.
 
-Nobody was watching (because nobody's job is to watch)
+## Issue background
 
-**And Rocket is not unusual. The actual finding is about the registry, not the sponsor.**
+In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439` that still listed a primary-completion date of June 2022. Because the registry records only a month, that commitment had already been expired for between 648 and 677 days when the revision was filed.
 
-In a random sample of 240 phase 2 / 2-3 / 3 trials, **this study cannot separate
-reconciliation from filing frequency, and most trials carrying an expired commitment have
-never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
-OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
-OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
-trial and have **zero** trials currently carrying an expired completion date. Non-U.S.
-government and institutional sponsors, the OTHER_GOV stratum, file a median of 2, and **27
-of 29 of their still-open commitments have already expired**. The ordering is monotone in
-filing frequency across all four strata, which is an association across four points rather
-than a tested relationship.
+The important finding is not that Rocket is unusual. It is that this kind of mismatch can remain public, machine-readable, and unaddressed because no system is assigned to compare a new registry version with the thesis built on the earlier one.
 
-That inverts the measure this project started with. Counting lapses that a later filing
-corrected, government sponsors look like the *best* reconcilers, because a lapse only becomes
-visible when the sponsor files again. A measure that needs its subject to keep talking cannot
-see the subject that stops.
+A random sample of 240 Phase 2, Phase 2/3, and Phase 3 trials supports that concern. The study cannot separate reconciliation from filing frequency, but most trials with an expired commitment had never reconciled it: 4 of 5 in `INDUSTRY`, 20 of 27 in `OTHER_GOV`, and 15 of 19 in `OTHER`.
 
-The supporting mechanism, among sponsors still filing: **at least 22.2% of industry
-completion-date revisions replace an estimate that had already expired**, a bound because a
-month-only date has two readings and this is the smaller; the first-of-month reading is
-26.2% (33 of 126). 24 of 52 (46.2%) industry trials that revised a date at all did it at
-least once. That is narrower than running late, which is well documented, and narrower than
-the raw after-lapse count, because a revision recording an *actual* completion is the update
-the regulation requires rather than a failure to file it.
+Among still-open commitments, 27 of 29 in the `OTHER_GOV` stratum had already expired. NIH-sponsored trials showed a median of 106.5 registry versions per trial and no currently expired completion dates; `OTHER_GOV` sponsors showed a median of 2 versions. The ordering is monotone across four strata, but it is an association across four points—not a tested causal relationship.
 
-Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
-still open. The anchor case stood expired for at least 648 days; under the first-of-month
-convention, the 677-day reading sits at the **85th percentile** of 188 such stretches. The
-rank is quoted with the reading it was computed from, because a percentile and the duration
-it ranks have to come off the same convention, and an earlier draft of this block paired the
-end-of-month duration with a first-of-month rank. Long, and inside the distribution rather
-than outside it.
+That changes the measure the project began with. Counting only lapses later corrected makes frequent filers look like the best reconcilers, because a lapse becomes visible only when its sponsor files again. A measure that requires its subject to keep reporting cannot observe the subject that stops.
 
-`docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the
-working record.
+Among sponsors still filing, at least 22.2% of industry completion-date revisions replaced an estimate that had already expired. The first-of-month convention produces 26.2% (33 of 126). Of industry trials that revised a date at all, 24 of 52 (46.2%) did so at least once.
 
-Every cohort figure in the claim documents is emitted from a field of snapshot
-`cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each of four
-sponsor strata, all measured, point prevalence as of 2026-07-22. The prose around them
-contains no numerals and a test regenerates every generated block and fails on a one-byte
-difference.
+Industry point prevalence was 8.3% across all trials and 33.3% among trials with an open commitment. For the Rocket anchor case, the 677-day first-of-month reading sits at the 85th percentile of 188 comparable stretches. The percentile is reported with the same date convention used to calculate it.
 
-## Main Claim
+`docs/WRITEUP.md` contains the standalone study, and `docs/COHORT.md` contains the working record.
 
-> **This system measures whether public, dated, self-authored commitments were kept,
-> revised, superseded, or allowed to expire without reconciliation. It does not measure
-> whether the underlying claim was ever true.**
+Every cohort figure in the claim documents is rendered from snapshot `cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each sponsor stratum, measured as of 2026-07-22. A test regenerates each generated block and fails on a one-byte difference.
 
-Diligence really wants a verdict on the underlying science, and on whether the stated dates will hold. No system reading public
-records can deliver one, and a model that pretends to is an opinion dressed as evidence. What is answerable, and already public: whether the promises survived contact with their own prior versions.
+## Main claim
 
-Theranos is a useful case study example. In real time nobody was going to catch it by evaluating the microfluidics. What was visible continuously was a decade of claims that did not reconcile against their own earlier versions. That pattern is measurable. Feasibility is not. `docs/PRINCIPLE.md` states the rule and the claims this system is therefore forbidden from making, and `orchestrator/lexicon.py` enforces them on
-the model, the pages and the docs.
+> **This system measures whether public, dated, self-authored commitments were kept, revised, superseded, or allowed to expire without reconciliation. It does not measure whether the underlying claim was ever true.**
+
+Diligence wants a verdict on the science and on whether a stated date will hold. A system reading public records cannot provide either without turning opinion into evidence.
+
+What it can answer is narrower and useful: whether a sponsor’s current public record still reconciles with its prior commitments.
+
+Theranos illustrates the distinction. A public-record system could not have settled the feasibility of its technology in real time. It could, however, have tracked claims that no longer reconciled with earlier claims. That pattern is measurable; feasibility is not.
+
+`docs/PRINCIPLE.md` defines this boundary, and `orchestrator/lexicon.py` enforces it across model output, rendered pages, and claim-bearing documents.
 
 ## The problem
 
-Every clinical-stage biotech thesis rests on a date. The company has cash into month X,
-the trial completes before month X, therefore it is funded to its catalyst and does not
-need to raise.
+Every clinical-stage biotech thesis contains a timing assumption:
 
-The left side of that sentence comes from SEC filings. The right side comes from
-ClinicalTrials.gov, where **the sponsor sets the date, can revise it whenever it likes,
-and nothing reconciles that revision against the thesis that depended on the old date.**
-
-Every revision is public, timestamped, and undiffed. The analyst who wrote the thesis in
-January is not re-reading the registry in April.
-
-A registry entry is not an observation. It is a claim, made by an interested party, that
-can be revised at any time, where every revision is public and timestamped and nobody
-diffs it. ClinicalTrials.gov is one instance of that shape.
-
-This project treats the thesis as a contract and audits both sides of it.
-
-```
+```text
 funding gap = runway exhaustion date - registered primary completion date
 ```
 
+Cash runway comes from SEC filings. The clinical commitment comes from ClinicalTrials.gov, where a sponsor can revise a date at any time. Each version is public and timestamped, but the registry does not compare a revision with the investment thesis that depended on the earlier date.
+
+A registry record is not an observation. It is a self-authored claim by an interested party, capable of revision. ClinicalTrials.gov is one instance of that broader pattern.
+
+This project treats the thesis as a contract and audits both sides of it.
+
 ## Two modes, one computation path
 
-```
+```text
 DEMO                                  WORKSPACE
 
 data/evidence/*.json                  ticker
@@ -109,296 +68,207 @@ committed, no network                     |
 ```
 
 `evidence/` is the seam and the only layer that knows where bytes came from.
-`tests/test_layering.py` walks the AST and fails if `engine/` or `orchestrator/` imports
-it, so no module that computes a displayed number can ask whether it is running live and
-answer differently. That is what makes the frozen demo evidence about the product rather
-than a mock of it.
 
-`/workspace` runs the real flow with no credentials, because the committed bundles and a
-live fetch are the same schema.
+`tests/test_layering.py` walks the AST and fails if `engine/` or `orchestrator/` imports that layer. A module that calculates a displayed value therefore cannot behave differently because it knows whether it is running against frozen or live evidence.
+
+That separation makes the demo evidence about the product rather than a mock of it.
+
+`/workspace` runs the live flow without credentials because committed bundles and live fetches share one schema.
 
 ## Quickstart
 
-No credentials, no API keys, no network. The demo runs from a committed snapshot.
+The demo requires no credentials, API keys, or network access.
 
 ```bash
 git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 534 passed, 19 skipped
+python3 -m pytest tests/ -q
 ```
 
-Run it as a module, from the repo root. Set `PORT` to move it off 8050.
+Run it as a module from the repository root. Set `PORT` to use a port other than 8050.
 
-**The guarantee:** the console makes no network call and reads no credential. Everything
-it renders comes from `data/snapshot.json`, which is committed. Clone, install Flask, run.
-Nothing else.
+The console reads only the committed `data/snapshot.json`. It makes no network call and reads no credential.
 
-**Four tiers, because the result depends on what your machine carries.** A clone gets
-tracked files only and installs `requirements.txt` alone, so four groups skip: fifteen that
-replay registry version history out of the gitignored `data/cache/`, one live Granite check
-that needs watsonx credentials, one browser-geometry check that needs Playwright, and two
-accessibility checks that need Playwright and axe-core. Each tier adds one thing to the one
-above it, and each has its own command, so a number here is traceable to what produced it.
+### Test tiers
 
-| tier | what it needs | command | result |
+The available test count depends on which optional tooling and research cache are present.
+
+| Tier | Requirements | Command | Result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **534 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **535 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **537 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **550 passed, 3 skipped** |
+| Base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **534 passed, 19 skipped** |
+| Playwright | Base plus Playwright and Chromium | `python3 -m pytest tests/ -q` | **535 passed, 18 skipped** |
+| Playwright + axe | Playwright plus `npm ci` | `npm run test:a11y` | **537 passed, 16 skipped** |
+| Cache-backed research | Playwright plus populated `data/cache/` | `python3 -m pytest tests/ -q` | **550 passed, 3 skipped** |
 
-Base is the tier a judge gets and the number printed above; on a clone with nothing extra
-installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
-that carries the extras. The last tier shares a command with the second because the cache
-is data rather than a dependency: it changes what an existing command reports instead of
-adding one. Running the axe command with the cache present runs both, and leaves the
-credentialed Granite check as the only skip.
+On a clean clone without optional tooling, the base tier is the expected result. `CID_BASE_DEPS_ONLY=1` pins that result on machines that also carry optional dependencies.
 
-The cache-backed tier and the combined cache-plus-axe pair were off this page for two
-commits. At the counts they carried then, both passed counts were also renderings of a
-cohort field, and `tests/test_prose_figures.py` cannot tell a test count from a retyped
-cohort figure, so it reported the collision either way. That is the right way round for a
-guard to be wrong. Three screens later the counts have moved again and neither collides, so
-both stay printed: the cache-backed tier is in the table above, and running the axe command
-with the cache present gives 523 passed and 1 skipped. Every printed tier reconciles to the
-same total, which is what the count guard enforces. The Granite check is verified not to pass on
-the stub: pointed at an invalid endpoint it fails on `source == "granite"`.
+The cache changes available research data rather than adding a software dependency. The browser test checks the demo’s opening frame, and the accessibility suite runs axe-core over the Phase 2 decision spine: inbox, receipt, redline, confirmation, decision review, and activity history.
 
-Measure the base and Playwright tiers with `node_modules/` absent. `npm ci` puts axe-core
-where the scan looks for it, and the scan runs whenever it finds it, so a machine that has
-run `npm ci` reports one tier higher than the row it thinks it is running.
+The responsive screens are measured at 1440×1000, 1024×768, and 390×844 because a breakpoint can create a defect that is absent on either side of it.
 
-The fifteen cache-dependent tests verify the cohort research rather than the console, the
-browser check verifies the demo's opening frame is where the script says it is, and the
-accessibility checks run axe-core over the Phase 2 decision spine: the inbox, the receipt,
-the redline, the confirmation the demo ends on, the decision review screen in both of
-the states it renders, and the activity history. The last two are measured at 1440x1000,
-1024x768 and 390x844, because their layout changes with the width and a breakpoint can
-create a violation neither side of it has.
-Nothing on the demo path depends on any of them, which is why a clone can run the whole
-product with nineteen tests skipped and still be running the real thing.
+`package.json` and `package-lock.json` pin axe-core and nothing else. The product is Flask and Jinja; there is no frontend build step. axe-core is loaded from disk rather than a CDN, preserving the demo’s no-network guarantee.
 
-`package.json` and `package-lock.json` pin axe-core and nothing else, so `npm ci` installs
-the exact version these results were measured against. There is no frontend build step and
-the product is Flask and Jinja; the lockfile exists only so the accessibility tier is
-reproducible. axe-core is MPL-2.0 and is installed rather than vendored, so no third-party
-source is committed here. The tests load it from disk and never from a CDN, which keeps the
-no-network guarantee. `CID_AXE_CORE` still overrides the path if you have axe-core
-elsewhere.
+`npm run test:a11y` fails closed: it exits nonzero if axe-core is unavailable, if no pages are scanned, or if a violation is found. Routes are keyed to the app’s `url_map`, so every route must either be scanned or named in `A11Y_NOT_SCANNED` with a reason.
 
-**Two things make that tier fail closed rather than fail quiet.** `npm run test:a11y` is the
-whole command; it sets `CID_AXE_REQUIRED=1` itself, so nothing depends on a reader
-remembering a variable, and with it set a run that scans nothing fails instead of reporting
-green, because a `skip` and a `pass` look identical in a summary line. It exits nonzero on a
-missing axe-core, on zero scans executed, and on any violation. And the pages scanned are
-keyed on the app's own `url_map`: a route is either scanned or named in `A11Y_NOT_SCANNED`
-with a reason, so adding a screen fails the suite until someone classifies it. It did that
-again for the activity history, which is scanned at three widths rather than merged into
-the default one. All seven scanned pages report zero violations, and there is no map of
-declared exceptions to file an eighth one in; the one that existed held three
-colour-contrast nodes on `/redline/confirm`
-and went with them when the template was repaired. That covers the Phase 2 surfaces and is
-not whole-app accessibility coverage; the Phase 1 screens are named as unscanned, and
-`docs/LIMITS.md` records what was measured on them.
+The scanned Phase 2 pages report zero axe violations. This is not whole-application accessibility coverage; Phase 1 surfaces are explicitly named as out of scope in `docs/LIMITS.md`.
 
-**The 90 second tour:**
+### The 90-second tour
 
-| | |
+| Location | What it shows |
 |---|---|
-| `/` | redirects to the Rocket detail, on purpose. The 677-day row is the point. |
-| the red node | a revision filed in April 2024 carrying a completion date from June 2022 |
-| the table below it | every input with the XBRL tag it resolved through |
-| `/contracts` | the ranked list, unreliable rows shown below it and never ranked, and below those any ticker that produced no contract at all, with the reason |
-| `/redline` | the thesis breaking: approved against a date that then lapsed, and Granite's memo about it |
-| `/workspace` | ticker in, recorded contract out. Identity and the empty queries are shown before any candidate; a lapsed date is listed and cannot be chosen |
-| `/belief/new` | where a belief comes from. The analyst writes the thesis, the trial, and the gap below which they would stop believing it |
-| Accept | writes a hash-chained ledger entry, then the badge reads the ledger back |
-| `/inbox` | the same states as a morning's work: one item per decision, worst first, every reason grouped under it, and the unreliable row shown without a position |
-| `/receipts/<entry hash>` | one recorded decision, addressed by its own hash, with the record-integrity badge recomputed at render |
-| `/evidence/<contract id>` | the chain behind one displayed figure: the calculation, the record each input resolves to, which links are exact, and where the chain stops |
+| `/` | Redirects to the Rocket detail. The expired commitment is the opening example. |
+| Red node | An April 2024 revision carrying a June 2022 completion date. |
+| Detail table | Every input and the XBRL tag through which it resolved. |
+| `/contracts` | Ranked contracts, unreliable rows kept visible but unranked, and contracts that could not be produced. |
+| `/redline` | The approved thesis, its breach, and Granite’s constrained memo. |
+| `/workspace` | A ticker becomes a recorded contract; identity and empty queries are shown before candidates. |
+| `/belief/new` | The analyst records a thesis, trial, and invalidating funding gap. |
+| Accept | Writes a hash-chained ledger entry and recomputes the integrity badge. |
+| `/inbox` | One task per decision, ordered by urgency, with reasons grouped under each item. |
+| `/receipts/<entry hash>` | A single decision record, addressed by its own hash and checked at render time. |
+| `/evidence/<contract id>` | The provenance chain behind a displayed figure and the places where that chain stops. |
 
-**The tamper demo:** accept the redline, edit any byte inside the `card` object in
-`data/decisions.jsonl`, reload the confirm page. The badge goes from `✓ intact` to
-`✗ tampered`, because it calls `verify()` at render time rather than trusting what the
-redirect told it.
+### Tamper demonstration
 
-**Reset between runs:**
+Accept the redline, edit any byte inside the `card` object in `data/decisions.jsonl`, and reload the confirmation page.
+
+The badge changes from `✓ intact` to `✗ tampered` because the page calls `verify()` at render time rather than trusting the redirect that led to it.
+
+### Reset between runs
 
 ```bash
 rm -f data/decisions.jsonl data/review_log.jsonl data/ledger.anchor
 ```
 
-Both are gitignored live state, written during a demo and safe to delete. The snapshot is
-not: `data/snapshot.json` is the frozen evidence and is committed deliberately.
+These are gitignored live-state files created during a demo. The committed `data/snapshot.json` is frozen evidence and should not be removed.
 
-**Where the frozen evidence comes from.** The snapshot was built against live SEC XBRL
-company facts, live ClinicalTrials.gov version history, and a live IBM Granite call whose
-classification is recorded in the file with `source: "granite"`. Rebuilding it requires
-credentials and is never done during a demo. The `docs/bob-sessions/` transcripts show it
-being built.
+### Frozen evidence
+
+The snapshot was built from live SEC XBRL company facts, live ClinicalTrials.gov version history, and a live IBM Granite call. The Granite classification is recorded with `source: "granite"`.
+
+Rebuilding requires credentials and does not occur during a demo. `docs/bob-sessions/` contains the build transcripts.
 
 ## The theme: intelligent systems for the future of work
 
 The work being automated here is not analysis. It is **noticing**.
 
-An analyst can compute a funding gap in ten minutes. What no analyst does, across forty
-positions, is re-read a registry every week to catch the one sponsor that moved a date by
-fourteen months, then check whether that breaks something they wrote down in January. The
-failure is not a hard problem solved badly. It is an easy problem nobody is assigned to.
+An analyst can calculate a funding gap quickly. What does not happen reliably across a portfolio is rereading a registry every week, detecting a revised date, and checking whether it breaks a thesis written months earlier.
 
-So the system records a written belief against a frozen evidence contract, detects when a
-rebuild contradicts a belief it already carries, drafts the challenge in the analyst's own
-vocabulary, and stops. A human accepts or rejects, and the
-decision hash-chains into a tamper-evident ledger. The judgement stays human. The
-vigilance is what gets automated.
+The system records a belief against a frozen evidence contract, detects when a rebuild contradicts that belief, drafts a challenge in the analyst’s vocabulary, and stops. A human accepts or rejects the result; the decision is then hash-chained into a tamper-evident ledger.
+
+Judgment remains human. Vigilance is what gets automated.
 
 ## The AI approach
 
 **Python computes. Granite judges prose. Humans decide.**
 
-IBM Granite on watsonx never produces a number. It reads the analyst's written rationale
-alongside the recomputed contract and reports which stated assumption a change breaks, and
-how badly. Every figure on screen comes from Python arithmetic over filed data.
+IBM Granite on watsonx does not produce a number. It reads the analyst’s written rationale beside the recomputed contract and identifies which stated assumption has been challenged. Every figure displayed by the product comes from Python arithmetic over filed data.
 
-That rule is enforced rather than asserted. `_quantitative()` scans model output for any
-quantitative expression at all and falls back to a deterministic stub if it finds one. The
-guard bans quantities outright rather than only unsourced ones: digit forms, number words,
-percentages, ratios, signs, durations, and the dates a month and an ordinal compose without
-using a digit. A response carrying one is discarded whole, never edited, because a sentence
-with its number deleted is a sentence whose meaning nobody has checked.
+That rule is enforced rather than asserted.
 
-The earlier rule was "a number absent from the input", on the reasoning that quoting a
-figure from the belief's own claim is quotation rather than invention. An audit retired it.
-It carried no *field*, so any bare digit anywhere in the analyst's own prose authorised that
-magnitude in the metric's own unit: a thesis reading "Phase 3 readiness across 12 sites"
-licensed both "3 months" and "12 months". `docs/LIMITS.md` carries the full reasoning and
-the exact residual.
+`_quantitative()` rejects model output containing quantitative expressions: digits, number words, percentages, ratios, signs, durations, and date forms that express a quantity without a digit. A response that trips the rule is discarded whole and replaced by a deterministic stub. It is never edited in place, because deleting a number can change a sentence’s meaning.
 
-**Two structural guards, not one.** `_quantitative()` stops the model measuring anything.
-`orchestrator/lexicon.py` stops it making a claim the evidence does not support: a
-feasibility verdict, an accusation of intent, a causal explanation for why a date moved, or
-silence asserted as fact. A rationale that trips either guard is discarded and the
-deterministic stub answers. The same lexicon scans every rendered page and every
-claim-bearing document, so the rule cannot hold in the code and drift in the pitch. It
-caught three violations already shipped in this repo when it was first run.
+An earlier rule prohibited only numbers absent from the input. That rule was retired after audit: a bare number in an analyst’s thesis could authorize that magnitude in an unrelated metric unit. `docs/LIMITS.md` records the reasoning and the remaining limitation.
 
-**Slip is only slip when the promise held its shape.** `engine/promise.py` classifies every
-registry revision as unchanged, date-only, a scope revision, a supersession, or uncertain,
-and only the first two may produce a number. A revision that also changed the primary
-endpoint describes a different commitment, and subtracting its dates is not a delay. The
-audited trials include established, contingent, and refused movements. A net-slip total is
-not usable unless promise identity holds across the revisions being compared. The first
-version of this audit reported a single count of unsupported trials; the three-state audit
-retracted it, and `docs/LIMITS.md` carries both the count and why it was withdrawn.
+`_quantitative()` prevents the model from measuring. `orchestrator/lexicon.py` prevents it from making claims the evidence cannot support: feasibility verdicts, claims of intent, causal explanations, or assertions that silence is evidence. The same lexicon scans model output, pages, and claim-bearing documents.
 
-Two supporting rules do the rest of the work.
+### Promise identity
 
-**Every displayed number names its source.** `Runway.provenance` records which XBRL tag
-each component resolved through, because tags are not uniform across filers and a
-numerator you cannot identify is not auditable. The console prints the tag beside the
-figure.
+A slip is only a slip if the promise retained its identity.
 
-**A lapsed completion date is never a catalyst.** You cannot run out of money before an
-event that already happened. Lapsed dates are retained and surfaced as date-integrity
-signals, which is the entire point of the project, rather than discarded or treated as a
-funding target.
+`engine/promise.py` classifies registry revisions as unchanged, date-only, scope revision, supersession, or uncertain. Only unchanged and date-only revisions can produce a definitive delay number.
+
+If a revision changes a primary endpoint, it may describe a different commitment. Subtracting the dates would not establish a delay. The system therefore distinguishes established, contingent, and refused movements.
+
+### Supporting rules
+
+**Every displayed number names its source.** `Runway.provenance` records the XBRL tag used for each component because issuers do not use uniform tags. The console displays the tag beside the figure.
+
+**A lapsed completion date is never a catalyst.** The system retains expired dates as integrity signals. It does not treat an event that should already have happened as a future funding target.
 
 ## How IBM Bob was used
 
 IBM Bob built the original governance port, redline loop, analyst console, snapshot generator, SVG revision timeline, and initial test suite. It also repaired the integrity badge test-first.
-The governance port includes the Ledger, Challenge, Classifier, and Granite modules adapted from an earlier project; prompts were rewritten for Catalyst terminology, while _fabricated() was preserved byte-for-byte. Bob also added engine/contract.py, which flattens a contract into the packet used by the breach scanner.
-The three verified modules in engine/, along with the specs, findings, demo script, and prompt pack in docs/, predate Bob. They were validated against live SEC and ClinicalTrials.gov data before the build began.
-Bob was constrained rather than trusted. .bob/custom_modes.yaml limits edit access with fileRegex, protecting the verified engine modules, and defines a read-only reviewer mode so review cannot silently alter what it assesses. Other AI tools were used only for permitted review, with each pass recorded separately in docs/BOB_LOG.md.
-Later work was implemented by hand with Claude Code and logged at the same level of detail. It includes the evidence seam, promise identity, claims lexicon, workspace mode, cohort study, decision-state model, non-quantitative Granite policy, locked ledger append, accessibility and test-isolation fixes, and the Phase 2 decision screens: inbox, receipts, review, activity history, evidence explorer, and the plain-language desk and memo views.
+
+The governance port includes the Ledger, Challenge, Classifier, and Granite modules adapted from an earlier project. Prompts were rewritten for Catalyst terminology, while `_fabricated()` was preserved byte-for-byte. Bob also added `engine/contract.py`, which flattens a contract into the packet used by the breach scanner.
+
+The three verified modules in `engine/`, along with the specifications, findings, demo script, and prompt pack in `docs/`, predate Bob. They were validated against live SEC and ClinicalTrials.gov data before the build began.
+
+Bob was constrained rather than trusted. `.bob/custom_modes.yaml` limits edit access with `fileRegex`, protecting the verified engine modules, and defines a read-only reviewer mode so review cannot quietly alter what it assesses.
+
+Other AI tools were used only for permitted review, with each pass recorded separately in `docs/BOB_LOG.md`.
+
+Later work was implemented by hand with Claude Code and logged at the same level of detail. It includes the evidence seam, promise identity, claims lexicon, workspace mode, cohort study, decision-state model, non-quantitative Granite policy, locked ledger append, accessibility and test-isolation fixes, and the Phase 2 decision screens: inbox, receipts, review, activity history, evidence explorer, desk, and memo views.
+
 In short: Bob built the original governance, redline, console, receipt, and research-panel foundations. Later extensions and adversarial corrections were implemented separately with Claude Code. Representing that division accurately matters more than claiming a single tool made the whole project.
 
 ## How it was verified
+
 Every meaningful defect in this project initially had the same symptom: the suite was green.
-Tests can pass without testing the failure they claim to cover: a model test may fall back to a stub, a helper may be imported but never called, or a snapshot may omit a computed property. For that reason, no check is trusted until it has been deliberately made to fail.
-The fabrication guard is exercised against live Granite, not a mock. It was validated by using an invalid endpoint and confirming that the test fails on source == "granite" rather than passing via the stub fallback. Without credentials, this test skips; no result count is claimed for an unmeasured credentialed run.
-The number-provenance test ensures every displayed figure appears verbatim in the snapshot. It was verified by adding 9999 to a template and confirming the test identified it.
-The ledger-badge test was written before the fix and observed failing first.
-Console checks were deliberately re-broken after repair: the marker class was renamed, stub was forced into a memo, and days_expired was changed from 677 to 123. Each check failed as expected.
-docs/LIMITS.md explains what each safeguard proves—and, just as importantly, what it does not.
+
+A model test can pass through a stub fallback. A helper can be imported but never called. A snapshot can omit a computed property. For that reason, no guard is trusted until it has been deliberately made to fail.
+
+- The fabrication guard runs against live Granite rather than a mock. It was checked with an invalid endpoint and failed on `source == "granite"` rather than passing through the stub fallback.
+- The number-provenance test was checked by placing `9999` in a template and confirming that the test identified it.
+- The ledger-badge test was written before its repair and observed failing first.
+- Console checks were deliberately re-broken after repair: the marker class was renamed, `stub` was forced into a memo, and `days_expired` changed from 677 to 123. Each check failed as expected.
+
+`docs/LIMITS.md` states what each safeguard proves and what it does not.
 
 ## What it found
 
-**Rocket Pharmaceuticals.** A completion date revised in April 2024 that had already been
-expired for 677 days, on `NCT04248439`. That date has since passed too, so the binding
-catalyst is now `NCT06092034` at 2028-04, against which the same runway gives **-14.5
-months, financing required**. Anchored to the old date the thesis read +8.4 months, funded.
-No later registry version reconciled the registered expectation. The date simply arrived,
-and passed.
+**Rocket Pharmaceuticals.** In April 2024, `NCT04248439` was revised with a primary-completion date that had already expired for between 648 and 677 days. That date has since passed.
 
-**And a correction this project found in its own numbers, then corrected again.** Earlier
-versions of this section reported "1,008 days of net slip" on that trial and "a 943 day
-move" on its successor, summing every date movement without checking the dates described
-the same commitment. `engine/promise.py` now checks, and reports three totals rather than
-one:
+The binding catalyst is now `NCT06092034`, with a registered primary-completion date of 2028-04. Against that date, the same runway calculation produces **-14.5 months: financing required**. Against the earlier date, the thesis read **+8.4 months: funded**.
 
-- **`NCT06092034`: 943 reported, 0 established.** Its revision changed the enrolment from
-  12 to 14. A count, not a wording, so no reading rescues it.
-- **`NCT04248439`: 1,008 reported, -422 established, +1,430 contingent, upper bound
-  1,008.** Its endpoint was reworded from phenotypic correction of bone marrow colony
-  forming units to Mitomycin-C resistance of bone marrow colony-forming cells. In Fanconi
-  anaemia those may be the same endpoint named more precisely. A reword and a redefinition
-  are indistinguishable from the text, so the movement is contingent on a human reading
-  both descriptions, and the original figure may have been right.
+No later registry version reconciled the lapsed expectation. The date simply arrived and passed.
 
-The second row is the more useful one. A first pass treated the reword as a scope revision
-and reported 1,008 as unsupported, which overcorrected. It also meant a sponsor could
-delete a delay from the total by rewording an endpoint. A guard the subject can defeat by
-editing prose, in the direction that flatters them, is not a guard. `docs/LIMITS.md` has
-the full table.
+The project also corrected its own earlier net-slip figures. Summing every date movement without checking whether the commitment remained the same produced claims the system could not support.
 
-The 677-day result is untouched by this: it is one version carrying an already-passed
-date, not a comparison across two commitments. So is the funding gap, which compares the
-current registered date to the runway.
+- **`NCT06092034`: 943 days reported, 0 days established.** The revision changed enrolment from 12 to 14, so the promise changed.
+- **`NCT04248439`: 1,008 days reported, -422 days established, +1,430 days contingent, upper bound 1,008 days.** The endpoint wording changed in a way that may be a clarification or may be a redefinition. The registry text alone cannot settle that question.
+
+The 677-day result remains valid because it concerns one registry version carrying a date that had already passed; it does not require comparing two potentially different commitments.
 
 Across 12 clinical-stage, pre-revenue companies, all 12 produced rankable runway bands.
 
-Burn is reported as a band, never a point, because one quarter containing a partnership
-upfront is unrepresentative. Rows whose burn estimate is unreliable stay visible with the
-reason attached and never carry a rank. A screen that silently drops its hard cases is
-worse than one that shows them.
+Burn is reported as a band rather than a point estimate because a single quarter can be distorted by a partnership upfront. Rows with unreliable burn remain visible, with their reason attached, but are never ranked.
 
 ## What this is not
 
-Whether cash-constrained sponsors revise their dates differently than solvent ones is an
-open question, not a result, and adjacent published work already exists. A commercial
-screener and a published revision dataset both exist and are cited in `docs/DEMO.md`.
+This is not a claim that cash-constrained sponsors revise dates differently from solvent sponsors. That remains an open question.
 
-The claim is the monitor. Not a novel dataset, and not a finding.
+This is not a novel registry dataset or a commercial screener. Existing adjacent work is cited in `docs/DEMO.md`.
 
-The system says **registered primary-completion expectation**, never "readout date". They  [lexicon-exempt]
-differ systematically by two to four months, and the gap is always optimistic.
+The claim is the monitor.
+
+The system says **registered primary-completion expectation**, not “readout date.” Those concepts differ systematically, often by months, and treating them as interchangeable would be optimistic.
 
 ## Layout
 
-```
-evidence/                 the seam: EvidenceSnapshot, frozen and live providers
-engine/promise.py         promise identity; refuses a slip number it cannot establish
-engine/dimensions.py      the endpoint and enrolment per registry version
-orchestrator/lexicon.py   the forbidden-claims list, enforced on model and pages
+```text
+evidence/                 EvidenceSnapshot, frozen and live providers
+engine/promise.py         promise identity; refuses unsupported slip numbers
+engine/dimensions.py      endpoint and enrolment by registry version
 engine/runway.py          cash runway from SEC XBRL company facts, as a band
-engine/ctgov_history.py   registry revision history, notice and expiry metrics
-engine/gap.py             the catalyst contract join
+engine/ctgov_history.py   registry history, notice, and expiry metrics
+engine/gap.py             catalyst-contract join
 engine/ledger.py          hash-chained belief ledger
 orchestrator/             redline loop, challenge builder, Granite client
-console/                  Flask console, four views, snapshot generator
-research/                 the monitoring-queue panel, CSV and figure
-tests/                    40 tests, no network, no credentials
-data/snapshot.json        the frozen demo artifact
-docs/PRINCIPLE.md         the one-sentence claim and the forbidden-claims list
-docs/WORKSPACE.md         the two-mode design
-docs/BOB_LOG.md           what Bob built versus what preceded it
-docs/bob-sessions/        full Bob task exports, the evidence behind that log
-docs/FINDINGS.md          eight data gotchas, prior art, attack surface
-docs/DEMO.md              three minute script
+orchestrator/lexicon.py   forbidden-claims policy for model, pages, and docs
+console/                  Flask console and snapshot generator
+research/                 monitoring-queue panel, CSV, and figures
+tests/                    automated checks; no network or credentials required
+data/snapshot.json        frozen demo artifact
+docs/PRINCIPLE.md         core claim and forbidden-claims policy
+docs/WORKSPACE.md         two-mode design
+docs/BOB_LOG.md           what Bob built and what preceded it
+docs/bob-sessions/        Bob task exports supporting the log
+docs/FINDINGS.md          data gotchas, prior art, and attack surface
+docs/DEMO.md              demo script
 ```
 
-Read `docs/FINDINGS.md` before writing extraction code. Each gotcha in it produces a wrong
-number rather than an error, and one of them caused a 49x error that looked exactly like a
-company about to run out of money.
+Read `docs/FINDINGS.md` before writing extraction code. Each documented gotcha produces a plausible wrong number rather than an error, and one previously created a 49× mistake that looked exactly like a company about to run out of money.
+```
