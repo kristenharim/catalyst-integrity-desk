@@ -3,24 +3,20 @@
 An auditable monitor for when a biotech investment thesis no longer matches its approved
 evidence contract.
 
-**The boundary, stated before anything else.** The system does not determine whether a
-thesis is true. It identifies when the public evidence no longer matches the assumptions
-recorded in the evidence contract and routes that change to a human. A belief written
-through the console is recorded and hash-chained; nothing re-reads it on its own.
+The system does not determine whether a thesis is true. It identifies when the public evidence no longer matches the assumptions
+recorded in the evidence contract and routes that change to a human. A belief written through the console is recorded and hash-chained; nothing re-reads it on its own.
 
-<!-- generated: anchor -->
+# Issue Background 
 In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
 carrying a primary completion date of June 2022. That date names a month, not a day, so read
 at its latest it **had already been expired for at least 648 days** when the revision was
 filed, and at its earliest 677 days. Either way it stood in public, on a federal registry,
 machine readable the entire time.
-<!-- /generated -->
 
-Nobody was watching, because nobody's job is to watch.
+Nobody was watching (because nobody's job is to watch)
 
 **And Rocket is not unusual. The actual finding is about the registry, not the sponsor.**
 
-<!-- generated: headline -->
 In a random sample of 240 phase 2 / 2-3 / 3 trials, **this study cannot separate
 reconciliation from filing frequency, and most trials carrying an expired commitment have
 never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
@@ -31,14 +27,12 @@ government and institutional sponsors, the OTHER_GOV stratum, file a median of 2
 of 29 of their still-open commitments have already expired**. The ordering is monotone in
 filing frequency across all four strata, which is an association across four points rather
 than a tested relationship.
-<!-- /generated -->
 
 That inverts the measure this project started with. Counting lapses that a later filing
 corrected, government sponsors look like the *best* reconcilers, because a lapse only becomes
 visible when the sponsor files again. A measure that needs its subject to keep talking cannot
 see the subject that stops.
 
-<!-- generated: mechanism -->
 The supporting mechanism, among sponsors still filing: **at least 22.2% of industry
 completion-date revisions replace an estimate that had already expired**, a bound because a
 month-only date has two readings and this is the smaller; the first-of-month reading is
@@ -54,36 +48,26 @@ rank is quoted with the reading it was computed from, because a percentile and t
 it ranks have to come off the same convention, and an earlier draft of this block paired the
 end-of-month duration with a first-of-month rank. Long, and inside the distribution rather
 than outside it.
-<!-- /generated -->
 
 `docs/WRITEUP.md` is the standalone write-up and `docs/COHORT.md` the
 working record.
 
-<!-- generated: provenance -->
 Every cohort figure in the claim documents is emitted from a field of snapshot
 `cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each of four
 sponsor strata, all measured, point prevalence as of 2026-07-22. The prose around them
 contains no numerals and a test regenerates every generated block and fails on a one-byte
 difference.
-<!-- /generated -->
 
-## The claim, in one sentence
+## Main Claim
 
 > **This system measures whether public, dated, self-authored commitments were kept,
 > revised, superseded, or allowed to expire without reconciliation. It does not measure
 > whether the underlying claim was ever true.**
 
-The second sentence is half the product. Diligence really wants a verdict on the
-underlying science, and on whether the stated dates will hold. No system reading public
-records can deliver one, and a model that pretends to is an opinion dressed as evidence.
-What is answerable, and already public: whether the promises survived contact with their
-own prior versions.
+Diligence really wants a verdict on the underlying science, and on whether the stated dates will hold. No system reading public
+records can deliver one, and a model that pretends to is an opinion dressed as evidence. What is answerable, and already public: whether the promises survived contact with their own prior versions.
 
-Theranos is the useful example because of what the tell was **not**. In real time nobody
-was going to catch it by evaluating the microfluidics. What was visible continuously was a
-decade of claims that did not reconcile against their own earlier versions. That pattern
-is measurable. Feasibility is not. `docs/PRINCIPLE.md` states the rule and the claims this
-system is therefore forbidden from making, and `orchestrator/lexicon.py` enforces them on
+Theranos is a useful case study example. In real time nobody was going to catch it by evaluating the microfluidics. What was visible continuously was a decade of claims that did not reconcile against their own earlier versions. That pattern is measurable. Feasibility is not. `docs/PRINCIPLE.md` states the rule and the claims this system is therefore forbidden from making, and `orchestrator/lexicon.py` enforces them on
 the model, the pages and the docs.
 
 ## The problem
@@ -323,170 +307,21 @@ funding target.
 
 ## How IBM Bob was used
 
-Bob was the primary development tool. The split below comes from `docs/BOB_LOG.md`, which
-was written as the work happened. Every Bob row there is backed by a full task export in
-`docs/bob-sessions/`: nine transcripts covering twelve rows, because three Bob sessions
-each produced two logged rows.
-
-**Built with Bob:**
-
-- **The governance port.** Ledger, challenge, classifier and Granite modules brought over
-  from a prior project, with the prompt strings rewritten for catalyst vocabulary and
-  `_fabricated()` kept byte for byte. Plus `engine/contract.py`, the flattener from a
-  contract to the packet the breach scanner reads.
-- **The redline loop.** `as_directions()` translates before and after metric packets into
-  word-only direction labels, so the model never sees a number it could echo back as its
-  own. `run_redline()` detects a breach and calls the challenge builder.
-- **The console.** All three views, the snapshot generator, the SVG revision timeline, and
-  the test suite.
-- **The integrity badge repair**, test first.
-
-**Preceded Bob and is not its work:** the three modules in `engine/`, verified against
-live SEC and ClinicalTrials.gov data before the build started, and the specs, findings,
-demo script and prompt pack in `docs/`.
-
-Bob was constrained rather than trusted. `.bob/custom_modes.yaml` puts a `fileRegex` on
-edit permission so the three verified engine modules cannot be rewritten, and defines a
-reviewer mode with no edit permission at all, so a review cannot quietly fix what it is
-judging. Those boundaries held.
-
-Other AI tools were used for review, which the challenge permits, and `docs/BOB_LOG.md`
-records those passes separately from the build.
-
-Work after Bob's build was completed by hand with Claude Code, not by Bob, and every line
-of it is logged in `docs/BOB_LOG.md` at the same detail as the Bob rows. That is: the
-unresolved-ticker row on `/contracts`, the thesis-break timeline, the derivation table, the
-analyst belief form, the monitoring queue, then the larger pass that added the evidence
-seam, promise identity, the enforced claims lexicon and workspace mode, then the random
-cohort study: its store, the snapshot the published rates cite, the first amendment to a
-protected engine module, and the absorption rules in the lexicon. Most recently, the
-three-axis decision state model in `console/states.py` and `console/review.py`, which
-separates what the evidence says from what a human is doing and from whether the decision
-record is still intact, and then the non-quantitative Granite policy in
-`orchestrator/granite.py`: the rule that replaced "a number absent from the input" after an
-audit broke it, and the pass that closed the word-form dates the replacement still let
-through, aligned both prompts with the rule the runtime actually enforces, and corrected the
-test counts three earlier rows had published from memory rather than from a run. Then the
-submission reconciliation: the classification's confidence stopped being rendered, the
-lexicon's silence rules stopped being keyed on three exact phrasings, and the claims this
-file makes about its own percentile, its own retracted audit, and its own Bob counts were
-put under `tests/test_claim_integrity.py` rather than left to review. Most recently, the
-registry-reconciliation line on `/redline` stopped resting on a typed Boolean: whether a
-later registry version ever reconciled the lapsed expectation is now derived in
-`console/review.py` from the anchored trial's committed version history and the snapshot's
-own `as_of`, renamed to the narrower fact it proves, and rendered as one of three sentences
-including an explicit unavailable when the stored history cannot answer. Then the first two
-Phase 2 screens: the decision inbox at `/inbox`, which surfaces the task machinery that had
-been wired to no route, and the decision integrity receipt at `/receipts/<entry_id>`,
-addressed by the ledger entry's own hash, with its colour tokens declared in CSS rather
-than imported, an axe-core accessibility check over both screens, and the elements nothing
-in this repo stores asserted absent from the rendered page. Most recently, that receipt got
-a way in: `/redline/confirm` links to the address of the entry it just rendered, selected by
-`card_id` like the receipt itself, so a later unrelated write cannot move it, and the
-accessibility check was widened to `/redline`, which had been carrying two colour-contrast
-failures of its own while the two screens either side of it measured clean. Most recently
-that check stopped choosing its own pages: which routes it scans is keyed on the app's
-`url_map`, so a screen cannot be added without being scanned or named as out of scope with a
-reason, and `npm run test:a11y` sets the strict requirement itself rather than asking anyone
-to remember a variable. The first thing the inventory caught was `/redline/confirm`, the page
-the demo ends on, which no scan had ever reached and which carried the same two pairings; it
-was scanned with those three violations declared and failing on the record rather than
-unmeasured, and they are now repaired by the same two token substitutions `/redline` took,
-with the mechanism that declared them deleted rather than left standing empty. In the same
-pass the suite stopped writing the repository's own runtime state: one test reached the
-ledger anchor on the real path and a plain `pytest tests/` created `data/ledger.anchor`, so
-the three console paths are redirected once for every test in `tests/conftest.py` and a
-session-scoped guard fails the run if any of the three real files is created or changed.
-Most recently, the third Phase 2 screen: the decision review at
-`/decisions/<card_id>/review`, which reads one decision end to end in one order at every
-width and places its three panels into a desktop row by grid rather than by reordering the
-markup. The one decision with a challenge behind it can be ruled on, through the write path
-that already existed; every other decision renders its evidence and no control at all,
-disabled ones included, because a control that cannot complete is a claim about capability
-the desk cannot keep. Measuring that screen at 390x844 found a defect every screen here had
-carried since the first commit: the navigation row could not wrap, so the whole console
-scrolled sideways on a phone. Most recently, the fourth Phase 2 screen: the activity history
-at `/activity`, which lists the ledger's own events and the rejections that never reach it,
-in the order the record holds them, each row bound to its own entry hash rather than to
-whichever entry is last. It is decision history and not evidence-change history, and it
-says which of the two it is on the page, because nothing here has a history of evidence runs
-to show. Most recently, the seeded ledger entry stopped reading as a decision taken in 1970:
-the `ts=0.0` the approve path writes is a marker rather than a moment, and the renderer both
-screens share returns a display state that names it as one, with the stored entry left
-byte-identical, because the alternative repair is to write a better timestamp into the
-record. The same extraction had already found that every receipt ever rendered stamped the
-host machine's local wall time under a UTC label. Most recently, the fifth Phase 2 screen: the
-narrow evidence explorer at `/evidence/<contract_id>`, reached by one link from the decision
-review and addressed by the same decision identity, so the two screens are naming one
-decision rather than arriving at one company twice. It shows the committed derivation for a
-contract, the source record each input resolves to, and three provenance states that never
-blur: source linked, named but unresolved, and unavailable. One function decides a state and
-only that function may name the strongest of the three, which a test asserts over the
-module's own syntax tree, so a named source has no path by which to become a resolved one.
-What the page could not establish sits beside what it could, including the registry versions
-this artifact does not store and the sponsor-to-issuer join, which is a string match nothing
-here normalises. The page renders its scope rather than implying it: it shows the evidence
-recorded in the committed artifact, and it does not independently verify the underlying
-thesis. Then the plain-language surface at `/desk` and `/memo/<ticker>`, added beside the
-analyst console rather than replacing it, and made the front door, so a first-time reader
-lands on the at-a-glance view while `/demo` keeps the opening frame the film is shot
-against. Most recently, the three charts on `/contract/<ticker>` were made legible: nodes
-filed days apart were drawing their date labels on top of each other, and every chart was
-wider than the column holding it, so the right-hand label was cut off. Labels now stack
-instead of the nodes moving, since moving a node would make the chart disagree with the
-date it draws, and the charts scale to their column. The same pass fixed a heading that
-could print one trial's identifier beside another trial's completion date whenever a
-registry fetch failed, and corrected `docs/LIMITS.md`, which was still describing the
-collision it had just stopped having.
-
-**IBM Bob built the original governance, redline, console, receipt and research-panel
-foundations. Later extensions and adversarial corrections were implemented separately with
-Claude Code and are recorded in the project log.** Everything in the original console --
-all three views, the snapshot generator, the redline loop, the governance port and the
-first test suite -- is Bob's, and `.bob/custom_modes.yaml` shows the constraints it was
-built under. What came after is not only review: the evidence seam, promise identity, the
-claims lexicon, workspace mode, the cohort study, the decision state model, the
-non-quantitative Granite policy and the locked ledger append are all product code written
-by hand. Describing that split inaccurately would be a worse failure than admitting a
-second tool touched the repo.
+IBM Bob built the original governance port, redline loop, analyst console, snapshot generator, SVG revision timeline, and initial test suite. It also repaired the integrity badge test-first.
+The governance port includes the Ledger, Challenge, Classifier, and Granite modules adapted from an earlier project; prompts were rewritten for Catalyst terminology, while _fabricated() was preserved byte-for-byte. Bob also added engine/contract.py, which flattens a contract into the packet used by the breach scanner.
+The three verified modules in engine/, along with the specs, findings, demo script, and prompt pack in docs/, predate Bob. They were validated against live SEC and ClinicalTrials.gov data before the build began.
+Bob was constrained rather than trusted. .bob/custom_modes.yaml limits edit access with fileRegex, protecting the verified engine modules, and defines a read-only reviewer mode so review cannot silently alter what it assesses. Other AI tools were used only for permitted review, with each pass recorded separately in docs/BOB_LOG.md.
+Later work was implemented by hand with Claude Code and logged at the same level of detail. It includes the evidence seam, promise identity, claims lexicon, workspace mode, cohort study, decision-state model, non-quantitative Granite policy, locked ledger append, accessibility and test-isolation fixes, and the Phase 2 decision screens: inbox, receipts, review, activity history, evidence explorer, and the plain-language desk and memo views.
+In short: Bob built the original governance, redline, console, receipt, and research-panel foundations. Later extensions and adversarial corrections were implemented separately with Claude Code. Representing that division accurately matters more than claiming a single tool made the whole project.
 
 ## How it was verified
-
-Every real defect found in this project had the same shape: **everything stayed green.** A
-test narrowed around a bug the author had already noticed. A live-model test that passed
-without ever reaching the model, because the stub fallback answered and stubs do not
-fabricate. A function imported into its own test and never called. A demo centrepiece
-missing from the snapshot because `dataclasses.asdict` serialises fields and not
-properties.
-
-None of them announced themselves. So a check here is not trusted until it has been seen
-failing.
-
-- The fabrication guard is tested against live Granite, not a mock. That test is
-  itself checked by pointing it at an invalid endpoint: it then fails on the
-  `source == "granite"` assertion rather than passing on the stub, which is the
-  precise way an earlier version of it gave a false pass. Without credentials that one
-  test skips; with them it runs. No count is quoted for the credentialed configuration,
-  because none has been measured for this commit.
-- The number-provenance test asserts that every figure in the rendered HTML appears
-  verbatim in the snapshot. It was confirmed by planting a `9999` in a template and
-  watching the test name that token.
-- The ledger badge test was written before its fix, and watched to fail.
-- Each console check was re-broken afterwards: the marker class renamed, `stub` forced
-  into the memo, `days_expired` changed from 677 to 123. All four failed as they should.
-
-`docs/LIMITS.md` states what every guard in this system does and does not prove, at the
-strength the evidence supports. It is worth reading before the code, because the honest
-version of each claim is narrower than the obvious one, and each limit there was found by
-breaking the thing rather than by reasoning about it.
-
-Stated precisely, because it is easy to oversell: the provenance check **detects
-unintended displayed literals**. It does not prove every rendered value is correctly
-formatted. It matches by substring, so a format that truncates a full-precision value
-passes for free, and it walks text nodes only, so attribute values such as SVG
-coordinates and stroke widths are never examined. Within those limits it does the job it
-exists for, which is catching a number that entered the page from somewhere other than
-the snapshot.
+Every meaningful defect in this project initially had the same symptom: the suite was green.
+Tests can pass without testing the failure they claim to cover: a model test may fall back to a stub, a helper may be imported but never called, or a snapshot may omit a computed property. For that reason, no check is trusted until it has been deliberately made to fail.
+The fabrication guard is exercised against live Granite, not a mock. It was validated by using an invalid endpoint and confirming that the test fails on source == "granite" rather than passing via the stub fallback. Without credentials, this test skips; no result count is claimed for an unmeasured credentialed run.
+The number-provenance test ensures every displayed figure appears verbatim in the snapshot. It was verified by adding 9999 to a template and confirming the test identified it.
+The ledger-badge test was written before the fix and observed failing first.
+Console checks were deliberately re-broken after repair: the marker class was renamed, stub was forced into a memo, and days_expired was changed from 677 to 123. Each check failed as expected.
+docs/LIMITS.md explains what each safeguard proves—and, just as importantly, what it does not.
 
 ## What it found
 
