@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from console.make_snapshot import (  # noqa: E402
     SVG_LABEL_GAP, SVG_PAD, SVG_ROW_H, SVG_WIDTH,
+    TL_LABEL_CHAR_W, TL_WIDTH,
     _add_svg_x, _join_lapsed_pcd, _svg_height,
 )
 
@@ -86,6 +87,34 @@ def test_canvas_is_tall_enough_for_its_deepest_label(name, history):
     assert history["svg_height"] >= deepest, (
         f"{name}: canvas is {history['svg_height']}px tall and the lowest label "
         f"sits at y={deepest}, so it is drawn outside the viewBox"
+    )
+
+
+def _shortfall_bands():
+    with open(SNAPSHOT_PATH) as f:
+        snap = json.load(f)
+    for ticker, c in snap["contracts"].items():
+        band = (c.get("thesis_timeline") or {}).get("shortfall")
+        if band:
+            yield ticker, band
+
+
+@pytest.mark.parametrize("ticker,band", list(_shortfall_bands()))
+def test_thesis_band_label_fits_the_canvas(ticker, band):
+    """The sentence naming the band has to sit inside the drawing that holds it.
+
+    Left-anchored at the band's own start, SRPT's narrow surplus band at x 865
+    to 961 pushed a 305px label to 1170 on a 1100px canvas, and the reader saw
+    "months of cash beyond the regist".
+    """
+    half = len(band["label"]) * TL_LABEL_CHAR_W / 2
+    assert 0 <= band["x_label"] - half, (
+        f"{ticker}: the band label starts at {band['x_label'] - half:.0f}, "
+        f"left of the canvas"
+    )
+    assert band["x_label"] + half <= TL_WIDTH, (
+        f"{ticker}: the band label ends at {band['x_label'] + half:.0f}, "
+        f"past the {TL_WIDTH}px canvas"
     )
 
 

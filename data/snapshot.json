@@ -196,6 +196,8 @@
         "shortfall": {
           "x_from": 312.2,
           "x_to": 960.9,
+          "x_label": 636.5,
+          "label": "35.6 months with no money before the registered event",
           "months_1f": "35.6"
         },
         "short": true
@@ -566,6 +568,8 @@
         "shortfall": {
           "x_from": 464.7,
           "x_to": 960.6,
+          "x_label": 712.6,
+          "label": "14.5 months with no money before the registered event",
           "months_1f": "14.5"
         },
         "short": true
@@ -813,6 +817,8 @@
         "shortfall": {
           "x_from": 307.6,
           "x_to": 729.9,
+          "x_label": 518.8,
+          "label": "20.2 months of cash beyond the registered event",
           "months_1f": "20.2"
         },
         "short": false
@@ -1384,6 +1390,8 @@
         "shortfall": {
           "x_from": 865.1,
           "x_to": 960.9,
+          "x_label": 913.0,
+          "label": "2.6 months of cash beyond the registered event",
           "months_1f": "2.6"
         },
         "short": false

@@ -54,6 +54,7 @@ SVG_ROW_H = 30  # vertical drop per stacked label row
 # because the end markers carry two lines of label each.
 TL_WIDTH = 1100
 TL_PAD = 90
+TL_LABEL_CHAR_W = 6.7  # px per character of the band label at font-size 11
 
 
 # ---------------------------------------------------------------------------
@@ -271,9 +272,22 @@ def _thesis_timeline(c: dict, today_iso: str) -> dict | None:
     # positive gap is a surplus and gets the same band in the other direction.
     if gap is not None:
         lo, hi = sorted([exh_lo, catalyst])
+        x_from, x_to = x(lo), x(hi)
+        # The sentence names the band, so it is centred on the band rather than
+        # started at its left edge.  Left-anchored, a narrow band sitting far
+        # right ran the label off the canvas: SRPT's surplus band spans 865 to
+        # 961 on a 1100px canvas and a 305px label from x_from ended at 1170,
+        # so the reader saw "beyond the regist".  Clamped so no combination of
+        # band position and band width can put it outside the drawing.
+        label = (f"{_fmt_1f(abs(gap))} months with no money before the registered event"
+                 if tl["short"] else
+                 f"{_fmt_1f(abs(gap))} months of cash beyond the registered event")
+        half = len(label) * TL_LABEL_CHAR_W / 2
         tl["shortfall"] = {
-            "x_from": x(lo),
-            "x_to": x(hi),
+            "x_from": x_from,
+            "x_to": x_to,
+            "x_label": round(min(max((x_from + x_to) / 2, half), TL_WIDTH - half), 1),
+            "label": label,
             "months_1f": _fmt_1f(abs(gap)),
         }
     return tl
