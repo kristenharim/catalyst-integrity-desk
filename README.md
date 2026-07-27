@@ -241,7 +241,7 @@ The project also corrected its own earlier net-slip figures. Summing every date 
 
 The 677-day result remains valid because it concerns one registry version carrying a date that had already passed; it does not require comparing two potentially different commitments.
 
-Across 12 clinical-stage, pre-revenue companies, all 12 produced rankable runway bands.
+The research panel requests 12 clinical-stage, pre-revenue companies. Seven of them reach `research/panel.csv`, and all seven carry a rankable runway band. The other five produced no contract in that run, because of the sponsor-name join, not anything about those companies.
 
 Burn is reported as a band rather than a point estimate because a single quarter can be distorted by a partnership upfront. Rows with unreliable burn remain visible, with their reason attached, but are never ranked.
 
