@@ -28,3 +28,7 @@ HANDOFF.md
 BUNDLE.md
 make_bundle.py
 .claude/
+
+# Editor vault config. `open docs/*.md` launches Obsidian, which writes this
+# into whatever folder it opened. Not part of the submission.
+.obsidian/
