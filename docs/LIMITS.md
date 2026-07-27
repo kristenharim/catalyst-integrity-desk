@@ -231,18 +231,50 @@ The two things that are checked, and were watched failing:
 The upgrade is the same one the provenance section already names: resolve the record and
 assert the formatter's exact output against the field it claims.
 
-## The timeline is drawn from the snapshot, and its geometry is unchecked
+## The timeline geometry is checked on the revision charts and not on the thesis chart
 
 The thesis-break timeline recomputes the exhaustion date and the lapsed-anchor gap from
 raw fields rather than copying the contract's strings, on purpose: an independent
 recomputation that disagrees is a defect worth catching, and a test asserts the agreement.
 That test caught a mutated gap.
 
-Not checked: whether the picture is legible. Marker x positions are asserted to fall
-inside the axis, and nothing more. Two markers a few days apart overlap, their labels
-collide, and every test stays green. On RCKT the filing and lapsed markers sit 39px apart
-and are readable only because they were given different label rows by hand. A contract
-whose dates cluster differently will draw badly and say nothing about it.
+**Corrected 2026-07-27.** This section used to say that marker positions were asserted to
+fall inside the axis and nothing more, so labels a few days apart collided with every test
+green. That was true, and it was true of a live defect while it said so: SRPT's NCT06246513
+filed two revisions two days apart at the end of a 397-day span, their nodes landed 4.9px
+apart, and four date labels rendered on top of each other. The same collision was live on
+PRME/NCT06559176 and SRPT/NCT03992430, and the right-hand label of every revision chart was
+being cut off by a container narrower than the fixed canvas the template drew.
+
+What is checked now, and only this: `tests/test_timeline_layout.py` reads the committed
+snapshot and asserts, per revision timeline, that no two date labels on the same row are
+closer than a label is wide, that every label at its full width falls inside the canvas,
+and that the canvas is tall enough for the deepest row it stacked. Nodes keep their true
+position on the time axis; colliding labels stack downward instead, because moving a node
+would make the chart disagree with the date it is drawing. The pre-fix geometry trips the
+first of those checks, which is what makes them a control rather than a description.
+
+What is still not checked:
+
+- **The thesis-break chart's markers.** Only its band sentence is guarded, by a clamp that
+  keeps the label inside the canvas. The filing, lapsed, today and catalyst markers are
+  still placed by date with hand-assigned label rows in the template. On RCKT the filing
+  and lapsed markers sit 39px apart and are readable because of those hand-assigned rows,
+  not because anything measured them. A contract whose dates cluster differently will draw
+  badly and say nothing about it.
+- **The above-axis labels on the revision charts.** `wording only`, `not comparable` and
+  `carried expired · N days` are not collision-managed the way the date labels below the
+  axis now are. No trial in the current snapshot carries two of them close enough to touch,
+  which is why the case is named here rather than handled: the guard would be written
+  against no observed failure.
+- **Character width is estimated, not measured.** Both guards derive a label's width from
+  its character count times a per-character constant for SF Mono at the rendered font size.
+  A fallback font with different metrics moves the real width, so the thresholds are close
+  rather than exact. Nothing here opens a browser; `tests/test_demo_frame.py` is the only
+  check that reads a real bounding box, and it reads the fold, not label collisions.
+- **Contrast and colour.** Where two stacked labels are only a few pixels apart
+  horizontally, telling which node owns which pair depends on the red-versus-grey colour
+  cue, and nothing asserts that cue is present or distinguishable.
 
 ## The opening frame is now measured, at one viewport, in one browser
 
@@ -264,9 +296,11 @@ What it does not establish:
 - **One viewport, one engine.** 1280x800 in headless Chromium. A different window size, a
   different browser, or a different default font can move every number here. The demo is
   filmed at one size, which is why one size is pinned.
-- **Position, not legibility.** Nothing measures contrast, overlap, or whether two markers
-  collide. The section above still applies: markers a few days apart overlap and every test
-  stays green.
+- **Position, not legibility.** This check measures the fold and nothing else: not contrast,
+  not overlap, not whether two markers collide. Label collision on the revision charts is
+  covered separately by `tests/test_timeline_layout.py`, which reads the snapshot rather
+  than the rendered page; the residuals of that check, including the thesis chart's own
+  markers, are listed in the section above.
 - **It skips without Playwright**, which is a development extra rather than a
   `requirements.txt` dependency. On a clean clone only the document-order check runs, and
   document order is weaker: a section above could grow tall enough to push the anchor below

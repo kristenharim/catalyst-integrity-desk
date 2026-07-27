@@ -142,7 +142,7 @@ git clone https://github.com/kristenharim/catalyst-integrity-desk.git
 cd catalyst-integrity-desk
 pip install -r requirements.txt
 python3 -m console.app            # http://localhost:8050
-python3 -m pytest tests/ -q       # 532 passed, 19 skipped
+python3 -m pytest tests/ -q       # 534 passed, 19 skipped
 ```
 
 Run it as a module, from the repo root. Set `PORT` to move it off 8050.
@@ -160,10 +160,10 @@ above it, and each has its own command, so a number here is traceable to what pr
 
 | tier | what it needs | command | result |
 |---|---|---|---|
-| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **532 passed, 19 skipped** |
-| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **533 passed, 18 skipped** |
-| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **535 passed, 16 skipped** |
-| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **548 passed, 3 skipped** |
+| base | `pip install -r requirements.txt` | `CID_BASE_DEPS_ONLY=1 python3 -m pytest tests/ -q` | **534 passed, 19 skipped** |
+| Playwright | base, plus `pip install playwright && python3 -m playwright install chromium` | `python3 -m pytest tests/ -q` | **535 passed, 18 skipped** |
+| Playwright + axe | Playwright, plus `npm ci` | `npm run test:a11y` | **537 passed, 16 skipped** |
+| cache-backed research | Playwright, plus a populated `data/cache/` | `python3 -m pytest tests/ -q` | **550 passed, 3 skipped** |
 
 Base is the tier a judge gets and the number printed above; on a clone with nothing extra
 installed the plain command produces it, and `CID_BASE_DEPS_ONLY=1` pins it on a machine
@@ -427,7 +427,17 @@ What the page could not establish sits beside what it could, including the regis
 this artifact does not store and the sponsor-to-issuer join, which is a string match nothing
 here normalises. The page renders its scope rather than implying it: it shows the evidence
 recorded in the committed artifact, and it does not independently verify the underlying
-thesis.
+thesis. Then the plain-language surface at `/desk` and `/memo/<ticker>`, added beside the
+analyst console rather than replacing it, and made the front door, so a first-time reader
+lands on the at-a-glance view while `/demo` keeps the opening frame the film is shot
+against. Most recently, the three charts on `/contract/<ticker>` were made legible: nodes
+filed days apart were drawing their date labels on top of each other, and every chart was
+wider than the column holding it, so the right-hand label was cut off. Labels now stack
+instead of the nodes moving, since moving a node would make the chart disagree with the
+date it draws, and the charts scale to their column. The same pass fixed a heading that
+could print one trial's identifier beside another trial's completion date whenever a
+registry fetch failed, and corrected `docs/LIMITS.md`, which was still describing the
+collision it had just stopped having.
 
 **IBM Bob built the original governance, redline, console, receipt and research-panel
 foundations. Later extensions and adversarial corrections were implemented separately with

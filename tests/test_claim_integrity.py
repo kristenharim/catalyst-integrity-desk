@@ -275,11 +275,20 @@ RETIRED_LIMITS = [
      "losing writer raises Conflict"),
     ("read from the ledger's last entry at render time",
      "the receipt is selected by card_id, not by whichever entry is last"),
+    # Added 2026-07-27. The sentence outlived the gap by one commit: the label
+    # collision it described was fixed and guarded, and this document went on
+    # calling it open. A limits file that overstates is the same defect as one
+    # that understates, pointed the other way.
+    ("Two markers a few days apart overlap, their labels collide, and every test "
+     "stays green",
+     "colliding date labels stack downward and tests/test_timeline_layout.py "
+     "fails on the pre-fix geometry"),
 ]
 
 CURRENT_LIMITS = [
     "fcntl.flock",
     "card_id",
+    "test_timeline_layout",
 ]
 
 
