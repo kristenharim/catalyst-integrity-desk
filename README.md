@@ -6,6 +6,15 @@ Catalyst Integrity Desk does not decide whether an investment thesis is true. It
 
 A belief entered through the console is hash-chained into a ledger. The system does not silently revisit or rewrite it.
 
+## At a glance
+
+- **What it does:** tracks whether a biotech sponsor's public, dated commitments (trial completion dates in ClinicalTrials.gov, cash runway from SEC filings) were kept, revised or quietly allowed to expire, and flags when a thesis built on them no longer holds.
+- **Headline finding:** Rocket Pharmaceuticals revised trial `NCT04248439` in April 2024 with a completion date that had already passed 648 to 677 days earlier. Re-anchored to the current catalyst, the same runway math flips from **+8.4 months, funded** to **-14.5 months, financing required**.
+- **Wider sample:** in a random sample of 240 Phase 2 and 3 trials, most expired commitments were never reconciled (for example, 20 of 27 in the `OTHER_GOV` stratum).
+- **How it stays honest:** every belief is hash-chained into a ledger, model output is limited to a fixed vocabulary, and a human makes every decision.
+- **Built for:** the IBM AI Builders Challenge, July 2026, with IBM Bob under explicit edit constraints.
+- **Try it:** `pip install -r requirements.txt && python3 -m console.app` (no keys or network needed; see [Quickstart](#quickstart)).
+
 ## Issue background
 
 In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439` that still listed a primary-completion date of June 2022. Because the registry records only a month, that commitment had already been expired for between 648 and 677 days when the revision was filed.
