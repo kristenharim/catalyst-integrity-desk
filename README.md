@@ -10,7 +10,7 @@ A belief entered through the console is hash-chained into a ledger. The system d
 
 - **What it does:** tracks whether a biotech sponsor's public, dated commitments (trial completion dates in ClinicalTrials.gov, cash runway from SEC filings) were kept, revised or quietly allowed to expire, and flags when a thesis built on them no longer holds.
 - **Headline finding:** Rocket Pharmaceuticals revised trial `NCT04248439` in April 2024 with a completion date that had already passed 648 to 677 days earlier. Re-anchored to the current catalyst, the same runway math flips from **+8.4 months, funded** to **-14.5 months, financing required**.
-- **Wider sample:** in a random sample of 240 Phase 2 and 3 trials, most expired commitments were never reconciled (for example, 20 of 27 in the `OTHER_GOV` stratum).
+- **Wider sample:** in a random sample of Phase 2 and 3 trials, most expired commitments were never reconciled (see [Issue background](#issue-background)).
 - **How it stays honest:** every belief is hash-chained into a ledger, model output is limited to a fixed vocabulary, and a human makes every decision.
 - **Built for:** the IBM AI Builders Challenge, July 2026, with IBM Bob under explicit edit constraints.
 - **Try it:** `pip install -r requirements.txt && python3 -m console.app` (no keys or network needed; see [Quickstart](#quickstart)).
@@ -253,7 +253,7 @@ This is not a novel registry dataset or a commercial screener. Existing adjacent
 
 The claim is the monitor.
 
-The system says **registered primary-completion expectation**, not “readout date.” Those concepts differ systematically, often by months, and treating them as interchangeable would be optimistic.
+The system says **registered primary-completion expectation**, not “readout date.” Those concepts differ systematically, often by months, and treating them as interchangeable would be optimistic. [lexicon-exempt]
 
 ## Layout
 
