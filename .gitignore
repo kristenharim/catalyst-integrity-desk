@@ -20,3 +20,11 @@ node_modules/
 # Live demo state — written during the demo, not committed.
 data/decisions.jsonl
 data/ledger.anchor
+
+# Agent orientation and bundle files: kept locally, not published (2026-11-11)
+AGENTS.md
+CLAUDE.md
+HANDOFF.md
+BUNDLE.md
+make_bundle.py
+.claude/
