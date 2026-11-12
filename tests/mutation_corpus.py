@@ -154,13 +154,13 @@ SEAT_7 = [
      "a cohort rate laundered through the citation table, which is exempt from "
      "the digit rule and used to reject only figures that matched a real field"),
     ("g7-backticked-figure", "README.md",
-     "Nobody was watching",
-     "Industry point prevalence is `8.3%` of all trials.\n\nNobody was watching",
+     "The important finding is not that Rocket is unusual.",
+     "Industry point prevalence is `8.3%` of all trials.\n\nThe important finding is not that Rocket is unusual.",
      "a live figure retyped in a code span, which the residual scan used to blank "
      "before looking"),
     ("g7-linked-figure", "README.md",
-     "Nobody was watching",
-     "The NIH median carry is [1,101.5 days](docs/WRITEUP.md).\n\nNobody was watching",
+     "The important finding is not that Rocket is unusual.",
+     "The NIH median carry is [1,101.5 days](docs/WRITEUP.md).\n\nThe important finding is not that Rocket is unusual.",
      "the same, in markdown link text"),
     ("g7-malformed-marker", "docs/STATUS.md",
      "<!-- generated: primary_measures -->",

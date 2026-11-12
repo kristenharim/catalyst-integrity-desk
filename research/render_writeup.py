@@ -1320,7 +1320,7 @@ Either way it stood in public, on a federal registry, machine readable the entir
 "block_headline": """\
 In a random sample of {n_trials} phase {phases} trials, **this study cannot separate
 reconciliation from filing frequency, and most trials carrying an expired commitment have
-never reconciled a lapsed date** — {silent_by_stratum}, dates that have stood a median of
+never reconciled a lapsed date**: {silent_by_stratum}, dates that have stood a median of
 {silent_medians}. NIH sponsors file a median of {nih_versions} registry versions per
 trial and have **zero** trials currently carrying an expired completion date. Non-U.S.
 government and institutional sponsors, the OTHER_GOV stratum, file a median of {og_versions},

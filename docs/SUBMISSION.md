@@ -92,7 +92,7 @@ expectation. The date simply arrived, and passed.
 <!-- generated: headline -->
 In a random sample of 240 phase 2 / 2-3 / 3 trials, **this study cannot separate
 reconciliation from filing frequency, and most trials carrying an expired commitment have
-never reconciled a lapsed date** — 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
+never reconciled a lapsed date**: 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
 OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
 OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
 trial and have **zero** trials currently carrying an expired completion date. Non-U.S.

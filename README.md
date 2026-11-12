@@ -17,23 +17,58 @@ A belief entered through the console is hash-chained into a ledger. The system d
 
 ## Issue background
 
-In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439` that still listed a primary-completion date of June 2022. Because the registry records only a month, that commitment had already been expired for between 648 and 677 days when the revision was filed.
+<!-- generated: anchor -->
+In April 2024, Rocket Pharmaceuticals filed a protocol revision for trial `NCT04248439`
+carrying a primary completion date of June 2022. That date names a month, not a day, so read
+at its latest it **had already been expired for at least 648 days** when the revision was
+filed, and at its earliest 677 days. Either way it stood in public, on a federal registry,
+machine readable the entire time.
+<!-- /generated -->
 
 The important finding is not that Rocket is unusual. It is that this kind of mismatch can remain public, machine-readable, and unaddressed because no system is assigned to compare a new registry version with the thesis built on the earlier one.
 
-A random sample of 240 Phase 2, Phase 2/3, and Phase 3 trials supports that concern. The study cannot separate reconciliation from filing frequency, but most trials with an expired commitment had never reconciled it: 4 of 5 in `INDUSTRY`, 20 of 27 in `OTHER_GOV`, and 15 of 19 in `OTHER`.
-
-Among still-open commitments, 27 of 29 in the `OTHER_GOV` stratum had already expired. NIH-sponsored trials showed a median of 106.5 registry versions per trial and no currently expired completion dates; `OTHER_GOV` sponsors showed a median of 2 versions. The ordering is monotone across four strata, but it is an association across four points—not a tested causal relationship.
+<!-- generated: headline -->
+In a random sample of 240 phase 2 / 2-3 / 3 trials, **this study cannot separate
+reconciliation from filing frequency, and most trials carrying an expired commitment have
+never reconciled a lapsed date**: 4 of 5 in INDUSTRY, 20 of 27 in OTHER_GOV, 15 of 19 in
+OTHER, dates that have stood a median of 1,101.5 days in INDUSTRY, 2,288.5 days in
+OTHER_GOV, 1,178 days in OTHER. NIH sponsors file a median of 106.5 registry versions per
+trial and have **zero** trials currently carrying an expired completion date. Non-U.S.
+government and institutional sponsors, the OTHER_GOV stratum, file a median of 2, and **27
+of 29 of their still-open commitments have already expired**. The ordering is monotone in
+filing frequency across all four strata, which is an association across four points rather
+than a tested relationship.
+<!-- /generated -->
 
 That changes the measure the project began with. Counting only lapses later corrected makes frequent filers look like the best reconcilers, because a lapse becomes visible only when its sponsor files again. A measure that requires its subject to keep reporting cannot observe the subject that stops.
 
-Among sponsors still filing, at least 22.2% of industry completion-date revisions replaced an estimate that had already expired. The first-of-month convention produces 26.2% (33 of 126). Of industry trials that revised a date at all, 24 of 52 (46.2%) did so at least once.
+<!-- generated: mechanism -->
+The supporting mechanism, among sponsors still filing: **at least 22.2% of industry
+completion-date revisions replace an estimate that had already expired**, a bound because a
+month-only date has two readings and this is the smaller; the first-of-month reading is
+26.2% (33 of 126). 24 of 52 (46.2%) industry trials that revised a date at all did it at
+least once. That is narrower than running late, which is well documented, and narrower than
+the raw after-lapse count, because a revision recording an *actual* completion is the update
+the regulation requires rather than a failure to file it.
 
-Industry point prevalence was 8.3% across all trials and 33.3% among trials with an open commitment. For the Rocket anchor case, the 677-day first-of-month reading sits at the 85th percentile of 188 comparable stretches. The percentile is reported with the same date convention used to calculate it.
+Industry point prevalence is 8.3% of all trials, and 33.3% of those whose commitment is
+still open. The anchor case stood expired for at least 648 days; under the first-of-month
+convention, the 677-day reading sits at the **85th percentile** of 188 such stretches. The
+rank is quoted with the reading it was computed from, because a percentile and the duration
+it ranks have to come off the same convention, and an earlier draft of this block paired the
+end-of-month duration with a first-of-month rank. Long, and inside the distribution rather
+than outside it.
+<!-- /generated -->
 
 `docs/WRITEUP.md` contains the standalone study, and `docs/COHORT.md` contains the working record.
 
-Every cohort figure in the claim documents is rendered from snapshot `cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each sponsor stratum, measured as of 2026-07-22. A test regenerates each generated block and fails on a one-byte difference.
+<!-- generated: provenance -->
+Every cohort figure in the claim documents is emitted from a field of snapshot
+`cohort-5b03269658b8` by `research/render_writeup.py`: 240 trials, 60 in each of four
+sponsor strata, all measured, point prevalence as of 2026-07-22. The prose around them
+contains no numerals and a test regenerates every generated block and fails on a one-byte
+difference.
+<!-- /generated -->
 
 ## Main claim
 
@@ -157,7 +192,7 @@ These are gitignored live-state files created during a demo. The committed `data
 
 The snapshot was built from live SEC XBRL company facts, live ClinicalTrials.gov version history, and a live IBM Granite call. The Granite classification is recorded with `source: "granite"`.
 
-Rebuilding requires credentials and does not occur during a demo. `docs/bob-sessions/` contains the build transcripts.
+Rebuilding requires credentials and does not occur during a demo. `docs/bob-sessions/` contains the build sessions as nine transcripts.
 
 ## The theme: intelligent systems for the future of work
 
@@ -198,6 +233,8 @@ If a revision changes a primary endpoint, it may describe a different commitment
 **A lapsed completion date is never a catalyst.** The system retains expired dates as integrity signals. It does not treat an event that should already have happened as a future funding target.
 
 ## How IBM Bob was used
+
+Bob was the primary development tool. Every Bob row in `docs/BOB_LOG.md`, written as the work happened, is backed by a full task export in `docs/bob-sessions/`: nine transcripts covering twelve rows, because three Bob sessions each produced two logged rows.
 
 IBM Bob built the original governance port, redline loop, analyst console, snapshot generator, SVG revision timeline, and initial test suite. It also repaired the integrity badge test-first.
 
@@ -253,7 +290,7 @@ This is not a novel registry dataset or a commercial screener. Existing adjacent
 
 The claim is the monitor.
 
-The system says **registered primary-completion expectation**, not “readout date.” Those concepts differ systematically, often by months, and treating them as interchangeable would be optimistic. [lexicon-exempt]
+The system says **registered primary-completion expectation**, never the date a readout is announced. Those concepts differ systematically, often by months, and treating them as interchangeable would be optimistic.
 
 ## Layout
 

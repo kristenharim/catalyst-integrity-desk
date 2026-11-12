@@ -166,6 +166,8 @@ def test_bob_counts_on_every_surface_match_the_log_and_the_directory():
     wrong, matched = [], {p for p, _ in BOB_COUNT_PATTERNS}
 
     for doc in BOB_COUNT_SURFACES:
+        if not (REPO / doc).exists():  # CLAUDE.md is local-only, untracked since 2026-11-11
+            continue
         text = " ".join((REPO / doc).read_text().split())
         for pattern, kind in BOB_COUNT_PATTERNS:
             for token in re.findall(pattern, text, re.IGNORECASE):
