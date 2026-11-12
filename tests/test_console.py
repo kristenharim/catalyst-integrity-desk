@@ -335,15 +335,21 @@ def test_snapshot_no_lapsed_catalyst():
     with open(SNAPSHOT_PATH) as f:
         snap = json.load(f)
 
-    today = _dt.date.today().isoformat()
+    # Judge the frozen snapshot against the day it was built, not the day the
+    # suite runs. Against today the check decays: every catalyst eventually
+    # passes, and a frozen demo would need a live rebuild (new SEC, registry and
+    # Granite calls) just to keep a test green. Against as_of it still catches
+    # the original failure, RCKT bound to 2026-05-05 in a snapshot built later.
+    # (Changed 2026-11-11, when SRPT's 2026-10-31 catalyst passed.)
+    built = snap.get("as_of") or _dt.date.today().isoformat()
     for ticker, c in snap["contracts"].items():
         cat = c.get("catalyst_date")
         if cat is None:
             continue  # no catalyst is fine; no catalyst != past catalyst
-        assert cat >= today, (
-            f"{ticker} binds to catalyst_date {cat!r} which is in the past "
-            f"(today is {today}).  The snapshot was built against a lapsed date "
-            f"and must be regenerated."
+        assert cat >= built, (
+            f"{ticker} binds to catalyst_date {cat!r}, already past when the "
+            f"snapshot was built ({built}).  The snapshot was built against a "
+            f"lapsed date and must be regenerated."
         )
 
 # ---------------------------------------------------------------------------
